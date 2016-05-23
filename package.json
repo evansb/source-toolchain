@@ -1,0 +1,42 @@
+{
+  "name": "jediscript",
+  "version": "0.0.1",
+  "description": "Jediscript compiler and standard library",
+  "main": "src/service.ts",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "compile": "PRODUCTION=1 node ./bin/compile",
+    "dev": "node ./bin/server"
+  },
+  "dependencies": {
+    "bluebird": "^3.4.0",
+    "immutable": "^3.8.1",
+    "jison": "^0.4.17",
+    "mustache": "^2.2.1",
+    "object-assign": "^4.1.0"
+  },
+  "devDependencies": {
+    "source-map-loader": "^0.1.5",
+    "ts-loader": "^0.8.2",
+    "tslint": "^3.10.2",
+    "typescript": "^1.8.10",
+    "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evansb/jediscript.git"
+  },
+  "keywords": [
+    "compiler",
+    "education"
+  ],
+  "author": "Evan Sebastian <evanlhoini@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/evansb/jediscript/issues"
+  },
+  "homepage": "https://github.com/evansb/jediscript#readme"
+}

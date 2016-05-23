@@ -1,0 +1,19 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "es5",
+    "sourceMap": true
+  },
+  "filesGlob": [
+    "./src/*.ts",
+    "./src/typings/*.d.ts",
+    "!grammar.txt"
+  ],
+  "exclude": [
+    "node_modules",
+    "lib"
+  ],
+  "atom": {
+    "rewriteTsconfig": false
+  }
+}
