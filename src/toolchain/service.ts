@@ -64,7 +64,7 @@ function checkExternalsOrThrow(
   if (typeof context !== 'object') {
     throw new Error('Context must be an object')
   }
-  externals.forEach(({ name, type }) => {
+  externals.forEach(({ name }) => {
     if (!name) {
       throw new Error('Context must be an array of { name, type? }')
     }

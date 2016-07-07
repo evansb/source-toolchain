@@ -62,8 +62,6 @@ export class SourceContext {
       }  
       // Everything o.k, commit snapshots
       this.commitSnapshot(snapshot)
-    }).add(() => {
-      this.snapshots = this.snapshots.delete(jobID)
     })
     return subscription
   }
@@ -71,16 +69,20 @@ export class SourceContext {
   /**
    * Subscribe for events. 
    * @param callback the callback fired when a snapshot is changed.
+   * @param regex event regex to respond
    * @param once set to true if the subscription is cancelled after completed
    *        once or error
    * @return subscription of event and its relevant snapshots. 
    */
   subscribe(callback: (error: Error, snap: Snapshot) => any,
-            event: string = '*',
+            regex: RegExp = /.*/,
+            completedOnly: boolean = false,
             once: boolean = false): Subscription {
     const subscription = this.subject.subscribe({
       next(snapshot: Snapshot): void {
-        callback(null, snapshot)
+        if (regex.test(snapshot.history[snapshot.history.length - 1])) {
+          callback(null, snapshot)
+        }
         if (once) {
           subscription.unsubscribe()
         }
@@ -103,9 +105,10 @@ export class SourceContext {
     return this.snapshots.toJS()
   }
 
-  private commitSnapshot(snapshot: Snapshot) {
+  private commitSnapshot(snapshot: Snapshot): void {
     // Everything o.k, commit snapshots
     snapshot.completed = true
+    snapshot.history.push('source:commit')
     Object.freeze(snapshot)
     this.snapshots.set(snapshot.id, snapshot)
     this.subject.next(snapshot)

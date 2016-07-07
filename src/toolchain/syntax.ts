@@ -1,12 +1,9 @@
-// Map Esprima Syntax type tag to availability.
-// Please consult the language specification before modifying those.
-import { Syntax as S } from 'esprima'
-
 /**
  * Syntax Utilities
  * 
  * @maintainer Evan Sebastian
  */
+import { Syntax as S } from 'espree'
 
 /**
  * Constants to indicate that feature is banned

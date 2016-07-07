@@ -26,6 +26,10 @@ module.exports = {
         test: /\.ts$/,
         loader: 'awesome-typescript-loader' + (isDevelopment?'?tsconfig=tsconfig.dev.json':''),
         exclude: /(node_modules|test-utils|\.test\.ts$|\.d\.ts)/
+      },
+      {
+        test: /\.json$/,
+        loader: 'json-loader'
       }
     ],
 
@@ -48,7 +52,7 @@ module.exports = {
       compress: {
         unused: true,
         dead_code: true,
-        warnings: true
+        warnings: false
       }
     })
   ] : []),

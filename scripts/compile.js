@@ -1,6 +1,8 @@
+const path          = require('path')
 const webpack       = require('webpack')
 const webpackConfig = require('./webpack.config')
 const debug         = require('debug')('compile')
+const rimraf        = require('rimraf')
 
 ;(function () {
   try {
@@ -9,7 +11,19 @@ const debug         = require('debug')('compile')
       if (error) {
         throw error
       }
-      console.log(stats.toString())
+      console.log(stats.toString({
+        timings: true,
+        assets: true,
+        chunkModules: true,
+        chunks: false
+      })) 
+      rimraf(path.join(process.cwd(), 'dist', 'src'), () => {
+        if (stats.hasErrors()) {
+          process.exit(1)
+        } else {
+          process.exit(0)
+        }
+      })
     })
   } catch (e) {
     debug('Compiler encountered an error.', e)

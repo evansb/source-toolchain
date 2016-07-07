@@ -32,28 +32,25 @@ describe('Source context pub/sub', () => {
         expect(err).to.be.null
         expect(snapshot.id).to.equal(0)
         done()
-      })
+      }, /source:commit/)
       ctx.recreateProgram('function foo() { return 2; }')
       expect(ctx.lastJobID).to.equal(1)
     })
 
-    it('add source:created to snapshot history', (done) => {
+    it('add source:created and source:commit to snapshot history', (done) => {
       ctx.subscribe((err, snapshot) => {
-        expect(err).to.be.null
         expect(snapshot.history).to.contain('source:created')
+        expect(snapshot.history).to.contain('source:commit')
         done()
-      })
+      }, /source:commit/)
       ctx.recreateProgram('function foo() { return 2; }')
     })
   })
 
   describe('appendProgram', () => {   
     it('emit N snapshots if called N times', (done) => {
-      const callback = sinon.spy((err: Error, snapshot: Snapshot) => {
-        expect(err).to.be.null
-        expect(snapshot.history).to.contain('source:created')
-      })
-      ctx.subscribe(callback)
+      const callback = sinon.spy()
+      ctx.subscribe(callback, /source:commit/)
       ctx.appendProgram('function foo() { return 2; }')
       ctx.appendProgram('function bar() { return 2; }')
       setTimeout(() => {
