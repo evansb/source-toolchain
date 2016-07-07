@@ -2,7 +2,7 @@
 import { expect } from 'chai'
 import { canUseSyntax, whenCanUseSyntax } from '../../src/toolchain/syntax'
 
-describe('[toolchain/syntax] Syntax Utilities', () => {
+describe('Syntax Utilities', () => {
   describe('canUseSyntax', () => {
     it('returns "yes" when a syntax can be used', () => {
       expect(canUseSyntax('Literal', 3)).to.equal('yes')

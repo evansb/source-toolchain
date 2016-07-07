@@ -1,20 +1,28 @@
 import { DebuggerContext } from './debugger'
-import { CompilerContext } from './compiler'
+import { SourceContext } from './source'
 
 const MIN_WEEK = 3 
-const MAX_WEEK = 13
+const MAX_WEEK = 12
 
 export type GlobalContext = Window | NodeJS.Global | { [name: string]: any }
 export type Externals = { name: string, type?: string }[]
 
 export class Context {
-  public compiler: CompilerContext
+  public source: SourceContext
   public debugger: DebuggerContext
 
   constructor(
     public week: number,
     private globalCtx: GlobalContext,
     private externals: Externals) {
+    const imported: { [name: string]: any } = {}
+    externals.forEach((e) => {
+      imported[e.name] = {
+        type: e.type,
+        value: globalCtx[e.name]
+      }
+    })
+    this.source = new SourceContext(week, imported)
   }
 }
 
@@ -53,5 +61,16 @@ function getDefaultContext(): GlobalContext {
 function checkExternalsOrThrow(
   context: GlobalContext,
   externals: Externals): void {
+  if (typeof context !== 'object') {
+    throw new Error('Context must be an object')
+  }
+  externals.forEach(({ name, type }) => {
+    if (!name) {
+      throw new Error('Context must be an array of { name, type? }')
+    }
+    if (!context.hasOwnProperty(name)) {
+      throw new Error(`Property '${name}' does not exist in context`)
+    }
+  })
   return
 }
