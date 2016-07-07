@@ -1,7 +1,15 @@
 # The Source Tool chain and Standard Library
+[![Build Status](https://travis-ci.org/evansb/source-toolchain.svg?branch=master)](https://travis-ci.org/evansb/source-toolchain)
 
-Source is a subset of JavaScript used as teaching language for
-first year undergraduate student in NUS.
+Source is a subset of JavaScript (ES5) used as teaching language for
+first year undergraduate student in NUS (CS1101S).
+
+This repository houses a learner friendly runtime system for Source.
+The goal of this runtime system is to have:
+
+1. Very friendly error message with link to lecture topic (see Elm).
+2. Modern streaming architecture with end goal of interactivity.
+3. Educational tools: e.g Substitution Stepper, List Visualizer.
 
 ## Directory Structure
 
@@ -29,9 +37,9 @@ first year undergraduate student in NUS.
 
 3. See `package.json` for more build options.
 
-### Dependencies
+## Credits
 
-This project uses RxJS 5 and Esprima
+This project uses RxJS 5 for its reactive API and and Esprima for parsing JS program.
 
 ## Contributors
 
