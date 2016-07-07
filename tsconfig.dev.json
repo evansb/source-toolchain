@@ -2,21 +2,19 @@
   "compileOnSave": false,
   "buildOnSave": false,
   "compilerOptions": {
-    "module": "commonjs",
     "target": "es5",
     "sourceMap": true,
-    "removeComments": false,
-    "outDir": "lib",
-    "declaration": true
+    "module": "commonjs"
   },
-  "files": [
-    "src/index.ts"
-  ],
   "exclude": [
     "node_modules",
-    "dist",
     "typings/globals",
     "typings/shims",
     "typings/index.d.ts"
-  ]
+  ],
+  "awesomeTypescriptLoaderOptions": {
+    "useBabel": false,
+    "useCache": true,
+    "forkChecker": true
+  }
 }

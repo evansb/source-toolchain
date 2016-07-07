@@ -1,33 +1,54 @@
 {
-  "name": "jediscript",
+  "name": "the-source",
   "version": "0.0.1",
-  "description": "Jediscript compiler and standard library",
-  "main": "src/service.ts",
+  "description": "Source language toolchain and standard library",
+  "typings": "lib/index.d.ts",
+  "main": "lib/index.js",
   "directories": {
+    "lib": "src",
     "test": "tests"
   },
   "scripts": {
-    "compile": "PRODUCTION=1 node ./bin/compile",
-    "dev": "node ./bin/server"
+    "clean": "rimraf lib dist",
+    "prepublish": "typings install && npm run compile",
+    "compile": "NODE_ENV=production tsc -p . && node ./scripts/compile",
+    "dev": "NODE_ENV=development node ./scripts/server",
+    "test:ci": "NODE_ENV=development CI=true BLUEBIRD_WARNINGS=0 karma start ./scripts/karma.conf.js",
+    "test": "NODE_ENV=development BLUEBIRD_WARNINGS=0 karma start ./scripts/karma.conf.js"
   },
   "dependencies": {
-    "bluebird": "^3.4.0",
-    "immutable": "^3.8.1",
-    "jison": "^0.4.17",
-    "mustache": "^2.2.1",
-    "object-assign": "^4.1.0"
+    "@reactivex/rxjs": "^5.0.0-beta.10",
+    "esprima": "^2.7.2",
+    "immutable": "^3.8.1"
   },
   "devDependencies": {
-    "source-map-loader": "^0.1.5",
-    "ts-loader": "^0.8.2",
+    "awesome-typescript-loader": "^1.1.1",
+    "chai": "^3.5.0",
+    "debug": "^2.2.0",
+    "jasmine-core": "^2.4.1",
+    "json-loader": "^0.5.4",
+    "karma": "^0.13.22",
+    "karma-chai": "^0.1.0",
+    "karma-jasmine": "^1.0.2",
+    "karma-mocha": "^1.1.1",
+    "karma-mocha-reporter": "^2.0.4",
+    "karma-phantomjs-launcher": "^1.0.1",
+    "karma-sinon": "^1.0.5",
+    "karma-typescript-preprocessor2": "^1.2.1",
+    "karma-webpack": "^1.7.0",
+    "mocha": "^2.5.3",
+    "phantomjs-prebuilt": "^2.1.7",
+    "rimraf": "^2.5.3",
+    "sinon": "^1.17.4",
     "tslint": "^3.10.2",
+    "tslint-loader": "^2.1.4",
     "typescript": "^1.8.10",
     "webpack": "^1.13.1",
     "webpack-dev-server": "^1.14.1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/evansb/jediscript.git"
+    "url": "git+https://github.com/evansb/the-source.git"
   },
   "keywords": [
     "compiler",
@@ -36,7 +57,7 @@
   "author": "Evan Sebastian <evanlhoini@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/evansb/jediscript/issues"
+    "url": "https://github.com/evansb/source-toolchain/issues"
   },
-  "homepage": "https://github.com/evansb/jediscript#readme"
+  "homepage": "https://github.com/evansb/source-toolchain#readme"
 }

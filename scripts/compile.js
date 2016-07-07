@@ -1,6 +1,6 @@
 const webpack       = require('webpack')
-const webpackConfig = require('../webpack.config')
-const debug         = require('debug')('app:bin:compile')
+const webpackConfig = require('./webpack.config')
+const debug         = require('debug')('compile')
 
 ;(function () {
   try {
@@ -9,7 +9,7 @@ const debug         = require('debug')('app:bin:compile')
       if (error) {
         throw error
       }
-      debug(stats)
+      console.log(stats.toString())
     })
   } catch (e) {
     debug('Compiler encountered an error.', e)
