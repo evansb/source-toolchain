@@ -54,6 +54,9 @@
       "es6/**/*.{js,jsx}",
       "!dist/**/*"
     ],
+    "require": [
+      "babel-register"
+    ],
     "concurrency": 5,
     "babel": "inherit"
   },
