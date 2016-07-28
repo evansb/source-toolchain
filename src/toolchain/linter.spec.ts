@@ -14,7 +14,7 @@ const snapshot$: Observable<ISnapshot> = Observable.of({
   messages: List()
 })
 
-test('linter:lint', (t) => { 
+test('lint', (t) => { 
   const message = linter.lint(source)
   t.truthy(message.header)
   t.true(message.results.length === 1)
@@ -22,7 +22,7 @@ test('linter:lint', (t) => {
   t.deepEqual(message.results[0].column, 10)
 })
 
-test('linter:createLinter', (t) => {
+test('createLinter', (t) => {
   t.plan(2)
   const linter$ = linter.createLinter(snapshot$)
   return new Promise<void>((resolve, reject) => {

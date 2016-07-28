@@ -21,7 +21,7 @@ const message1 = {
   }]
 }
 
-test('printer:printToString', (t) => { 
+test('printToString', (t) => { 
   const result = printer.printToString(message1) 
   t.true(typeof result === 'string')
   t.regex(result, /Test Message/) 
