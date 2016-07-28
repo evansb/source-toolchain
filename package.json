@@ -9,7 +9,7 @@
     "clean": "rimraf .awcache dist es6 es5",
     "lint": "tslint -c tslint.json src/**/*.ts",
     "prepublish": "typings install && npm run lint && npm run compile",
-    "compile": "NODE_ENV=production tsc -p . --declaration && babel es6 --out-dir es5",
+    "compile": "NODE_ENV=production tsc -p . --declaration && babel es6 --out-dir es5 --ignore *.spec.js",
     "dist": "NODE_ENV=production node ./scripts/bundle",
     "test": "ava",
     "watch": "NODE_ENV=development concurrently 'tsc -p .  --watch' 'ava --watch --verbose'"
