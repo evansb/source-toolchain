@@ -38,10 +38,11 @@ export function lint(code: string): ISnapshotMessage {
   }
 }
 
-export function createLinter(snapshot$: Observable<[ISnapshot, ISnapshotMessage]>):
+export function createLinter(
+  snapshot$: Observable<[ISnapshot, ISnapshotMessage]>):
   Observable<[ISnapshot, ISnapshotMessage]> {
   return Observable.create((observer) => {
-    snapshot$.subscribe(([snapshot, _]) => {
+    snapshot$.subscribe(([snapshot, _]) => { // tslint:disable-line
       const result = lint(snapshot.code)
       observer.next([snapshot, result])
     })
