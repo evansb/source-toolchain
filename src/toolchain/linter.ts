@@ -2,11 +2,11 @@ import { linter } from 'eslint'
 
 /// Header which might be appended on lint errors.
 export const LINT_ERROR_HEADER 
-  = '[!] These are valid in JavaScript but not in Source'
+  = '[!] Syntax Error/Warning'
 
 /// Rule indicator for missing semicolon
 export const MISSING_SEMICOLON_ID = 'semi'
-export const MISSING_SEMICOLON_MESSAGE = 'Missing Semicolon'
+export const MISSING_SEMICOLON_MESSAGE = 'Error: Missing Semicolon'
 
 /**
  * Subset of eslint lint result
@@ -28,7 +28,7 @@ export interface ILintResult {
 export function lint(code: string): ILintResult[] {
   return linter.verify(code, {
     rules: {
-      semi: 'warn'
+      semi: 'error'
     }
   })
 }
