@@ -108,8 +108,8 @@ for (let idx = 0; idx < keys.length; idx += 1) {
  * @param week the week
  * @return 'yes', 'no', or 'banned'
  */
-export function canUseSyntax(syntax: string,
-                             week: number = 12): ('yes' | 'no' | 'banned') {
+export function canUse(syntax: string, week: number = 12): 
+  ('yes' | 'no' | 'banned') {
   if (syntaxAvailableInWeek[BANNED][syntax]) {
     return 'banned' 
   } else if (minWeekOfSyntaxType[syntax] <= week) {
@@ -124,6 +124,6 @@ export function canUseSyntax(syntax: string,
  * @param syntax the syntax tag
  * @return a week number, or BANNED if the syntax is banned.
  */
-export function whenCanUseSyntax(syntax: string): number {
+export function whenCanUse(syntax: string): number {
   return minWeekOfSyntaxType[syntax] 
 }
