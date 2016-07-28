@@ -1,3 +1,4 @@
 /// <reference path='../typings/index.d.ts' />
-/// <reference path='./typings/espree.d.ts' />
+import 'babel-polyfill'
+
 export { createContext, Context } from './toolchain/service'

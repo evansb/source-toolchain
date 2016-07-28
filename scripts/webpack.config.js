@@ -1,7 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
 const ForkCheckerPlugin = require('awesome-typescript-loader').ForkCheckerPlugin
-const nodeModulesPath = path.join(process.cwd(), 'node_modules')
 const isDevelopment = process.env.NODE_ENV === 'development'
 
 module.exports = {
@@ -11,7 +10,6 @@ module.exports = {
     path: path.join(process.cwd(), 'dist'),
     publicPath: '/',
     filename: '[name].min.js',
-    libraryTarget: 'umd',
     library: 'SourceToolchain'
   },
 
@@ -24,17 +22,13 @@ module.exports = {
     loaders: [
       {
         test: /\.ts$/,
-        loader: 'awesome-typescript-loader' + (isDevelopment?'?tsconfig=tsconfig.dev.json':''),
+        loader: 'awesome-typescript-loader',
         exclude: /(node_modules|test-utils|\.test\.ts$|\.d\.ts)/
       },
       {
         test: /\.json$/,
         loader: 'json-loader'
       }
-    ],
-
-    preLoaders: [
-      { test: /\.tsx?$/, loader: 'tslint', exclude: /node_modules/ }
     ]
   },
 
@@ -43,7 +37,8 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env': {
         'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-      }
+      },
+      '__DEV__': isDevelopment
     })
   ].concat((!isDevelopment) ? [
     new webpack.optimize.OccurrenceOrderPlugin(),
@@ -56,12 +51,6 @@ module.exports = {
       }
     })
   ] : []),
-
-  tslint: {
-    emitErrors: true,
-    formattersDirectory: path.join(nodeModulesPath,
-      'tslint-loader', 'formatters')
-  },
 
   node: {
     fs: 'empty'

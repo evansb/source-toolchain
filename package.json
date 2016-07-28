@@ -2,50 +2,41 @@
   "name": "the-source",
   "version": "0.0.1",
   "description": "Source language toolchain and standard library",
-  "typings": "lib/index.d.ts",
-  "main": "lib/index.js",
-  "directories": {
-    "lib": "src",
-    "test": "tests"
-  },
+  "typings": "es6/index.d.ts",
+  "main": "es5/index.js",
+  "jsnext:main": "es6/index.js",
   "scripts": {
-    "clean": "rimraf lib dist",
-    "prepublish": "typings install && npm run compile",
-    "compile": "NODE_ENV=production tsc -p . && node ./scripts/compile",
-    "dev": "NODE_ENV=development node ./scripts/server",
-    "test:ci": "NODE_ENV=development CI=true BLUEBIRD_WARNINGS=0 karma start ./scripts/karma.conf.js",
-    "test": "NODE_ENV=development BLUEBIRD_WARNINGS=0 karma start ./scripts/karma.conf.js"
+    "clean": "rimraf .awcache dist es6 es5",
+    "lint": "tslint -c tslint.json src/**/*.ts",
+    "prepublish": "typings install && npm run lint && npm run compile",
+    "compile": "NODE_ENV=production tsc -p . --declaration && babel es6 --out-dir es5",
+    "dist": "NODE_ENV=production node ./scripts/bundle",
+    "test": "ava",
+    "watch": "NODE_ENV=development concurrently 'tsc -p .  --watch' 'ava --watch --verbose'"
   },
   "dependencies": {
     "@reactivex/rxjs": "^5.0.0-beta.10",
+    "babel-cli": "^6.11.4",
+    "babel-core": "^6.11.4",
+    "babel-loader": "^6.2.4",
+    "babel-plugin-transform-async-to-generator": "^6.8.0",
+    "babel-preset-es2015": "^6.9.0",
     "eslint": "^3.0.1",
     "espree": "^3.1.6",
     "immutable": "^3.8.1"
   },
   "devDependencies": {
+    "ava": "^0.15.2",
     "awesome-typescript-loader": "^1.1.1",
-    "chai": "^3.5.0",
+    "babel-polyfill": "^6.9.1",
+    "concurrently": "^2.2.0",
     "debug": "^2.2.0",
-    "jasmine-core": "^2.4.1",
     "json-loader": "^0.5.4",
-    "karma": "^0.13.22",
-    "karma-chai": "^0.1.0",
-    "karma-jasmine": "^1.0.2",
-    "karma-mocha": "^1.1.1",
-    "karma-mocha-reporter": "^2.0.4",
-    "karma-phantomjs-launcher": "^1.0.1",
-    "karma-sinon": "^1.0.5",
-    "karma-typescript-preprocessor2": "^1.2.1",
-    "karma-webpack": "^1.7.0",
-    "mocha": "^2.5.3",
-    "phantomjs-prebuilt": "^2.1.7",
     "rimraf": "^2.5.3",
     "sinon": "^1.17.4",
     "tslint": "^3.10.2",
-    "tslint-loader": "^2.1.4",
     "typescript": "^1.8.10",
-    "webpack": "^1.13.1",
-    "webpack-dev-server": "^1.14.1"
+    "webpack": "^1.13.1"
   },
   "repository": {
     "type": "git",
@@ -55,6 +46,17 @@
     "compiler",
     "education"
   ],
+  "ava": {
+    "files": [
+      "es6/**/*.spec.js"
+    ],
+    "source": [
+      "es6/**/*.{js,jsx}",
+      "!dist/**/*"
+    ],
+    "concurrency": 5,
+    "babel": "inherit"
+  },
   "author": "Evan Sebastian <evanlhoini@gmail.com>",
   "license": "MIT",
   "bugs": {

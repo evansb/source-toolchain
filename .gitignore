@@ -1,8 +1,8 @@
 .awcache
-.DS_Store
 node_modules
 dist
-lib
+es6
+es5
 typings
 !./typings/shims
 npm-debug.log
