@@ -14,8 +14,6 @@ const Messages = {
 
 /**
  * Lint the source code
- * @param  {string} code The source code
- * @return {ILintResult[]} List of eslint errors/warnings
  */
 export function lint(code: string): ISnapshotMessage {
   const results = linter.verify(code, {
