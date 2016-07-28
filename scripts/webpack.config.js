@@ -1,30 +1,20 @@
 const path = require('path')
 const webpack = require('webpack')
-const ForkCheckerPlugin = require('awesome-typescript-loader').ForkCheckerPlugin
 const isDevelopment = process.env.NODE_ENV === 'development'
 
 module.exports = {
-  entry: { 'source-toolchain': './src/index.ts' },
+  target: 'web',
+  entry: './es5/index.js',
 
   output: {
     path: path.join(process.cwd(), 'dist'),
     publicPath: '/',
-    filename: '[name].min.js',
+    filename: 'source-toolchain.min.js',
     library: 'SourceToolchain'
-  },
-
-  resolve: {
-    extensions: ['', '.ts', '.js'],
-    moduleDirectories: ['node_modules']
   },
 
   module: {
     loaders: [
-      {
-        test: /\.ts$/,
-        loader: 'awesome-typescript-loader',
-        exclude: /(node_modules|test-utils|\.test\.ts$|\.d\.ts)/
-      },
       {
         test: /\.json$/,
         loader: 'json-loader'
@@ -33,7 +23,6 @@ module.exports = {
   },
 
   plugins: [
-    new ForkCheckerPlugin(),
     new webpack.DefinePlugin({
       'process.env': {
         'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
@@ -50,9 +39,5 @@ module.exports = {
         warnings: false
       }
     })
-  ] : []),
-
-  node: {
-    fs: 'empty'
-  }
+  ] : [])
 }

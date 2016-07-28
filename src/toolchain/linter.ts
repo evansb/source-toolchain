@@ -1,11 +1,11 @@
-import { linter } from 'eslint'
+import { JSHINT } from 'jshint'
 import { ISnapshotMessage, Snapshot$ } from './common'
 
 /// Header which might be appended on lint errors.
 export const LINT_ERROR_HEADER = '[!] There are syntax error/warning(s)'
 
 /// Rule indicator for missing semicolon
-export const MISSING_SEMICOLON_ID = 'semi'
+export const MISSING_SEMICOLON_ID = 'W033'
 export const MISSING_SEMICOLON_MESSAGE = 'Error: Missing Semicolon'
 
 const Messages = {
@@ -16,17 +16,17 @@ const Messages = {
  * Lint the source code
  */
 export function lint(code: string): ISnapshotMessage {
-  const results = linter.verify(code, {
-    rules: {
-      semi: 'error'
-    }
-  }).map(r => {
-    const message = Messages[r.ruleId]
+  const options = {
+    expr: true
+  }
+  JSHINT(code, options)
+  const results = JSHINT.data().errors.map(r => {
+    const message = Messages[r.code]
     return {
       line: r.line,
-      endLine: r.endLine,
-      column: r.column,
-      endColumn: r.endColumn,
+      endLine: r.last,
+      column: r.character,
+      endColumn: r.lastcharacter,
       message: message || ''
     }
   })
