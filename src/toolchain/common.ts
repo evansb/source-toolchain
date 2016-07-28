@@ -1,4 +1,5 @@
 import { Map, List } from 'immutable'
+import { Observable } from 'rxjs/Observable'
 
 export interface ISnapshot { 
   id: string 
@@ -23,3 +24,5 @@ export interface ISnapshotMessage {
     message: string
   }[]
 }
+
+export type Snapshot$ = Observable<ISnapshot>

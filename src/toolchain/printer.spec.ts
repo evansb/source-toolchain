@@ -2,6 +2,7 @@ import test from 'ava'
 import * as printer from './printer'
 
 const message1 = {
+  from: 'test',
   header: 'Test Header',
   code: '\n'
     + 'function foo() {\n'
@@ -22,7 +23,6 @@ const message1 = {
 
 test('printer:printToString', (t) => { 
   const result = printer.printToString(message1) 
-  console.log('\n' + result)
   t.true(typeof result === 'string')
   t.regex(result, /Test Message/) 
   t.regex(result, /Test Header/)  
