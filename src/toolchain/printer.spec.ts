@@ -26,6 +26,6 @@ test('printer:printToString', (t) => {
   t.true(typeof result === 'string')
   t.regex(result, /Test Message/) 
   t.regex(result, /Test Header/)  
-  t.regex(result, /line 2 col 4 - line 4 col 8/) 
+  t.regex(result, /\(line 2 col 4\) - \(line 4 col 8\)/) 
   t.regex(result, /-------\^/)
 })

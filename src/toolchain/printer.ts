@@ -8,9 +8,9 @@ export function printToString(
   withHeader: boolean = true
 ): string {
   let errors: string = message.results.reduce((previous, current, index) => { 
-    let header = `${current.message} (line ${current.line} col ${current.column}` // tslint:disable-line
+    let header = `${current.message} (line ${current.line} col ${current.column})` // tslint:disable-line
     if (current.endLine) {
-      header += ` - line ${current.endLine} col ${current.endColumn})`
+      header += ` - (line ${current.endLine} col ${current.endColumn})`
     }
     const lines = message.code.split('\n')
     const endLine = current.endLine || current.line
