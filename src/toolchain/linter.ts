@@ -1,5 +1,6 @@
-import { ISnapshotMessage } from './common'
+import { Observable } from 'rxjs/Observable'
 import { linter } from 'eslint'
+import { ISnapshot, ISnapshotMessage } from './common'
 
 /// Header which might be appended on lint errors.
 export const LINT_ERROR_HEADER = '[!] There are syntax error/warning(s)'
@@ -36,3 +37,14 @@ export function lint(code: string): ISnapshotMessage {
     code
   }
 }
+
+export function createLinter(snapshot$: Observable<[ISnapshot, ISnapshotMessage]>):
+  Observable<[ISnapshot, ISnapshotMessage]> {
+  return Observable.create((observer) => {
+    snapshot$.subscribe(([snapshot, _]) => {
+      const result = lint(snapshot.code)
+      observer.next([snapshot, result])
+    })
+  })
+}
+
