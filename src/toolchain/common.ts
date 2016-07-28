@@ -4,14 +4,15 @@ export interface ISnapshot {
   id: string 
   parentID: string
   week: number
-  code: string
+  code: string 
+  messages: List<ISnapshotMessage>
   environment?: Map<string, any>
-  outputs: List<string>
   valueType: string
   value?: any
 }
 
 export interface ISnapshotMessage {
+  from: string
   header?: string
   code: string
   results: {
