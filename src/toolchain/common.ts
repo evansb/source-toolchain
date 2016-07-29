@@ -1,4 +1,4 @@
-import { Map, Record } from 'immutable'
+import { Map, Record, Stack } from 'immutable'
 import { Observable } from 'rxjs/Observable'
 
 const SnapshotRecord = Record({ 
@@ -7,11 +7,31 @@ const SnapshotRecord = Record({
   week: 3,
   code: '' ,
   ast: undefined,
-  environment: Map(),
-  valueReady: false,
+  environment: Map(), 
+  stateStack: Stack<State>(),
+  done: false,
+  node: undefined,
   valueType: 'Undefined',
   value: undefined
 })
+
+const StateRecord = Record({
+  done: false,
+  node: undefined,
+  scope: undefined, 
+  thisExpression: undefined,
+  value: undefined,
+  n_: undefined
+})
+
+export class State extends StateRecord {
+  done: boolean
+  node: ESTree.Node
+  scope: any
+  thisExpression: any
+  value: any
+  n_: number
+}
 
 export class Snapshot extends SnapshotRecord { 
   id: string 
@@ -20,8 +40,11 @@ export class Snapshot extends SnapshotRecord {
   code: string 
   ast: ESTree.Program
   environment: Map<string, any>
+  done: boolean
+  node: ESTree.Node
   valueType: string
   value: any
+  stateStack: Stack<State>
 }
 
 const SnapshotErrorRecord = Record({
