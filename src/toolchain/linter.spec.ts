@@ -1,35 +1,37 @@
 import test from 'ava'
-import { List } from 'immutable'
 import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/observable/of'
-import 'rxjs/add/operator/map'
+import 'rxjs/add/operator/take'
 
-import { ISnapshot } from './common'
+import { Snapshot, SnapshotError } from './common'
 import * as linter from './linter'
 
-const source = 'function foo() { return 2; }\n' + 'foo() + 3\n'
-
-const snapshot$: Observable<ISnapshot> = Observable.of({
-  code: source,
-  messages: List()
-})
-
-test('lint', (t) => { 
-  const message = linter.lint(source)
-  t.truthy(message.header)
-  t.true(message.results.length === 1)
-  t.deepEqual(message.results[0].line, 2)  
-  t.deepEqual(message.results[0].column, 10)
+test('lint semicolon', (t) => {  
+  const code = 'function foo() { return 2; }\n' + 'foo() + 3\n'
+  const snapshot = new Snapshot({ code }) 
+  return new Promise<void>((resolve, reject) => { 
+    linter.lint(snapshot).subscribe((output) => {
+      if (output instanceof SnapshotError) {
+        t.deepEqual(output.line, 2)  
+        t.deepEqual(output.column, 10)
+      }
+    }, reject, resolve)
+  })
 })
 
 test('createLinter', (t) => {
-  t.plan(2)
+  t.plan(1)
+  const code = 'function foo() { return 2; }\n'
+  const snapshot$ = Observable.of(new Snapshot({ code }))
   const linter$ = linter.createLinter(snapshot$)
   return new Promise<void>((resolve, reject) => {
-    linter$.subscribe((result) => {
-      t.deepEqual(result.code, source)
-      t.deepEqual(result.messages.count(), 1)
+    linter$.snapshot$.subscribe((result) => {
+      t.deepEqual(result.code, code)
       resolve()
+    }) 
+    linter$.error$.subscribe((result) => {
+      t.fail()
+      reject()
     })
   })
 })

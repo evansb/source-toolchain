@@ -4,8 +4,10 @@ import { List } from 'immutable'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/timeout'
 import 'rxjs/add/observable/of'
-import { Snapshot$ } from './toolchain/common'
+import 'rxjs/add/observable/concat'
+import { Snapshot$, Error$, Snapshot } from './toolchain/common'
 import { createLinter } from './toolchain/linter'
+import { createParser } from './toolchain/parser'
 
 const DEFAULT_TIMEOUT = 3000
 
@@ -15,17 +17,21 @@ export interface IRequest {
   timeout?: number
 }
 
-export function createContext(request$: Observable<IRequest>): Snapshot$ {
-  return Observable.create((observer) => {
-    request$.subscribe((request) => {
-      const timeout = request.timeout || DEFAULT_TIMEOUT
-      const snapshot$ = Observable.of({
-        week: request.week,
-        code: request.code,
-        messages: List()
-      })
-      const linter = createLinter(snapshot$)
-      return linter.timeout(timeout)
-    })
-  })
+export interface ISink {
+  snapshot$: Snapshot$,
+  error$: Error$
+}
+
+export function createContext(request$: Observable<IRequest>): ISink {
+  const snapshot$ = request$.map((request) => (new Snapshot({
+    week: request.week,
+    code: request.code,
+    messages: List()
+  })))
+  const linterSink = createLinter(snapshot$)
+  const parserSink = createParser(linterSink.snapshot$)
+  return {
+    snapshot$: parserSink.snapshot$.timeout(DEFAULT_TIMEOUT),
+    error$: Observable.concat(linterSink.error$, parserSink.error$)
+  }
 }

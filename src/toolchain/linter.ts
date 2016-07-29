@@ -1,5 +1,10 @@
 import { JSHINT } from 'jshint'
-import { ISnapshotMessage, Snapshot$ } from './common'
+import { Observer } from 'rxjs/Observer'
+import { Observable } from 'rxjs/Observable'
+import { SnapshotError, Snapshot$, Snapshot, Error$, ISink } from './common'
+import 'rxjs/add/operator/filter'
+import 'rxjs/add/operator/map'
+import 'rxjs/add/operator/mergeAll'
 
 /// Header which might be appended on lint errors.
 export const LINT_ERROR_HEADER = '[!] There are syntax error/warning(s)'
@@ -12,37 +17,40 @@ const Messages = {
   [MISSING_SEMICOLON_ID]: MISSING_SEMICOLON_MESSAGE
 }
 
+const LintOptions = {
+  expr: true
+}
+
 /**
  * Lint the source code
  */
-export function lint(code: string): ISnapshotMessage {
-  const options = {
-    expr: true
-  }
-  JSHINT(code, options)
-  const results = JSHINT.data().errors.map(r => {
-    const message = Messages[r.code]
-    return {
-      line: r.line,
-      endLine: r.last,
-      column: r.character,
-      endColumn: r.lastcharacter,
-      message: message || ''
+export function lint(snapshot: Snapshot): Observable<Snapshot | SnapshotError> {
+  return Observable.create((observer: Observer<Snapshot | SnapshotError>) => {
+    JSHINT(snapshot.code, LintOptions)
+    const errors = JSHINT.data().errors || []
+    errors.forEach((r) => {
+      const error = new SnapshotError({
+        from: 'linter',
+        line: r.line,
+        endLine: r.last,
+        column: r.character,
+        endColumn: r.lastcharacter,
+        message: Messages[r.code] || ''
+      })
+      observer.next(error)
+    })
+    if (errors.length === 0) {
+      observer.next(snapshot) 
     }
+    observer.complete()
   })
-  return {
-    from: 'linter',
-    header: LINT_ERROR_HEADER,
-    results,
-    code
-  }
 }
 
-export function createLinter(snapshot$: Snapshot$): Snapshot$ {
-  return snapshot$.map((snapshot) => {
-    const message = lint(snapshot.code)
-    snapshot.messages = snapshot.messages.push(message)
-    return snapshot
-  })
+export function createLinter(snapshot$: Snapshot$): ISink {
+  const sink = snapshot$.map((snapshot) => lint(snapshot)).mergeAll()
+  return {
+    snapshot$: <Snapshot$> sink.filter((p) => p instanceof Snapshot),
+    error$: <Error$> sink.filter((p) => p instanceof SnapshotError)
+  }
 }
 
