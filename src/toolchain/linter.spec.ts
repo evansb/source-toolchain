@@ -6,7 +6,7 @@ import 'rxjs/add/operator/take'
 import { Snapshot, SnapshotError } from './common'
 import * as linter from './linter'
 
-test('lint semicolon', (t) => {  
+test('linter output', (t) => {  
   const code = 'function foo() { return 2; }\n' + 'foo() + 3\n'
   const snapshot = new Snapshot({ code }) 
   return new Promise<void>((resolve, reject) => { 
@@ -18,6 +18,10 @@ test('lint semicolon', (t) => {
     }, reject, resolve)
   })
 })
+
+lintNegative('foo + 3', 'semicolon')
+lintNegative('if (x) 2;', 'brace if')
+lintNegative('while (x) x++;', 'brace while')
 
 test('createLinter', (t) => {
   t.plan(1)
@@ -35,3 +39,17 @@ test('createLinter', (t) => {
     })
   })
 })
+
+function lintNegative(code: string, name: string, plan = 1) { 
+  test(`lint:${name}`, (t) => {
+    const snapshot = new Snapshot({ code }) 
+    t.plan(plan)
+    return new Promise<void>((resolve, reject) => { 
+      linter.lint(snapshot).subscribe((output) => {
+        if (output instanceof SnapshotError) {
+          t.pass()
+        }
+      }, reject, resolve)
+    })
+  })
+}

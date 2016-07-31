@@ -66,8 +66,6 @@ export function step(snapshot: Snapshot): Snapshot {
       return stepLiteral(snapshot)  
     case 'ExpressionStatement':
       return stepExpressionStatement(snapshot)  
-    case 'BinaryExpression':
-      return stepBinaryExpression(snapshot)
     default: return
   }
 }

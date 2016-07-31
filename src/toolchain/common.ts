@@ -1,18 +1,45 @@
 import { Map, Record, Stack } from 'immutable'
 import { Observable } from 'rxjs/Observable'
 
-const SnapshotRecord = Record({ 
+export type Value = {
+  type: string
+  value: any
+}
+
+export type Foreign = {
+  type: string
+  id: string
+}
+
+export type InlineForeign = {
+  type: string
+  value: any
+}
+
+export type Any = Foreign | Value | InlineForeign
+
+export const NEVER: Foreign = {
+  type: 'foreign',
+  id: 'never'
+}
+
+export const UNDEFINED: Value = {
+  type: 'undefined',
+  value: undefined
+}
+
+const SnapshotRecord = Record({  
   id: undefined,
   parent: undefined,
   week: 3,
   code: '' ,
   ast: undefined,
-  environment: Map(), 
+  environment: Stack(), 
   stateStack: Stack<State>(),
   done: false,
   node: undefined,
   valueType: 'Undefined',
-  value: undefined
+  value: UNDEFINED
 })
 
 const StateRecord = Record({
@@ -39,12 +66,62 @@ export class Snapshot extends SnapshotRecord {
   week: number
   code: string 
   ast: ESTree.Program
-  environment: Map<string, any>
+  environment: Stack<Map<string, Any>>
   done: boolean
   node: ESTree.Node
   valueType: string
-  value: any
+  value: Any
   stateStack: Stack<State>
+
+  constructor(init: any) {
+    super(init)
+  }
+
+  box(value: any): Any {
+    if (typeof value === 'function') {
+      return <InlineForeign> {
+        type: 'foreign_inline',
+        value
+      }
+    }
+    return {
+      type: typeof value,
+      value: value
+    }
+  }
+
+  unbox(value: Any, context: any): any {
+    if (value.type === 'foreign') {
+      return context[(<Foreign> value).id]
+    } else {
+      return (<Value> value).value
+    }
+  }
+
+  getVar(name: string): Any {
+    let value = undefined
+    const found = this.environment.some((env) => {
+      value = env.get(name)
+      return env.has(name)
+    })
+    if (found) {
+      return value
+    } else {
+      return NEVER
+    }
+  }
+
+  setVar(name: string, value: Any): this {
+    return <this> this.set('environment',
+      this.environment.shift().unshift(
+        this.environment.peek().set(name, value)
+      )
+    )
+  }
+
+  extend(bindings: Map<string, any>): this {
+    return <this> this.set('environment', this.environment.unshift(bindings))
+  }
 }
 
 const SnapshotErrorRecord = Record({

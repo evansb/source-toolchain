@@ -40,6 +40,9 @@ const saniziters: { [index: string]: Sanitizer<any> } = {
     if (!node.init) {
       return `Missing value in variable declaration`
     }
+    if ((<ESTree.Identifier> node.id).name === 'undefined') { 
+      return `Cannot redefine the constant 'undefined'`
+    }
   },
   IfStatement: (node: ESTree.IfStatement) => { 
     if (!node.alternate) {
@@ -49,6 +52,11 @@ const saniziters: { [index: string]: Sanitizer<any> } = {
   EmptyStatement: (node: ESTree.EmptyStatement, week: number) => {
     if (week < whenCanUse('EmptyStatement')) {
       return `Perhaps this is an extra semicolon`
+    }
+  },
+  ReturnStatement: (node: ESTree.ReturnStatement, week: number) => {
+    if (week < whenCanUse('EmptyStatement') && !node.argument) {
+      return `Missing return value`
     }
   }
 }
@@ -79,10 +87,8 @@ export function sanitize(ast: ESTree.Program, week: number): Error$ {
     traverse(ast, {
       enter(node: ESTree.Node): void {
         sanitizeFeatures(observer, node, week)
-        for (const type in saniziters) {
-          if (saniziters.hasOwnProperty(type) && node.type === type) {
-            runSanitizer(saniziters[type], node, week, observer)
-          }
+        if (saniziters.hasOwnProperty(node.type)) {
+          runSanitizer(saniziters[node.type], node, week, observer)
         }
       },
       leave(node: ESTree.Node): void {

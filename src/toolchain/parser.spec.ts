@@ -41,6 +41,19 @@ const s_missing_init = `
 `
 positiveSanitize(s_missing_init, 'missing init')
 
+const s_missing_return_value = `
+  function foo() {
+    return;
+  }
+`
+positiveSanitize(s_missing_return_value, 'missing return value +', 3)
+negativeSanitize(s_missing_return_value, 'missing return value -', 4)
+
+const s_redefine_undefined = `
+  var undefined = 2;
+`
+positiveSanitize(s_redefine_undefined, 'redefine undefined', 3)
+
 test('createParser', (t) => {
   t.plan(2)
   const snapshot$ = Observable.of(

@@ -18,7 +18,8 @@ const Messages = {
 }
 
 const LintOptions = {
-  expr: true
+  expr: true,
+  curly: true
 }
 
 /**
