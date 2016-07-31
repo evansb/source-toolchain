@@ -125,3 +125,12 @@ export function canUse(syntax: string, week: number = 12):
 export function whenCanUse(syntax: string): number {
   return minWeekOfSyntaxType[syntax] 
 }
+
+export const BANNED_OPERATORS = {
+  '&': true,
+  '|': true,
+  '>>': true,
+  '<<': true,
+  '^': true,
+  '~': true
+}

@@ -8,33 +8,38 @@ import 'rxjs/add/observable/of'
 const s_basic = `
   1 + 2;
 `
+negativeSanitize(s_basic, 'basic', 5)
 
 const s_array = `
   [1, [2, 3]];
 `
+positiveSanitize(s_array, 'array literal +', 3, 2)
+negativeSanitize(s_array, 'array literal -', 5)
 
-test('sanitize basic', (t) => { 
-  const ast = parser.parse(s_basic)
-  t.plan(0)
-  return new Promise<void>((resolve, reject) => {
-    parser
-      .sanitize(<ESTree.Program> ast, 3).take(1)
-      .subscribe(() => t.pass(), reject, resolve)
-  })
-})
+const s_bitwise = `
+  1 & 2;
+`
+positiveSanitize(s_bitwise, 'binary operator')
 
-test('sanitize banned feature', (t) => { 
-  const ast = <ESTree.Program> parser.parse(s_array)
-  t.plan(4)
-  return new Promise<void>((resolve, reject) => {
-    parser
-      .sanitize(ast, 3).take(2)
-      .subscribe((err) => {
-        t.regex(err.message, /ArrayExpression/)
-        t.regex(err.message, /Cannot use/)
-      }, reject, resolve)
-  })
-})
+const s_if_wo_else = `
+  if (x) { 2; }
+`
+positiveSanitize(s_if_wo_else, 'if without else')
+
+const s_empty_statement = `
+  ;
+`
+positiveSanitize(s_empty_statement, 'empty statement', 3, 2)
+
+const s_multiple_decls = `
+  var x = 3, y = 4;
+`
+positiveSanitize(s_multiple_decls, 'multiple decls')
+
+const s_missing_init = `
+  var x;
+`
+positiveSanitize(s_missing_init, 'missing init')
 
 test('createParser', (t) => {
   t.plan(2)
@@ -54,3 +59,27 @@ test('createParser', (t) => {
     })
   })
 })
+
+function positiveSanitize(code: string, name: string, week: number = 3, plan: number = 1) {
+  test(`sanitize:${name}`, (t) => {
+    const ast = parser.parse(code)
+    t.plan(plan)  
+    return new Promise<void>((resolve, reject) => {
+      parser
+        .sanitize(<ESTree.Program> ast, week)
+        .subscribe(() => t.pass(), reject, resolve)
+    })
+  })
+}
+
+function negativeSanitize(code: string, name: string, week: number = 3) {
+  test(`sanitize:${name}`, (t) => {
+    const ast = parser.parse(code)
+    t.plan(0)  
+    return new Promise<void>((resolve, reject) => {
+      parser
+        .sanitize(<ESTree.Program> ast, week)
+        .subscribe(() => t.fail(), reject, resolve)
+    })
+  })
+}

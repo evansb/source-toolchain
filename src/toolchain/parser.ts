@@ -1,9 +1,12 @@
 /// <reference path='../../typeshims/estraverse.d.ts' />
+import { Observer } from 'rxjs/Observer'
 import { Observable } from 'rxjs/Observable'
 import { Snapshot, Snapshot$, SnapshotError, Error$, ISink } from './common'
 import { parse as _parse } from 'acorn'
 import { traverse } from 'estraverse'
-import { whenCanUse } from './syntax'
+import { whenCanUse, BANNED_OPERATORS } from './syntax'
+
+import 'rxjs/add/observable/merge'
 import 'rxjs/add/operator/filter'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/mergeAll'
@@ -19,14 +22,67 @@ function createOutput(node: ESTree.Node, message: string) {
   })
 }
 
-export function sanitizeFeatures(ast: ESTree.Program, week: number): Error$ {
+type Sanitizer<N extends ESTree.Node> = (node: N, week?: number) => string
+
+const saniziters: { [index: string]: Sanitizer<any> } = {
+  BinaryExpression: (node: ESTree.BinaryExpression) => {
+    if (BANNED_OPERATORS[node.operator]) {
+      return `Operator ${node.operator} is only available in Javascript`
+    }
+  },
+  VariableDeclaration: (node: ESTree.VariableDeclaration) => {
+   const declarations = (<ESTree.VariableDeclaration> node).declarations
+   if (declarations.length > 1) {
+      return `This style of variable declaration is only available in Javascript`
+    } 
+  },
+  VariableDeclarator: (node: ESTree.VariableDeclarator) => {
+    if (!node.init) {
+      return `Missing value in variable declaration`
+    }
+  },
+  IfStatement: (node: ESTree.IfStatement) => { 
+    if (!node.alternate) {
+      return `Missing else statement`
+    }
+  },
+  EmptyStatement: (node: ESTree.EmptyStatement, week: number) => {
+    if (week < whenCanUse('EmptyStatement')) {
+      return `Perhaps this is an extra semicolon`
+    }
+  }
+}
+
+function runSanitizer<N extends ESTree.Node>(
+  sanitizer: Sanitizer<N>,
+  node: N,
+  week: number,
+  observer: Observer<SnapshotError>): boolean {
+  let error
+  if (error = sanitizer(node, week)) {
+    observer.next(createOutput(node, error))
+    return true
+  }
+  return false
+}
+
+export function sanitizeFeatures(observer: Observer<SnapshotError>, node: ESTree.Node, week: number) {
+  const minWeek = whenCanUse(node.type)
+  if (minWeek > week) {
+    const message = `Cannot use ${node.type} until week ${minWeek}`
+    observer.next(createOutput(node, message))
+  }
+}
+
+export function sanitize(ast: ESTree.Program, week: number): Error$ {
   return Observable.create((observer) => {
     traverse(ast, {
       enter(node: ESTree.Node): void {
-        const minWeek = whenCanUse(node.type)
-        if (minWeek > week) {
-          const message = `Cannot use ${node.type} until week ${minWeek}`
-          observer.next(createOutput(node, message))
+        sanitizeFeatures(observer, node, week)
+        for (const type in saniziters) {
+          if (saniziters.hasOwnProperty(type) && node.type === type) {
+            runSanitizer(saniziters[type], node, week, observer)
+          }
         }
       },
       leave(node: ESTree.Node): void {
@@ -36,10 +92,6 @@ export function sanitizeFeatures(ast: ESTree.Program, week: number): Error$ {
       }
     })
   })
-}
-
-export function sanitize(ast: ESTree.Program, week: number): Error$ {
-  return sanitizeFeatures(ast, week)
 }
 
 export function parse(code: string): ESTree.Program | SyntaxError {
