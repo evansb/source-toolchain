@@ -7,7 +7,8 @@ test('BANNED', (t) => {
 
 test('canUse', (t) => {
   t.deepEqual(canUse('ArrayExpression', 3), 'no') 
-  t.deepEqual(canUse('ArrayExpression', 12), 'yes') 
+  t.deepEqual(canUse('ArrayExpression', 12), 'yes')  
+  t.deepEqual(canUse('WhileStatement', 12), 'banned') 
 })
 
 test('whenCanUse', (t) => {

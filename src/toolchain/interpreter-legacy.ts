@@ -1,7 +1,7 @@
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/filter'
 import { Any, Undefined, Snapshot, Snapshot$, ISink,
-  isNever, isTruthy, unbox, box, createError, Error$ } from './common'
+  isForeign, isNever, isTruthy, unbox, box, createError, Error$ } from './common'
 
 import T = ESTree
 type Env = Map<string, any>
@@ -50,14 +50,14 @@ const evaluators: { [index: string]: Evaluator<any> } = {
     const ident = <T.Identifier> node.id
     snapshot.setVar(ident.name, {
       type: 'function',
-      value: node
+      value: Object.assign({}, node)
     })
     return Undefined
   },
   FunctionExpression(node: T.FunctionExpression, snapshot: Snapshot) {
     return {
       type: 'function',
-      value: node
+      value: Object.assign({}, node)
     }
   },
   Program(node: T.Program, snapshot: Snapshot) {
@@ -71,7 +71,7 @@ const evaluators: { [index: string]: Evaluator<any> } = {
   LogicalExpression(node: T.LogicalExpression, snapshot: Snapshot) {
     if (node.operator === '&&') {
       const left = evaluate(node.left, snapshot)
-      if (!left) {
+      if (!isTruthy(left)) {
         return { type: 'boolean', value: false }
       }
       return evaluate(node.right, snapshot)
@@ -106,7 +106,7 @@ const evaluators: { [index: string]: Evaluator<any> } = {
     const calleeValue = evaluate(node.callee, snapshot)
     if (calleeValue.type === 'function') {
       return apply(node, calleeValue.value, snapshot)
-    } else if (calleeValue.type === 'foreign') {
+    } else if (isForeign(calleeValue)) {
       const unboxed = unbox(calleeValue, snapshot.context)
       if (typeof unboxed === 'function') {
         return applyForeign(node, unboxed, snapshot)
@@ -143,24 +143,30 @@ export function evaluate(node: T.Node, snapshot: Snapshot): Any {
 }
 
 function applyBinaryOperator(operator: string, left: any, right: any): any {
-  switch (operator) {
-    case '+': return left + right
-    case '-': return left - right
-    case '*': return left * right
-    case '/': return left / right 
-    case '%': return left / right 
-    case '===': return left === right 
-    case '!==': return left === right
-    default: return undefined
+  if (operator === '+') {
+    return left + right
+  } else if (operator === '-') {
+    return left - right
+  } else if (operator === '*') {
+    return left * right
+  } else if (operator === '/') {
+    return left / right
+  } else if (operator === '%') {
+    return left % right
+  } else if (operator === '===') {
+    return left === right
+  } else {
+    return left !== right
   }
 }
 
 function applyUnaryOperator(operator: string, right: any): any {
-  switch (operator) {
-    case '+': return +right
-    case '-': return -right
-    case '!': return !right
-    default: return undefined
+  if (operator === '+') {
+    return +right
+  } else if (operator === '-') {
+    return -right
+  } else {
+    return !right  
   }
 }
 
@@ -198,15 +204,11 @@ function applyForeign(
   snapshot: Snapshot
 ): Any {
   const args: any[] = node.arguments.map((arg) => {
-    if (!(arg.type === 'ForeignValue')) {
-      const value = evaluate(arg, snapshot)
-      if (value.type !== 'function') {
-        return unbox(value, snapshot.context)
-      } else {
-        return unboxFunction(snapshot, value.value)
-      }
+    const value = evaluate(arg, snapshot)
+    if (value.type !== 'function') {
+      return unbox(value, snapshot.context)
     } else {
-      return arg
+      return unboxFunction(snapshot, value.value)
     }
   })
   const result = callee.apply(null, args)
@@ -246,13 +248,9 @@ export function createEvaluator(snapshot$: Snapshot$): ISink {
       s.value = value
       return s
     } catch (e) {
-      if (e.node) {
-        const err = createError('interpreter', e.node, e.message)
-        err.snapshot = s
-        return err
-      } else {
-        throw e
-      }
+      const err = createError('interpreter', e.node, e.message)
+      err.snapshot = s
+      return err
     }
   })
   return {

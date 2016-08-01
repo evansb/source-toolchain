@@ -98,23 +98,19 @@ export function parse(code: string): ESTree.Program | SyntaxError {
   try {
     return _parse(code, options)
   } catch (e) {
-    if (e instanceof SyntaxError) {
-      return e
-    } else {
-      throw e
-    }
+    return e
   }
 }
 
 export function createParser(snapshot$: Snapshot$, week: number = 3): ISink {
   const parseResult$ = snapshot$.map((snapshot) => {
     const parseResult = parse(snapshot.code)
-    if (parseResult instanceof SyntaxError) {
+    if (parseResult instanceof Error) {
       const r = <any> parseResult
       const error = {
         snapshot,
-        line: r.loc.line,
-        column: r.loc.column,
+        line: r.lineNumber,
+        column: r.index,
         message: r.message
       }
       return Observable.of(error)

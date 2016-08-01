@@ -6,3 +6,5 @@ es5
 typings
 !./typings/shims
 npm-debug.log
+coverage
+.nyc_output

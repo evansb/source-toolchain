@@ -19,22 +19,6 @@ export type Any = {
   value?: any
 }
 
-export function isString(value: Any) {
-  return value.type === 'string'
-}
-
-export function isFunction(value: Any) {
-  return value.type === 'function'
-}
-
-export function isNumber(value: Any) {
-  return value.type === 'number'
-}
-
-export function isBoolean(value: Any) {
-  return value.type === 'boolean'
-}
-
 export function isForeign(value: Any) {
   return value.type === 'foreign'
 }
@@ -169,7 +153,7 @@ export function createError(
   message: string
 ): ISnapshotError { 
   let base = { from, message }
-  if (node.loc) {
+  if (node && node.loc) {
     base = Object.assign(base, {
       line: node.loc.start.line,
       column: node.loc.start.column,

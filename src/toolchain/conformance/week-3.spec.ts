@@ -5,7 +5,7 @@ import { init, evaluate } from '../interpreter-legacy'
 
 let testCount = 0
 
-function run(code: string, value: any, context?: { [name: string]: any }) {
+function run(code: string, value: any, context?: { [name: string]: any }, isNegative = false) {
   testCount++;
   const count = testCount
   const ast = parse(code) 
@@ -16,7 +16,11 @@ function run(code: string, value: any, context?: { [name: string]: any }) {
       const result = evaluate(ast, snapshot)
       t.deepEqual(unbox(result, {}), value)
     } catch (e) {
-      t.fail(`Test ${count} failed because ${e.message}`)
+      if (isNegative) {
+        t.pass()
+      } else {
+        t.fail(`Test ${count} failed because ${e.message}`)
+      }
     }
   })
 }
@@ -128,3 +132,23 @@ run(`foreign(function() { return 2; }, foreign2);`, 5, {
 run(`var x = foreign2; x()()`, 2, {
   foreign2: function() { return function() { return 2; }; }
 })
+
+// 34
+run(`function foo(x) { return 2 + x; }; foreign2(foo);`, 4, {
+  foreign2: function(f) { return f(2); }
+})
+
+// 35
+run(`true && (true || false) && (!false) && (2 %2 === 0);`, true)
+
+// 36
+run(`false && x;`, false)
+
+// 37
+run(`var x = 2; x(3)`, false, {}, true)
+
+// 38
+run(`function x() { return function() { return 2; } } x() !== x()`, true)
+
+// 39
+run(`function x() { return function() { return 2; } } x === x;`, true)
