@@ -13,4 +13,4 @@ install:
 
 script:
   - npm run test:ci
-  - npm run bundle
+  - npm run dist
