@@ -12,5 +12,5 @@ install:
   - npm install
 
 script:
-  - npm run test:ci
+  - npm run test
   - npm run dist
