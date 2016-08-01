@@ -7,11 +7,11 @@ test('BANNED', (t) => {
 
 test('canUse', (t) => {
   t.deepEqual(canUse('ArrayExpression', 3), 'no') 
-  t.deepEqual(canUse('ArrayExpression', 5), 'yes') 
+  t.deepEqual(canUse('ArrayExpression', 12), 'yes') 
 })
 
 test('whenCanUse', (t) => {
-  t.deepEqual(whenCanUse('ArrayExpression'), 5) 
+  t.deepEqual(whenCanUse('ArrayExpression'), 12) 
   t.deepEqual(whenCanUse('SpreadElement'), BANNED)
 })
 

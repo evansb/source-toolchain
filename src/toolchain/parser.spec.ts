@@ -14,7 +14,7 @@ const s_array = `
   [1, [2, 3]];
 `
 positiveSanitize(s_array, 'array literal +', 3, 2)
-negativeSanitize(s_array, 'array literal -', 5)
+negativeSanitize(s_array, 'array literal -', 13)
 
 const s_bitwise = `
   1 & 2;

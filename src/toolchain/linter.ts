@@ -31,6 +31,7 @@ export function lint(snapshot: Snapshot): Observable<Snapshot | ISnapshotError> 
     const errors = JSHINT.data().errors || []
     errors.forEach((r) => {
       const error = {
+        id: snapshot.id,
         from: 'linter',
         line: r.line,
         endLine: r.last,

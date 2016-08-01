@@ -1,6 +1,5 @@
 /// <reference path='../typings/index.d.ts' />
 import { Observable } from 'rxjs/Observable'
-import { List } from 'immutable'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/timeout'
 import 'rxjs/add/observable/of'
@@ -26,7 +25,6 @@ export function createContext(request$: Observable<IRequest>): ISink {
   const snapshot$ = request$.map((request) => (new Snapshot({
     week: request.week,
     code: request.code,
-    messages: List()
   })))
   const linterSink = createLinter(snapshot$)
   const parserSink = createParser(linterSink.snapshot$)

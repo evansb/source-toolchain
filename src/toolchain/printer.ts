@@ -1,11 +1,11 @@
-import { Snapshot, SnapshotError } from './common'
+import { Snapshot, ISnapshotError } from './common'
 
 /**
  * Pretty print snapshot output message
  */
 export function printErrorToString(
   snapshot: Snapshot,
-  error: SnapshotError
+  error: ISnapshotError
 ): string { 
   const lines = snapshot.code.split('\n')
   let header = `${error.message} (line ${error.line} col ${error.column})` // tslint:disable-line

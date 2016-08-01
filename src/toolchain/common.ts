@@ -4,12 +4,12 @@ const NeverSym = Symbol()
 const UndefinedSym = Symbol()
 
 export const Never = {
-  type: 'foreign',
+  type: 'never',
   value: NeverSym
 }
 
 export const Undefined = {
-  type: 'foreign',
+  type: 'undefined',
   value: UndefinedSym
 }
 
@@ -40,25 +40,30 @@ export function isForeign(value: Any) {
 }
 
 export function isNever(value: Any) {
-  return value.type === 'foreign' && value.value === NeverSym
+  return value.type === 'never' && value.value === NeverSym
 }
 
 export function isUndefined(value: Any) {
-  return value.type === 'foreign' && value.value === UndefinedSym
+  return value.type === 'undefined' && value.value === UndefinedSym
 }
 
-export function box(value: any): Any {
+export function isTruthy(value: Any) {
+  return value.value && !isUndefined(value) && !isNever(value)
+}
+
+export function box(value: any, type?: string): Any {
   if (typeof value === 'function') {
     return { type: 'foreign', value }
   }
-  return { type: typeof value, value: value }
+  return { type: type || typeof value, value: value }
 }
 
 export function unbox(value: Any, context: any): any {
-  if (value.type === 'foreign') {
-    if (isUndefined(value) || isNever(value)) {
+  if (isUndefined(value) || isNever(value)) {
       return undefined
-    } else if (value.id) {
+  }
+  if (value.type === 'foreign') {
+     if (value.id) {
       return context[value.id]
     } else {
       return value.value
@@ -71,14 +76,17 @@ export function unbox(value: Any, context: any): any {
 export class Snapshot { 
   id: string 
   week: number
-  code: string 
   ast: ESTree.Program
-  environment: Array<Map<string, Any>> = []
+  environment: Array<Map<string, Any>> = [this.initialEnvironment()]
   done: boolean
   node: ESTree.Node
   valueType: string
   value: Any = Undefined
   context: any = {}
+  callStack: Array<ESTree.Node> = []
+
+  private _code: string 
+  private _lines: string[]
 
   constructor(
     fields: {
@@ -89,6 +97,28 @@ export class Snapshot {
       context?: any
     }) {
     Object.assign(this, fields)
+  }
+
+  initialEnvironment() {
+    const map = new Map()
+    map.set('Infinity', { type: 'number', value: Infinity })
+    map.set('NaN', { type: 'number', value: NaN })
+    return map
+  }
+
+  get code() {
+    return this._code
+  }
+
+  get lines() {
+    return this._lines
+  }
+
+  set code(c: string) {
+    this._code = c
+      .replace(new RegExp('\r\n', 'g'), '\n')
+      .replace(new RegExp('\r', 'g'), '\n')
+    this._lines = this._code.split('\n')
   }
 
   getVar(name: string): Any {
@@ -107,14 +137,10 @@ export class Snapshot {
   setVar(name: string, value: Any) {
     return this.environment[0].set(name, value)
   }
-
-  extend(bindings: Map<string, any>) {
-    return this.environment.unshift(bindings)
-  }
 }
 
 export interface ISnapshotError {
-  id: string
+  id?: string
   from: string
   line: number
   endLine: number

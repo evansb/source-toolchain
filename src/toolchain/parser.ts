@@ -132,7 +132,8 @@ export function createParser(snapshot$: Snapshot$, week: number = 3): ISink {
       snapshot.ast = parseResult
       return Observable.of(
         Observable.of(snapshot),
-        sanitize(parseResult, snapshot.week)
+        <any> sanitize(parseResult, snapshot.week)
+          .map((s) => Object.assign(s, { id: snapshot.id }))
       ).mergeAll()
     }
   })
