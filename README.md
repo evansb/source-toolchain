@@ -4,8 +4,8 @@
 Source is a subset of JavaScript (ES5) used as teaching language for
 first year undergraduate student in NUS (CS1101S).
 
-This repository houses a learner friendly runtime system for Source.
-The goal of this runtime system is to have:
+This repository houses a learner friendly toolchain for Source written in TypeScript.
+The end goal of this runtime system is to have:
 
 1. Very friendly error message with link to lecture topic (see Elm).
 2. Modern streaming architecture with end goal of interactivity.
@@ -14,20 +14,17 @@ The goal of this runtime system is to have:
 ## Directory Structure
 
     doc                     Documentation
-    lib                     Compiled entry point (Node JS)
-    src/toolchain           Toolchain  (Compiler, Debugger, etc)
-    src/stdlib              Standard library (e.g lists and stream) in JS
-    tests/toolchain         Toolchain unit test
-    tests/stdlib            Standard library tests
-    tests/conformance       Integration test
+    src/toolchain           Toolchain (Compiler, Debugger, etc)
+    src/stdlib              Javascript standard library (e.g lists and stream)
+    es6/**                  Compiled ES6 files and typings.
+    es5/**                  Compiled ES5 files
 
 ## Getting Started (For Developer)
 
 1. You will need
 
         npm>=3 and node>=5  To develop
-        typings-cli         To install type definitions
-        vscode              Recommended TypeScript editor
+        A good TypeScript editor (Sublime or VSCode recommended)
 
 2. Install and compile
 
@@ -35,11 +32,11 @@ The goal of this runtime system is to have:
         npm install
         npm run compile
 
-3. See `package.json` for more build options.
+3. See `package.json` for more build tasks.
 
 ## Credits
 
-This project uses RxJS 5 for its reactive API and and Esprima for parsing JS program.
+This project uses RxJS 5 for its streaming API, acorn for parsing JS, and jshint for linting.
 
 ## Contributors
 
