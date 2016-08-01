@@ -1,6 +1,6 @@
 import test from 'ava'
 import * as printer from './printer'
-import { SnapshotError, Snapshot } from './common'
+import { Snapshot } from './common'
 
 const snapshot1 = new Snapshot({
   code: '\n'
@@ -12,14 +12,14 @@ const snapshot1 = new Snapshot({
     + '}\n'
 })
 
-const message1 = new SnapshotError({
+const message1 = {
   from: 'test',
   line: 2, 
   endLine: 4,
   column: 4,
   endColumn: 8,
   message: 'Test Message'
-})
+}
 
 test('printToString', (t) => { 
   const result = printer.printErrorToString(snapshot1, message1) 

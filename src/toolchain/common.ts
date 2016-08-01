@@ -1,101 +1,94 @@
-import { Map, Record, Stack } from 'immutable'
 import { Observable } from 'rxjs/Observable'
 
-export type Value = {
-  type: string
-  value: any
-}
+const NeverSym = Symbol()
+const UndefinedSym = Symbol()
 
-export type Foreign = {
-  type: string
-  id: string
-}
-
-export type InlineForeign = {
-  type: string
-  value: any
-}
-
-export type Any = Foreign | Value | InlineForeign
-
-export const NEVER: Foreign = {
+export const Never = {
   type: 'foreign',
-  id: 'never'
+  value: NeverSym
 }
 
-export const UNDEFINED: Value = {
-  type: 'undefined',
-  value: undefined
+export const Undefined = {
+  type: 'foreign',
+  value: UndefinedSym
 }
 
-const SnapshotRecord = Record({  
-  id: undefined,
-  parent: undefined,
-  week: 3,
-  code: '' ,
-  ast: undefined,
-  environment: Stack(), 
-  stateStack: Stack<State>(),
-  done: false,
-  node: undefined,
-  valueType: 'Undefined',
-  value: UNDEFINED
-})
-
-const StateRecord = Record({
-  done: false,
-  node: undefined,
-  scope: undefined, 
-  thisExpression: undefined,
-  value: undefined,
-  n_: undefined
-})
-
-export class State extends StateRecord {
-  done: boolean
-  node: ESTree.Node
-  scope: any
-  thisExpression: any
-  value: any
-  n_: number
+export type Any = {
+  type: string 
+  id?: string
+  value?: any
 }
 
-export class Snapshot extends SnapshotRecord { 
+export function isString(value: Any) {
+  return value.type === 'string'
+}
+
+export function isFunction(value: Any) {
+  return value.type === 'function'
+}
+
+export function isNumber(value: Any) {
+  return value.type === 'number'
+}
+
+export function isBoolean(value: Any) {
+  return value.type === 'boolean'
+}
+
+export function isForeign(value: Any) {
+  return value.type === 'foreign'
+}
+
+export function isNever(value: Any) {
+  return value.type === 'foreign' && value.value === NeverSym
+}
+
+export function isUndefined(value: Any) {
+  return value.type === 'foreign' && value.value === UndefinedSym
+}
+
+export function box(value: any): Any {
+  if (typeof value === 'function') {
+    return { type: 'foreign', value }
+  }
+  return { type: typeof value, value: value }
+}
+
+export function unbox(value: Any, context: any): any {
+  if (value.type === 'foreign') {
+    if (isUndefined(value) || isNever(value)) {
+      return undefined
+    } else if (value.id) {
+      return context[value.id]
+    } else {
+      return value.value
+    }
+  } else {
+    return value.value
+  }
+}
+
+export class Snapshot { 
   id: string 
-  parent: string
   week: number
   code: string 
   ast: ESTree.Program
-  environment: Stack<Map<string, Any>>
+  environment: Array<Map<string, Any>> = []
   done: boolean
   node: ESTree.Node
   valueType: string
-  value: Any
-  stateStack: Stack<State>
+  value: Any = Undefined
+  context: any = {}
 
-  constructor(init: any) {
-    super(init)
-  }
-
-  box(value: any): Any {
-    if (typeof value === 'function') {
-      return <InlineForeign> {
-        type: 'foreign_inline',
-        value
-      }
-    }
-    return {
-      type: typeof value,
-      value: value
-    }
-  }
-
-  unbox(value: Any, context: any): any {
-    if (value.type === 'foreign') {
-      return context[(<Foreign> value).id]
-    } else {
-      return (<Value> value).value
-    }
+  constructor(
+    fields: {
+      code?: string,
+      ast?: ESTree.Program,
+      id?: string,
+      week?: number,
+      context?: any
+    }) {
+    Object.assign(this, fields)
   }
 
   getVar(name: string): Any {
@@ -107,34 +100,20 @@ export class Snapshot extends SnapshotRecord {
     if (found) {
       return value
     } else {
-      return NEVER
+      return Never
     }
   }
 
-  setVar(name: string, value: Any): this {
-    return <this> this.set('environment',
-      this.environment.shift().unshift(
-        this.environment.peek().set(name, value)
-      )
-    )
+  setVar(name: string, value: Any) {
+    return this.environment[0].set(name, value)
   }
 
-  extend(bindings: Map<string, any>): this {
-    return <this> this.set('environment', this.environment.unshift(bindings))
+  extend(bindings: Map<string, any>) {
+    return this.environment.unshift(bindings)
   }
 }
 
-const SnapshotErrorRecord = Record({
-  id: undefined,
-  from: undefined,
-  line: undefined,
-  endLine: undefined,
-  column: undefined,
-  endColumn: undefined,
-  message: undefined
-})
-
-export class SnapshotError extends SnapshotErrorRecord {
+export interface ISnapshotError {
   id: string
   from: string
   line: number
@@ -145,7 +124,7 @@ export class SnapshotError extends SnapshotErrorRecord {
 }
 
 export type Snapshot$ = Observable<Snapshot>
-export type Error$ = Observable<SnapshotError>
+export type Error$ = Observable<ISnapshotError>
 
 export interface ISink {
   snapshot$: Snapshot$,

@@ -1,5 +1,4 @@
-import { Map, Stack } from 'immutable'
-import { Value, Snapshot } from './common'
+import { Any, Undefined, Snapshot, unbox, box } from './common'
 
 import T = ESTree
 type Env = Map<string, any>
@@ -11,62 +10,60 @@ const isStoppingNode = {
   ContinueStatement: true
 }
 
-type Evaluator<N> = (node: N, snapshot: Snapshot, context: any) => Snapshot
+type Evaluator<N> = (node: N, snapshot: Snapshot) => Any
 
-export function init(snapshot: Snapshot,
-                     globals: { [index: string]: Value }): Snapshot {
-  return <Snapshot> snapshot.set('environment', Stack.of(Map(globals)))
+export function init(snapshot: Snapshot, globals: Map<string, Any>) {
+  snapshot.done = false
+  snapshot.environment = [globals]
+  snapshot.value = Undefined
 }
 
 const evaluators: { [index: string]: Evaluator<any> } = {
   Literal(node: T.Literal, snapshot: Snapshot) {
-    return <Snapshot> snapshot.set('value', {
-      type: node.type,
-      value: node.value
-    })
+    return box(node.value)
   },
-  ExpressionStatement(node: T.ExpressionStatement, snapshot: Snapshot, context: any) {
-    return evaluate(node.expression, snapshot, context)
+  ExpressionStatement(node: T.ExpressionStatement, snapshot: Snapshot) {
+    return evaluate(node.expression, snapshot)
   },
-  VariableDeclaration(node: T.VariableDeclaration, snapshot: Snapshot, context: any) {
+  VariableDeclaration(node: T.VariableDeclaration, snapshot: Snapshot) {
     const declaration = node.declarations[0]
     const { name } = <T.Identifier> declaration.id
-    const snapshot2 = evaluate(declaration.init, snapshot, context)
-    return snapshot.setVar(name, snapshot2.value)
+    const value = evaluate(declaration.init, snapshot)
+    snapshot.setVar(name, value)
+    return Undefined
   },
-  BinaryExpression(node: T.BinaryExpression, snapshot: Snapshot, context: any) { 
-    const rightEff = evaluate(node.right, snapshot, context)
-    const leftEff = evaluate(node.left, rightEff, context)
-    const result = applyBinaryOperator(node.operator,
-      snapshot.unbox(leftEff.value, context),
-      snapshot.unbox(rightEff.value, context)
-    )
-    return <Snapshot> leftEff.set('value', snapshot.box(result))
+  BinaryExpression(node: T.BinaryExpression, snapshot: Snapshot) { 
+    const right = evaluate(node.right, snapshot)
+    const left = evaluate(node.left, snapshot)
+    return box(applyBinaryOperator(node.operator,
+      unbox(left, snapshot.context),
+      unbox(right, snapshot.context)
+    ))
   },  
   Program(node: T.Program, snapshot: Snapshot) {
     return this.BlockStatement(node, snapshot)
   },
-  BlockStatement(node: T.BlockStatement, snapshot: Snapshot, context: any) {
-    let lastSnapshot = snapshot
+  BlockStatement(node: T.BlockStatement, snapshot: Snapshot) {
+    let lastValue: Any = Undefined
     node.body.some((n) => {
-      lastSnapshot = evaluate(n, lastSnapshot, context)
+      lastValue = evaluate(n, snapshot)
       return isStoppingNode[n.type]
     })
-    return lastSnapshot
+    return lastValue
   },
-  CallExpression(node: T.CallExpression, snapshot: Snapshot, context: any) {
-    return snapshot
+  CallExpression(node: T.CallExpression, snapshot: Snapshot) {
+    return Undefined
   },
   Identifier(node: T.Identifier, snapshot: Snapshot) {
-    return <Snapshot> snapshot.set('value', snapshot.getVar(node.name))
+    return snapshot.getVar(node.name)
   }
 }
 
-export function evaluate(node: T.Node, snapshot: Snapshot, context: any): Snapshot {
+export function evaluate(node: T.Node, snapshot: Snapshot): Any {
   if (evaluators.hasOwnProperty(node.type)) {
-    return evaluators[node.type](node, snapshot, context)
+    return evaluators[node.type](node, snapshot)
   } else {
-    return snapshot
+    return snapshot.value
   }
 }
 

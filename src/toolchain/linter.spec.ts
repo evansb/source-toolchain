@@ -3,7 +3,7 @@ import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/observable/of'
 import 'rxjs/add/operator/take'
 
-import { Snapshot, SnapshotError } from './common'
+import { Snapshot } from './common'
 import * as linter from './linter'
 
 test('linter output', (t) => {  
@@ -11,7 +11,7 @@ test('linter output', (t) => {
   const snapshot = new Snapshot({ code }) 
   return new Promise<void>((resolve, reject) => { 
     linter.lint(snapshot).subscribe((output) => {
-      if (output instanceof SnapshotError) {
+      if (!(output instanceof Snapshot)) {
         t.deepEqual(output.line, 2)  
         t.deepEqual(output.column, 10)
       }
@@ -46,7 +46,7 @@ function lintNegative(code: string, name: string, plan = 1) {
     t.plan(plan)
     return new Promise<void>((resolve, reject) => { 
       linter.lint(snapshot).subscribe((output) => {
-        if (output instanceof SnapshotError) {
+        if (!(output instanceof Snapshot)) {
           t.pass()
         }
       }, reject, resolve)

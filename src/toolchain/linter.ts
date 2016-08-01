@@ -1,7 +1,7 @@
 import { JSHINT } from 'jshint'
 import { Observer } from 'rxjs/Observer'
 import { Observable } from 'rxjs/Observable'
-import { SnapshotError, Snapshot$, Snapshot, Error$, ISink } from './common'
+import { ISnapshotError, Snapshot$, Snapshot, Error$, ISink } from './common'
 import 'rxjs/add/operator/filter'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/mergeAll'
@@ -25,19 +25,19 @@ const LintOptions = {
 /**
  * Lint the source code
  */
-export function lint(snapshot: Snapshot): Observable<Snapshot | SnapshotError> {
-  return Observable.create((observer: Observer<Snapshot | SnapshotError>) => {
+export function lint(snapshot: Snapshot): Observable<Snapshot | ISnapshotError> {
+  return Observable.create((observer: Observer<Snapshot | ISnapshotError>) => {
     JSHINT(snapshot.code, LintOptions)
     const errors = JSHINT.data().errors || []
     errors.forEach((r) => {
-      const error = new SnapshotError({
+      const error = {
         from: 'linter',
         line: r.line,
         endLine: r.last,
         column: r.character,
         endColumn: r.lastcharacter,
         message: Messages[r.code] || ''
-      })
+      }
       observer.next(error)
     })
     if (errors.length === 0) {
@@ -51,7 +51,7 @@ export function createLinter(snapshot$: Snapshot$): ISink {
   const sink = snapshot$.map((snapshot) => lint(snapshot)).mergeAll()
   return {
     snapshot$: <Snapshot$> sink.filter((p) => p instanceof Snapshot),
-    error$: <Error$> sink.filter((p) => p instanceof SnapshotError)
+    error$: <Error$> sink.filter((p) => !(p instanceof Snapshot))
   }
 }
 

@@ -1,7 +1,7 @@
 /// <reference path='../../typeshims/estraverse.d.ts' />
 import { Observer } from 'rxjs/Observer'
 import { Observable } from 'rxjs/Observable'
-import { Snapshot, Snapshot$, SnapshotError, Error$, ISink } from './common'
+import { Snapshot, Snapshot$, ISnapshotError, Error$, ISink } from './common'
 import { parse as _parse } from 'acorn'
 import { traverse } from 'estraverse'
 import { whenCanUse, BANNED_OPERATORS } from './syntax'
@@ -11,15 +11,15 @@ import 'rxjs/add/operator/filter'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/mergeAll'
 
-function createOutput(node: ESTree.Node, message: string) {
-  return new SnapshotError({
+function createOutput(node: ESTree.Node, message: string): ISnapshotError {
+  return {
     from: 'parser',
     message,
     line: node.loc.start.line,
     column: node.loc.start.column,
     endLine: node.loc.end.line,
     endColumn: node.loc.end.column
-  })
+  }
 }
 
 type Sanitizer<N extends ESTree.Node> = (node: N, week?: number) => string
@@ -65,7 +65,7 @@ function runSanitizer<N extends ESTree.Node>(
   sanitizer: Sanitizer<N>,
   node: N,
   week: number,
-  observer: Observer<SnapshotError>): boolean {
+  observer: Observer<ISnapshotError>): boolean {
   let error
   if (error = sanitizer(node, week)) {
     observer.next(createOutput(node, error))
@@ -74,7 +74,7 @@ function runSanitizer<N extends ESTree.Node>(
   return false
 }
 
-export function sanitizeFeatures(observer: Observer<SnapshotError>, node: ESTree.Node, week: number) {
+export function sanitizeFeatures(observer: Observer<ISnapshotError>, node: ESTree.Node, week: number) {
   const minWeek = whenCanUse(node.type)
   if (minWeek > week) {
     const message = `Cannot use ${node.type} until week ${minWeek}`
@@ -122,22 +122,22 @@ export function createParser(snapshot$: Snapshot$, week: number = 3): ISink {
     const parseResult = _parse(snapshot.code)
     if (parseResult instanceof SyntaxError) {
       const r = <any> parseResult
-      const error = new SnapshotError({
+      const error = {
         line: r.loc.line,
         column: r.loc.column,
         message: r.message
-      })
+      }
       return Observable.of(error)
     } else {
-      const withAst = snapshot.set('ast', parseResult)
+      snapshot.ast = parseResult
       return Observable.of(
-        Observable.of(withAst),
+        Observable.of(snapshot),
         sanitize(parseResult, snapshot.week)
       ).mergeAll()
     }
   })
   const result$ = parseResult$.mergeAll().filter(p => p instanceof Snapshot) 
-  const error$ = parseResult$.mergeAll().filter(p => p instanceof SnapshotError)
+  const error$ = parseResult$.mergeAll().filter(p => !(p instanceof Snapshot))
   return {
     snapshot$: result$ as Snapshot$,
     error$: error$ as Error$
