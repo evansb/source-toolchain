@@ -9,7 +9,7 @@ import { createLinter } from './toolchain/linter'
 import { createParser } from './toolchain/parser'
 import { createEvaluator } from './toolchain/interpreter-legacy'
 
-const DEFAULT_TIMEOUT = 3000
+const DEFAULT_TIMEOUT = 10000
 
 export interface IRequest {
   code: string
@@ -18,6 +18,7 @@ export interface IRequest {
   context?: any
   parent?: Snapshot
   globals?: {[name: string]: any}
+  maxCallStack?: number
 }
 
 export interface ISink {
@@ -29,12 +30,14 @@ export function createContext(request$: Observable<IRequest>): ISink {
   const snapshot$ = request$.map((request) => (new Snapshot({
     week: request.week,
     code: request.code,
+    timeout: request.timeout || DEFAULT_TIMEOUT,
+    maxCallStack: request.maxCallStack
   })))
   const linterSink = createLinter(snapshot$)
   const parserSink = createParser(linterSink.snapshot$)
   const evalSink = createEvaluator(parserSink.snapshot$)
   return {
-    snapshot$: evalSink.snapshot$.timeout(DEFAULT_TIMEOUT),
+    snapshot$: evalSink.snapshot$,
     error$: Observable.concat(linterSink.error$, parserSink.error$, evalSink.error$)
   }
 }

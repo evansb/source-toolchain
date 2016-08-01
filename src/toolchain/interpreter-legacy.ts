@@ -50,14 +50,14 @@ const evaluators: { [index: string]: Evaluator<any> } = {
     const ident = <T.Identifier> node.id
     snapshot.setVar(ident.name, {
       type: 'function',
-      value: boxFunction(snapshot, node)
+      value: node
     })
     return Undefined
   },
   FunctionExpression(node: T.FunctionExpression, snapshot: Snapshot) {
     return {
       type: 'function',
-      value: boxFunction(snapshot, node)
+      value: node
     }
   },
   Program(node: T.Program, snapshot: Snapshot) {
@@ -102,24 +102,21 @@ const evaluators: { [index: string]: Evaluator<any> } = {
     })
     return lastValue
   },
-  CallExpression(node: T.CallExpression, snapshot: Snapshot) {
-    let callee: Function
+  CallExpression(node: T.CallExpression, snapshot: Snapshot) {  
+    let callee: (T.FunctionExpression | T.FunctionDeclaration)
     if (node.callee.type === 'Identifier') {
-      callee = snapshot.getVar((<T.Identifier> node.callee).name).value
-    } else if (node.callee.type === 'ForeignValue') {
-      callee = (<any> node.callee).value
-    } else if (node.callee.type === 'FunctionExpression') {
-      callee = boxFunction(snapshot, <T.FunctionExpression> node.callee)
-    }
-    const args = Array.prototype.map.call(node.arguments, (n) => {
-      if (!(n.type === 'ForeignValue')) {
-        return unbox(evaluate(n, snapshot), snapshot)
+      const funVal = snapshot.getVar((<T.Identifier> node.callee).name)
+      if (funVal.type === 'foreign') {
+        return applyForeign(node, unbox(funVal, snapshot.context), snapshot)
       } else {
-        return (<any> n).value
+        callee = funVal.value
       }
-    })
-    const result = callee.apply(null, args)
-    return box(result)
+    } else if (node.callee.type === 'FunctionExpression') {
+      callee = <T.FunctionExpression> node.callee
+    } else {
+      throw new EvaluationError(node, `Cannot apply value of type ${node.type}`)
+    }
+    return apply(node, callee, snapshot)
   },
   Identifier(node: T.Identifier, snapshot: Snapshot) {
     const value = snapshot.getVar(node.name)
@@ -140,7 +137,8 @@ const evaluators: { [index: string]: Evaluator<any> } = {
   }
 }
 
-export function evaluate(node: T.Node, snapshot: Snapshot): Any {
+export function evaluate(node: T.Node, snapshot: Snapshot): Any { 
+  snapshot.currentNode = node
   if (evaluators.hasOwnProperty(node.type)) {
     return evaluators[node.type](node, snapshot)
   } else {
@@ -170,8 +168,14 @@ function applyUnaryOperator(operator: string, right: any): any {
   }
 }
 
-function apply(node: T.CallExpression, snapshot: Snapshot): Any {
-  const callee = <T.FunctionExpression> node.callee
+function apply(
+  node: T.CallExpression,
+  callee: T.FunctionExpression,
+  snapshot: Snapshot
+): Any { 
+  if (snapshot.callStack.length >= snapshot.maxCallStack) {
+    throw new EvaluationError(node, 'Maximum call stack exceeded')
+  }
   const env = new Map()
   callee.params.forEach((p, idx) => {
     const id = <T.Identifier> p
@@ -192,8 +196,28 @@ function apply(node: T.CallExpression, snapshot: Snapshot): Any {
   return result
 }
 
-function boxFunction(snapshot: Snapshot,
-                     ast: T.FunctionDeclaration | T.FunctionExpression): Function {  
+function applyForeign(
+  node: T.CallExpression,
+  callee: Function,
+  snapshot: Snapshot
+): Any {
+  const args: any[] = node.arguments.map((arg) => {
+    if (!(arg.type === 'ForeignValue')) {
+      const value = evaluate(arg, snapshot)
+      if (value.type !== 'function') {
+        return unbox(value, snapshot.context)
+      } else {
+        return unboxFunction(snapshot, value.value)
+      }
+    } else {
+      return arg
+    }
+  })
+  const result = callee.apply(null, args)
+  return box(result)
+}
+
+function unboxFunction(snapshot: Snapshot, ast: T.FunctionDeclaration | T.FunctionExpression): Function {  
   return function() {
     const args = Array.prototype.map.call(arguments, (e) => {
       return { type: 'ForeignValue', value: e }
@@ -212,7 +236,7 @@ function boxFunction(snapshot: Snapshot,
       callee,
       arguments: args
     }
-    const result: Any = apply(desugared, snapshot)
+    const result: Any = apply(desugared, callee, snapshot)
     return unbox(result, snapshot)
   }
 }
@@ -222,6 +246,7 @@ export function createEvaluator(snapshot$: Snapshot$): ISink {
     let value
     try {
       value = evaluate(s.ast, s)
+      s.done = true
       s.value = value
       return s
     } catch (e) {

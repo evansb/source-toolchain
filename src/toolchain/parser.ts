@@ -3,7 +3,7 @@ import { Observer } from 'rxjs/Observer'
 import { Observable } from 'rxjs/Observable'
 import { Snapshot, Snapshot$, ISnapshotError, Error$, ISink,
   createError } from './common'
-import { parse as _parse } from 'acorn'
+import { parse as _parse } from 'esprima'
 import { traverse } from 'estraverse'
 import { whenCanUse, BANNED_OPERATORS } from './syntax'
 
@@ -93,8 +93,7 @@ export function sanitize(ast: ESTree.Program, week: number): Error$ {
 export function parse(code: string): ESTree.Program | SyntaxError {
   const options = {
     sourceType: 'script',
-    ecmaVersion: 5,
-    locations: true
+    loc: true
   }
   try {
     return _parse(code, options)
@@ -109,7 +108,7 @@ export function parse(code: string): ESTree.Program | SyntaxError {
 
 export function createParser(snapshot$: Snapshot$, week: number = 3): ISink {
   const parseResult$ = snapshot$.map((snapshot) => {
-    const parseResult = _parse(snapshot.code)
+    const parseResult = parse(snapshot.code)
     if (parseResult instanceof SyntaxError) {
       const r = <any> parseResult
       const error = {

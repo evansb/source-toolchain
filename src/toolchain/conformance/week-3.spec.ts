@@ -1,6 +1,6 @@
 import test from 'ava'
 import { Snapshot, unbox } from '../common'
-import { parse } from 'acorn'
+import { parse } from 'esprima'
 import { init, evaluate } from '../interpreter-legacy'
 
 let testCount = 0
@@ -12,8 +12,12 @@ function run(code: string, value: any, context?: { [name: string]: any }) {
   const snapshot = new Snapshot({ code, ast, context })
   init(snapshot, Object.keys(context || {}).filter((k) => context.hasOwnProperty(k)))
   test(`eval-${count}`, (t) => {
-    const result = evaluate(ast, snapshot)
-    t.deepEqual(unbox(result, {}), value)
+    try {
+      const result = evaluate(ast, snapshot)
+      t.deepEqual(unbox(result, {}), value)
+    } catch (e) {
+      t.fail(`Test ${count} failed because ${e.message}`)
+    }
   })
 }
 

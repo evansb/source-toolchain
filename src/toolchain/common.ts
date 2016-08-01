@@ -83,7 +83,11 @@ export class Snapshot {
   valueType: string
   value: Any = Undefined
   context: any = {}
-  callStack: Array<ESTree.Node> = []
+  startTime: Date = new Date()
+  callStack: Array<ESTree.CallExpression> = []
+  maxCallStack: number
+  timeout: number
+  currentNode: ESTree.Node
 
   private _code: string 
   private _lines: string[]
@@ -94,7 +98,9 @@ export class Snapshot {
       ast?: ESTree.Program,
       id?: string,
       week?: number,
-      context?: any
+      context?: any,
+      timeout?: number,
+      maxCallStack?: number
     }) {
     Object.assign(this, fields)
   }

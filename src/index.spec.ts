@@ -19,3 +19,24 @@ test('Simple integration', (t) => {
     })
   })
 })
+
+test('Infinite loop', (t) => {
+  return new Promise<void>((resolve, reject) => {
+    t.plan(1)
+    try {
+      const { error$, snapshot$ } = createContext(Observable.from([
+        { code: 'function f() { return f(); } f();', week: 3,
+          maxCallStack: 100, timeout: 1000 }, 
+      ]))
+      error$.subscribe((e) => {
+        t.truthy(e)
+        resolve()
+      })
+      snapshot$.subscribe((s) => {
+        t.fail()
+      })
+    } catch (e) {
+      console.log(e)
+    }
+  })
+})

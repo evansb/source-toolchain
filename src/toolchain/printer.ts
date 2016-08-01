@@ -17,8 +17,10 @@ export function printErrorToString(error: ISnapshotError): string {
       affectedCode += codeInLine + '\n'
       if (li === error.line) {
         const leftPadding = Array(error.column).join(' ')
-        const rightPadding = Array(codeInLine.length - error.column + 1)
-          .join('-')
+        const rightPaddingLength = (error.endLine === error.line && error.endColumn)
+        ? error.endColumn - error.column + 1
+        : codeInLine.length - error.column + 1
+        const rightPadding = Array(rightPaddingLength).join('-')
         affectedCode += leftPadding + '^' + rightPadding + '\n'
       } else if (li === endLine) {
         const leftPadding = Array(error.endColumn).join('-')
