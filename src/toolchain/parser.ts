@@ -1,14 +1,14 @@
 /// <reference path='../../typeshims/estraverse.d.ts' />
 import { Observer } from 'rxjs/Observer'
 import { Observable } from 'rxjs/Observable'
-import { Snapshot, Snapshot$, ISnapshotError, Error$, ISink,
-  createError } from './common'
+import { ISnapshotError, Error$, ISink, createError, Snapshot } from './common'
 import { parse as _parse } from 'esprima'
 import { traverse } from 'estraverse'
 import { whenCanUse, BANNED_OPERATORS } from './syntax'
 
 import 'rxjs/add/observable/merge'
 import 'rxjs/add/operator/filter'
+import 'rxjs/add/observable/concat'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/mergeAll'
 
@@ -102,31 +102,35 @@ export function parse(code: string): ESTree.Program | SyntaxError {
   }
 }
 
-export function createParser(snapshot$: Snapshot$, week: number = 3): ISink {
-  const parseResult$ = snapshot$.map((snapshot) => {
-    const parseResult = parse(snapshot.code)
-    if (parseResult instanceof Error) {
-      const r = <any> parseResult
-      const error = {
-        snapshot,
-        line: r.lineNumber,
-        column: r.index,
-        message: r.message
-      }
-      return Observable.of(error)
-    } else {
-      snapshot.ast = parseResult
-      return Observable.of(
-        Observable.of(snapshot),
-        <any> sanitize(parseResult, snapshot.week)
+export function createParser(snapshot$: ISink, week: number = 3): ISink {
+  return Observable.create(observer => {
+    snapshot$.subscribe(s => {
+      if (!(s instanceof Snapshot)) { observer.next(s) }
+      const snapshot = <Snapshot> s
+      const parseResult = parse(snapshot.code)
+      if (parseResult instanceof Error) {
+        const r = <any> parseResult
+        const error = {
+          snapshot,
+          line: r.lineNumber,
+          column: r.index,
+          message: r.message
+        }
+        return observer.next(error)
+      } else {
+        let errored = false
+        snapshot.ast = parseResult
+        sanitize(parseResult, snapshot.week)
           .map((s) => Object.assign(s, { id: snapshot.id }))
-      ).mergeAll()
-    }
+          .subscribe(
+            (e) => { errored = true; observer.next(e) },  
+            (e) => observer.next(e),
+            () => {
+              if (!errored) {
+                observer.next(snapshot)
+              }
+            })
+      } 
+    })
   })
-  const result$ = parseResult$.mergeAll().filter(p => p instanceof Snapshot) 
-  const error$ = parseResult$.mergeAll().filter(p => !(p instanceof Snapshot))
-  return {
-    snapshot$: result$ as Snapshot$,
-    error$: error$ as Error$
-  }
 }

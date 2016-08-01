@@ -142,10 +142,7 @@ export interface ISnapshotError {
 export type Snapshot$ = Observable<Snapshot>
 export type Error$ = Observable<ISnapshotError>
 
-export interface ISink {
-  snapshot$: Snapshot$,
-  error$: Error$
-}
+export type ISink = Observable<Snapshot | ISnapshotError>
 
 export function createError(
   from: string,

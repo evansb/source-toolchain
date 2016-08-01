@@ -55,7 +55,7 @@ const s_redefine_undefined = `
 positiveSanitize(s_redefine_undefined, 'redefine undefined', 3)
 
 test('createParser', (t) => {
-  t.plan(3)
+  t.plan(4)
   const snapshot$ = Observable.of(
     new Snapshot({ code: s_basic }),
     new Snapshot({ code: s_array, week: 3 }),
@@ -64,17 +64,17 @@ test('createParser', (t) => {
   const parser$ = parser.createParser(snapshot$)
   return new Promise<void>((resolve, reject) => {
     let count = 0
-    parser$.snapshot$.subscribe((s) => {
+    parser$.subscribe((s) => {
       count++
-      t.deepEqual(s.ast.type, 'Program')
-    }) 
-    parser$.error$.subscribe((s) => {
-      count++
-      if (count === 3) {
-        t.pass()
+      if (s instanceof Snapshot) {
+        t.deepEqual((<Snapshot> s).ast.type, 'Program')
+      } else {
+        t.truthy(s)
+      } 
+      if (count === 4) {
         resolve()
       }
-    })
+    }) 
   })
 })
 

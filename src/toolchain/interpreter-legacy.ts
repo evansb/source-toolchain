@@ -1,7 +1,7 @@
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/filter'
-import { Any, Undefined, Snapshot, Snapshot$, ISink,
-  isForeign, isNever, isTruthy, unbox, box, createError, Error$ } from './common'
+import { Any, Undefined, Snapshot, ISink,
+  isForeign, isNever, isTruthy, unbox, box, createError } from './common'
 
 import T = ESTree
 type Env = Map<string, any>
@@ -239,22 +239,20 @@ function unboxFunction(snapshot: Snapshot, ast: T.FunctionDeclaration | T.Functi
   }
 }
 
-export function createEvaluator(snapshot$: Snapshot$): ISink {
-  const mixed$ = snapshot$.map((s) => {
+export function createEvaluator(snapshot$: ISink): ISink {
+  return snapshot$.map((s) => {
+    if (!(s instanceof Snapshot)) { return s }
+    const snapshot = <Snapshot> s
     let value
     try {
-      value = evaluate(s.ast, s)
-      s.done = true
-      s.value = value
-      return s
+      value = evaluate(snapshot.ast, snapshot)
+      snapshot.done = true
+      snapshot.value = value
+      return snapshot
     } catch (e) {
       const err = createError('interpreter', e.node, e.message)
-      err.snapshot = s
+      err.snapshot = snapshot
       return err
     }
   })
-  return {
-    snapshot$: <Snapshot$> mixed$.filter((s) => s instanceof Snapshot),
-    error$: <Error$> mixed$.filter((s) => !(s instanceof Snapshot))
-  }
 }

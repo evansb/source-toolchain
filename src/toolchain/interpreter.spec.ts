@@ -1,7 +1,7 @@
 import test from 'ava'
 import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/observable/of'
-import { Any, Snapshot, Never, unbox, isUndefined } from './common'
+import { Any, Snapshot, Never, unbox, isUndefined, ISnapshotError } from './common'
 import { init, createEvaluator } from './interpreter-legacy'
 import { parse } from './parser'
 
@@ -36,13 +36,9 @@ test('createEvaluator +', (t) => {
   const snapshot = new Snapshot({ code, ast })
   const evaluator = createEvaluator(Observable.of(snapshot))
   return new Promise<void>((resolve, reject) => {
-    evaluator.snapshot$.subscribe((result) => {
+    evaluator.subscribe((result: Snapshot) => {
       t.true(isUndefined(result.value))
       resolve()
-    }) 
-    evaluator.error$.subscribe((result) => {
-      t.fail()
-      reject()
     })
   })
 })
@@ -54,10 +50,7 @@ test('createEvaluator -', (t) => {
   const evaluator = createEvaluator(Observable.of(snapshot))
   t.plan(1)
   return new Promise<void>((resolve, reject) => {
-    evaluator.snapshot$.subscribe((result) => {
-      reject()
-    }) 
-    evaluator.error$.subscribe((result) => {
+    evaluator.subscribe((result: ISnapshotError) => {
       t.regex(result.message, /Undefined variable/)
       resolve()
     })

@@ -1,10 +1,11 @@
 /// <reference path='../typings/index.d.ts' />
 import { Observable } from 'rxjs/Observable'
+import { Observer } from 'rxjs/Observer'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/timeout'
 import 'rxjs/add/observable/of'
 import 'rxjs/add/observable/concat'
-import { Snapshot$, Error$, Snapshot } from './toolchain/common'
+import { Snapshot, ISnapshotError } from './toolchain/common'
 import { createLinter } from './toolchain/linter'
 import { createParser } from './toolchain/parser'
 import { createEvaluator } from './toolchain/interpreter-legacy'
@@ -21,12 +22,13 @@ export interface IRequest {
   maxCallStack?: number
 }
 
-export interface ISink {
-  snapshot$: Snapshot$,
-  error$: Error$
+export type ISink = Observable<Snapshot | ISnapshotError>
+
+export function createRequestStream(request: (observer: Observer<IRequest>) => any): Observable<IRequest> {
+  return Observable.create(request)
 }
 
-export function createContext(request$: Observable<IRequest>): ISink {
+export function createServer(request$: Observable<IRequest>): ISink {
   const snapshot$ = request$.map((request) => (new Snapshot({
     week: request.week,
     code: request.code,
@@ -34,12 +36,9 @@ export function createContext(request$: Observable<IRequest>): ISink {
     maxCallStack: request.maxCallStack
   })))
   const linterSink = createLinter(snapshot$)
-  const parserSink = createParser(linterSink.snapshot$)
-  const evalSink = createEvaluator(parserSink.snapshot$)
-  return {
-    snapshot$: evalSink.snapshot$,
-    error$: Observable.concat(linterSink.error$, parserSink.error$, evalSink.error$)
-  }
+  const parserSink = createParser(linterSink)
+  const evalSink = createEvaluator(parserSink)
+  return evalSink
 }
 
 import * as common from './toolchain/common'

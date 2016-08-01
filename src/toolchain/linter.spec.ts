@@ -25,14 +25,10 @@ test('createLinter', (t) => {
   const snapshot$ = Observable.of(new Snapshot({ code }))
   const linter$ = linter.createLinter(snapshot$)
   return new Promise<void>((resolve, reject) => {
-    linter$.snapshot$.subscribe((result) => {
+    linter$.subscribe((result: Snapshot) => {
       t.deepEqual(result.code, code)
       resolve()
     }) 
-    linter$.error$.subscribe((result) => {
-      t.fail()
-      reject()
-    })
   })
 })
 

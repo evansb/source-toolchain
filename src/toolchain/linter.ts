@@ -1,11 +1,6 @@
 import { JSHINT } from 'jshint'
 import { Observable } from 'rxjs/Observable'
-import { ISnapshotError, Snapshot$, Snapshot, Error$, ISink } from './common'
-import 'rxjs/add/observable/from'
-import 'rxjs/add/observable/concat'
-import 'rxjs/add/operator/filter'
-import 'rxjs/add/operator/map'
-import 'rxjs/add/operator/mergeAll'
+import { ISnapshotError, Snapshot$, Snapshot, ISink } from './common'
 
 /// Header which might be appended on lint errors.
 export const LINT_ERROR_HEADER = '[!] There are syntax error/warning(s)'
@@ -28,29 +23,30 @@ const LintOptions = {
  */
 export function lint(code: string, snapshot?: Snapshot): ISnapshotError[] { 
   JSHINT(code, LintOptions)
-  return (JSHINT.data().errors || []).map((r) => {
-    return {
-      from: 'linter',
-      snapshot: snapshot,
-      line: r.line,
-      endLine: r.last,
-      column: r.character,
-      endColumn: r.lastcharacter,
-      message: Messages[r.code] || ''
-    }
-  })
+  return (JSHINT.data().errors || [])
+    .filter(r => r && r.reason && !(/Unrecoverable/.test(r.reason)))
+    .map((r) => {
+      return {
+        from: 'linter',
+        snapshot: snapshot,
+        line: r && r.line,
+        endLine: r && r.last,
+        column: r && r.character,
+        endColumn: r && r.lastcharacter,
+        message: r && (r.reason || (r.code && Messages[r.code]) || '')
+      }
+    })
 }
 
 export function createLinter(snapshot$: Snapshot$): ISink {
-  const sink = snapshot$
-    .map((snapshot) =>
-      Observable.concat(
-        Observable.from(lint(snapshot.code, snapshot)),
-        Observable.of(snapshot)
-      )
-    ).mergeAll()
-  return {
-    snapshot$: <Snapshot$> sink.filter(s => s instanceof Snapshot),
-    error$: <Error$> sink.filter(s => !(s instanceof Snapshot))
-  }
+  return Observable.create(observer => {
+    snapshot$.subscribe(snapshot => {
+      const lintResult = lint(snapshot.code, snapshot)
+      if (lintResult.length > 0) {
+        lint(snapshot.code, snapshot).forEach(e => observer.next(e))
+      } else {
+        observer.next(snapshot)
+      }
+    })
+  })
 }
