@@ -1,5 +1,9 @@
 # The Source Tool chain and Standard Library
 [![Build Status](https://travis-ci.org/evansb/source-toolchain.svg?branch=master)](https://travis-ci.org/evansb/source-toolchain)
+[![Coverage Status](https://coveralls.io/repos/github/evansb/source-toolchain/badge.svg?branch=master)](https://coveralls.io/github/evansb/source-toolchain?branch=master)
+[![npm version](https://badge.fury.io/js/the-source.svg)](https://badge.fury.io/js/the-source)
+[![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.png?v=101)](https://github.com/ellerbrock/typescript-badges/)
+
 
 Source is a subset of JavaScript (ES5) used as teaching language for
 first year undergraduate student in NUS (CS1101S).
@@ -36,7 +40,7 @@ The end goal of this runtime system is to have:
 
 ## Credits
 
-This project uses RxJS 5 for its streaming API, acorn for parsing JS, and jshint for linting.
+This project uses RxJS 5 for its streaming API, esprima for parsing JS, and jshint for linting.
 
 ## Contributors
 
