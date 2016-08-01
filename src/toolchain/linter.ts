@@ -54,4 +54,3 @@ export function createLinter(snapshot$: Snapshot$): ISink {
     error$: <Error$> sink.filter(s => !(s instanceof Snapshot))
   }
 }
-

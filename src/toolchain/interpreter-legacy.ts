@@ -103,20 +103,16 @@ const evaluators: { [index: string]: Evaluator<any> } = {
     return lastValue
   },
   CallExpression(node: T.CallExpression, snapshot: Snapshot) {  
-    let callee: (T.FunctionExpression | T.FunctionDeclaration)
-    if (node.callee.type === 'Identifier') {
-      const funVal = snapshot.getVar((<T.Identifier> node.callee).name)
-      if (funVal.type === 'foreign') {
-        return applyForeign(node, unbox(funVal, snapshot.context), snapshot)
-      } else {
-        callee = funVal.value
+    const calleeValue = evaluate(node.callee, snapshot)
+    if (calleeValue.type === 'function') {
+      return apply(node, calleeValue.value, snapshot)
+    } else if (calleeValue.type === 'foreign') {
+      const unboxed = unbox(calleeValue, snapshot.context)
+      if (typeof unboxed === 'function') {
+        return applyForeign(node, unboxed, snapshot)
       }
-    } else if (node.callee.type === 'FunctionExpression') {
-      callee = <T.FunctionExpression> node.callee
-    } else {
-      throw new EvaluationError(node, `Cannot apply value of type ${node.type}`)
     }
-    return apply(node, callee, snapshot)
+    throw new EvaluationError(node, `Cannot apply value of type ${node.type}`)
   },
   Identifier(node: T.Identifier, snapshot: Snapshot) {
     const value = snapshot.getVar(node.name)

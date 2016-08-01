@@ -107,3 +107,24 @@ run(`function addOne(x) { return x + 1; } addOne(3);`, 4)
 
 // 29
 run(`function rec(x) { return x === 0 ? 0 : rec(x - 1); } rec(3);`, 0)
+
+// 30
+run(`foreign(3);`, 3, {
+  foreign: function(x) { return x; }
+})
+
+// 31
+run(`foreign(function() { return 2; });`, 2, {
+  foreign: function(x) { return x(); }
+})
+
+// 32
+run(`foreign(function() { return 2; }, foreign2);`, 5, {
+  foreign: function(x, y) { return x() + y(); },
+  foreign2: function() { return 3; }
+})
+
+// 33
+run(`var x = foreign2; x()()`, 2, {
+  foreign2: function() { return function() { return 2; }; }
+})
