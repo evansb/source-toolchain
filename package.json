@@ -1,14 +1,14 @@
 {
   "name": "the-source",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Source language toolchain and standard library",
   "typings": "es6/index.d.ts",
   "main": "es5/index.js",
   "jsnext:main": "es6/index.js",
   "scripts": {
-    "clean": "rimraf .awcache dist es6 es5",
+    "clean": "rimraf .awcache typings dist es6 es5",
     "lint": "tslint -c tslint.json src/**/*.ts",
-    "prepublish": "typings install && npm run lint && npm run compile",
+    "prepublish": "npm run clean && typings install && npm run compile && npm run dist",
     "compile": "NODE_ENV=production tsc -p . --declaration && babel es6 --out-dir es5 --ignore *.spec.js",
     "dist": "NODE_ENV=production node ./scripts/dist",
     "test": "ava",
