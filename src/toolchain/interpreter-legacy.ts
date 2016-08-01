@@ -1,8 +1,18 @@
-import { Any, Undefined, Snapshot, isTruthy, unbox, box } from './common'
+import 'rxjs/add/operator/map'
+import 'rxjs/add/operator/filter'
+import { Any, Undefined, Snapshot, Snapshot$, ISink,
+  isNever, isTruthy, unbox, box, createError, Error$ } from './common'
 
 import T = ESTree
 type Env = Map<string, any>
 type Result = [any, Snapshot]
+type Evaluator<N> = (node: N, snapshot: Snapshot) => Any
+
+export class EvaluationError extends Error {
+  constructor(public node: T.Node, public message: string) {
+    super(message)
+  }
+}
 
 const isStoppingNode = {
   ReturnStatement: true,
@@ -10,19 +20,15 @@ const isStoppingNode = {
   ContinueStatement: true
 }
 
-type Evaluator<N> = (node: N, snapshot: Snapshot) => Any
-
-export function init(snapshot: Snapshot, globals: { [index: string]: any }) {
-  snapshot.done = false
-  for (const key in globals) {
-    if (globals.hasOwnProperty(key)) {
-      snapshot.setVar(key, {
-        type: 'foreign',
-        id: key
-      })
-    }
-  }
+export function init(snapshot: Snapshot, globals: string[]) {
+  snapshot.done = false 
   snapshot.value = Undefined
+  globals.forEach(key =>
+    snapshot.setVar(key, {
+      type: 'foreign',
+      id: key
+    })
+  )
 }
 
 const evaluators: { [index: string]: Evaluator<any> } = {
@@ -116,7 +122,12 @@ const evaluators: { [index: string]: Evaluator<any> } = {
     return box(result)
   },
   Identifier(node: T.Identifier, snapshot: Snapshot) {
-    return snapshot.getVar(node.name)
+    const value = snapshot.getVar(node.name)
+    if (isNever(value)) {
+      throw new EvaluationError(node, `Undefined variable ${node.name}`)
+    } else {
+      return value
+    }
   },
   VariableDeclaration(node: T.VariableDeclaration, snapshot: Snapshot) {
     return this.VariableDeclarator(node.declarations[0], snapshot)
@@ -203,5 +214,28 @@ function boxFunction(snapshot: Snapshot,
     }
     const result: Any = apply(desugared, snapshot)
     return unbox(result, snapshot)
+  }
+}
+
+export function createEvaluator(snapshot$: Snapshot$): ISink {
+  const mixed$ = snapshot$.map((s) => {
+    let value
+    try {
+      value = evaluate(s.ast, s)
+      s.value = value
+      return s
+    } catch (e) {
+      if (e.node) {
+        const err = createError('interpreter', e.node, e.message)
+        err.snapshot = s
+        return err
+      } else {
+        throw e
+      }
+    }
+  })
+  return {
+    snapshot$: <Snapshot$> mixed$.filter((s) => s instanceof Snapshot),
+    error$: <Error$> mixed$.filter((s) => !(s instanceof Snapshot))
   }
 }

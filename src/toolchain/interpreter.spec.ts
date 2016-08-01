@@ -1,6 +1,9 @@
 import test from 'ava'
-import { Any, Snapshot, Never, unbox } from './common'
-import { init } from './interpreter-legacy'
+import { Observable } from 'rxjs/Observable'
+import 'rxjs/add/observable/of'
+import { Any, Snapshot, Never, unbox, isUndefined } from './common'
+import { init, createEvaluator } from './interpreter-legacy'
+import { parse } from './parser'
 
 test('init', (t) => {
   const context = {
@@ -11,7 +14,7 @@ test('init', (t) => {
   t.deepEqual<Any>(snapshot.getVar('undefined'), Never) 
   t.deepEqual<Any>(snapshot.getVar('x'), Never) 
 
-  init(snapshot, context)
+  init(snapshot, ['undefined', 'x'])
 
   t.deepEqual<Any>(snapshot.getVar('x'), { type: 'foreign', id: 'x' })   
   t.deepEqual<any>(unbox(snapshot.getVar('x'), context), 3)
@@ -23,6 +26,40 @@ test('read global vars', (t) => {
     'foo': 3
   }
   const snapshot = new Snapshot({ code: 'foo;' })
-  init(snapshot, context)
+  init(snapshot, ['foo'])
   t.deepEqual<any>(unbox(snapshot.getVar('foo'), context), 3)
+})
+
+test('createEvaluator +', (t) => {
+  const code = 'var x = 2;'
+  const ast = parse(code) as ESTree.Program
+  const snapshot = new Snapshot({ code, ast })
+  const evaluator = createEvaluator(Observable.of(snapshot))
+  return new Promise<void>((resolve, reject) => {
+    evaluator.snapshot$.subscribe((result) => {
+      t.true(isUndefined(result.value))
+      resolve()
+    }) 
+    evaluator.error$.subscribe((result) => {
+      t.fail()
+      reject()
+    })
+  })
+})
+
+test('createEvaluator -', (t) => {
+  const code = 'x;'
+  const ast = parse(code) as ESTree.Program
+  const snapshot = new Snapshot({ code, ast })
+  const evaluator = createEvaluator(Observable.of(snapshot))
+  t.plan(1)
+  return new Promise<void>((resolve, reject) => {
+    evaluator.snapshot$.subscribe((result) => {
+      reject()
+    }) 
+    evaluator.error$.subscribe((result) => {
+      t.regex(result.message, /Undefined variable/)
+      resolve()
+    })
+  })
 })

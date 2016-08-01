@@ -7,6 +7,7 @@ import 'rxjs/add/observable/concat'
 import { Snapshot$, Error$, Snapshot } from './toolchain/common'
 import { createLinter } from './toolchain/linter'
 import { createParser } from './toolchain/parser'
+import { createEvaluator } from './toolchain/interpreter-legacy'
 
 const DEFAULT_TIMEOUT = 3000
 
@@ -14,6 +15,9 @@ export interface IRequest {
   code: string
   week: number
   timeout?: number
+  context?: any
+  parent?: Snapshot
+  globals?: {[name: string]: any}
 }
 
 export interface ISink {
@@ -28,8 +32,12 @@ export function createContext(request$: Observable<IRequest>): ISink {
   })))
   const linterSink = createLinter(snapshot$)
   const parserSink = createParser(linterSink.snapshot$)
+  const evalSink = createEvaluator(parserSink.snapshot$)
   return {
-    snapshot$: parserSink.snapshot$.timeout(DEFAULT_TIMEOUT),
-    error$: Observable.concat(linterSink.error$, parserSink.error$)
+    snapshot$: evalSink.snapshot$.timeout(DEFAULT_TIMEOUT),
+    error$: Observable.concat(linterSink.error$, parserSink.error$, evalSink.error$)
   }
 }
+
+import * as common from './toolchain/common'
+export { common }

@@ -10,7 +10,7 @@ function run(code: string, value: any, context?: { [name: string]: any }) {
   const count = testCount
   const ast = parse(code) 
   const snapshot = new Snapshot({ code, ast, context })
-  init(snapshot, context || {})
+  init(snapshot, Object.keys(context || {}).filter((k) => context.hasOwnProperty(k)))
   test(`eval-${count}`, (t) => {
     const result = evaluate(ast, snapshot)
     t.deepEqual(unbox(result, {}), value)

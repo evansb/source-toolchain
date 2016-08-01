@@ -26,11 +26,12 @@ const LintOptions = {
 /**
  * Lint the source code
  */
-export function lint(code: string): ISnapshotError[] { 
+export function lint(code: string, snapshot?: Snapshot): ISnapshotError[] { 
   JSHINT(code, LintOptions)
   return (JSHINT.data().errors || []).map((r) => {
     return {
       from: 'linter',
+      snapshot: snapshot,
       line: r.line,
       endLine: r.last,
       column: r.character,
@@ -44,7 +45,7 @@ export function createLinter(snapshot$: Snapshot$): ISink {
   const sink = snapshot$
     .map((snapshot) =>
       Observable.concat(
-        Observable.from(lint(snapshot.code)),
+        Observable.from(lint(snapshot.code, snapshot)),
         Observable.of(snapshot)
       )
     ).mergeAll()

@@ -1,7 +1,8 @@
 /// <reference path='../../typeshims/estraverse.d.ts' />
 import { Observer } from 'rxjs/Observer'
 import { Observable } from 'rxjs/Observable'
-import { Snapshot, Snapshot$, ISnapshotError, Error$, ISink } from './common'
+import { Snapshot, Snapshot$, ISnapshotError, Error$, ISink,
+  createError } from './common'
 import { parse as _parse } from 'acorn'
 import { traverse } from 'estraverse'
 import { whenCanUse, BANNED_OPERATORS } from './syntax'
@@ -10,17 +11,6 @@ import 'rxjs/add/observable/merge'
 import 'rxjs/add/operator/filter'
 import 'rxjs/add/operator/map'
 import 'rxjs/add/operator/mergeAll'
-
-function createOutput(node: ESTree.Node, message: string): ISnapshotError {
-  return {
-    from: 'parser',
-    message,
-    line: node.loc.start.line,
-    column: node.loc.start.column,
-    endLine: node.loc.end.line,
-    endColumn: node.loc.end.column
-  }
-}
 
 type Sanitizer<N extends ESTree.Node> = (node: N, week?: number) => string
 
@@ -68,7 +58,7 @@ function runSanitizer<N extends ESTree.Node>(
   observer: Observer<ISnapshotError>): boolean {
   let error
   if (error = sanitizer(node, week)) {
-    observer.next(createOutput(node, error))
+    observer.next(createError('parser', node, error))
     return true
   }
   return false
@@ -78,7 +68,7 @@ export function sanitizeFeatures(observer: Observer<ISnapshotError>, node: ESTre
   const minWeek = whenCanUse(node.type)
   if (minWeek > week) {
     const message = `Cannot use ${node.type} until week ${minWeek}`
-    observer.next(createOutput(node, message))
+    observer.next(createError('parser', node, message))
   }
 }
 
@@ -123,6 +113,7 @@ export function createParser(snapshot$: Snapshot$, week: number = 3): ISink {
     if (parseResult instanceof SyntaxError) {
       const r = <any> parseResult
       const error = {
+        snapshot,
         line: r.loc.line,
         column: r.loc.column,
         message: r.message

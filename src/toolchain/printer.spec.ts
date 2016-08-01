@@ -13,6 +13,7 @@ const snapshot1 = new Snapshot({
 })
 
 const message1 = {
+  snapshot: snapshot1,
   from: 'test',
   line: 2, 
   endLine: 4,
@@ -22,7 +23,7 @@ const message1 = {
 }
 
 test('printToString', (t) => { 
-  const result = printer.printErrorToString(snapshot1, message1) 
+  const result = printer.printErrorToString(message1) 
   t.true(typeof result === 'string')
   t.regex(result, /Test Message/) 
   t.regex(result, /\(line 2 col 4\) - \(line 4 col 8\)/)  

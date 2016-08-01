@@ -140,12 +140,12 @@ export class Snapshot {
 }
 
 export interface ISnapshotError {
-  id?: string
-  from: string
-  line: number
-  endLine: number
-  column: number
-  endColumn: number
+  from: string 
+  snapshot?: Snapshot
+  line?: number
+  endLine?: number
+  column?: number
+  endColumn?: number
   message: string
 }
 
@@ -155,4 +155,21 @@ export type Error$ = Observable<ISnapshotError>
 export interface ISink {
   snapshot$: Snapshot$,
   error$: Error$
+}
+
+export function createError(
+  from: string,
+  node: ESTree.Node,
+  message: string
+): ISnapshotError { 
+  let base = { from, message }
+  if (node.loc) {
+    base = Object.assign(base, {
+      line: node.loc.start.line,
+      column: node.loc.start.column,
+      endLine: node.loc.end.line,
+      endColumn: node.loc.end.column
+    })
+  }
+  return base
 }
