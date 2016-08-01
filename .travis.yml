@@ -5,6 +5,7 @@ node_js:
 
 cache:
   directories:
+    - $(npm config get prefix)/bin/typings
     - node_modules
 
 install:

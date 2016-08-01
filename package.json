@@ -58,7 +58,6 @@
     "require": [
       "babel-register"
     ],
-    "timeout": "3s",
     "concurrency": 5,
     "babel": "inherit"
   },
