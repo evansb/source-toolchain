@@ -1,7 +1,6 @@
 {
   "globalDependencies": {
     "esprima": "registry:dt/esprima#2.1.0+20160621120642",
-    "estree": "registry:dt/estree#0.0.0+20160317120654",
-    "node": "registry:dt/node#6.0.0+20160720070758"
+    "estree": "registry:dt/estree#0.0.0+20160317120654"
   }
 }
