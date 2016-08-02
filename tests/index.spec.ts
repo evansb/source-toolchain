@@ -1,7 +1,7 @@
 import test from 'ava'
 import { Observable } from 'rxjs/Observable'
 import { Subject } from 'rxjs/Subject'
-import { IRequest, createServer, createRequestStream } from '../src/index'
+import { IRequest, createServer, createRequestStream, printValueToString } from '../src/index'
 import { Snapshot } from '../src/toolchain/common'
 import 'rxjs/add/observable/from'
 import 'rxjs/add/operator/take'
@@ -72,5 +72,35 @@ test('Infinite loop', (t) => {
     } catch (e) {
       t.fail()
     }
+  })
+})
+
+test('Print eval result', (t) => {
+  return new Promise<void>((resolve, reject) => {
+    t.plan(1)
+    let result = []
+    const server = createServer(Observable.from([
+      { code: 'function foo() { return 2; } foo;', week: 3 }, 
+      { code: '1 + 2;', week: 3 },
+      { code: 'true;', week: 3 },
+      { code: '\'hello\';', week: 3 }, 
+      { code: '(function () { return 2; });', week: 3 }
+    ])) 
+    server.take(5).subscribe((e) => {
+      if (e instanceof Snapshot) {
+        result.push(printValueToString(e.value))
+      } else {
+        t.fail()
+      }
+    }, reject, () => {
+      t.deepEqual(result, [
+        'function foo() {\n    return 2;\n}',
+        '3',
+        'true',
+        'hello',
+        'function () {\n    return 2;\n}'
+      ])
+      resolve()
+    })
   })
 })
