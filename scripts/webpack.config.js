@@ -4,7 +4,7 @@ const isDevelopment = process.env.NODE_ENV === 'development'
 
 module.exports = {
   target: 'web',
-  entry: './es5/index.js',
+  entry: './es5/src/index.js',
 
   output: {
     path: path.join(process.cwd(), 'dist'),

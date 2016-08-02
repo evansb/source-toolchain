@@ -17,10 +17,5 @@
     "typings/globals",
     "typings/shims",
     "typings/index.d.ts"
-  ],
-  "awesomeTypescriptLoaderOptions": {
-    "useBabel": false,
-    "useCache": true,
-    "forkChecker": true
-  }
+  ]
 }

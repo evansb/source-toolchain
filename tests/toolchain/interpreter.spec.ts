@@ -1,9 +1,9 @@
 import test from 'ava'
 import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/observable/of'
-import { Any, Snapshot, Never, unbox, isUndefined, ISnapshotError } from './common'
-import { init, createEvaluator } from './interpreter-legacy'
-import { parse } from './parser'
+import { Any, Snapshot, Never, unbox, isUndefined, ISnapshotError } from '../../src/toolchain/common'
+import { init, createEvaluator } from '../../src/toolchain/interpreter-legacy'
+import { parse } from '../../src/toolchain/parser'
 
 test('init', (t) => {
   const context = {

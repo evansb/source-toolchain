@@ -1,6 +1,6 @@
 import test from 'ava'
-import * as printer from './printer'
-import { Snapshot } from './common'
+import * as printer from '../../src/toolchain/printer'
+import { Snapshot } from '../../src/toolchain/common'
 
 const snapshot1 = new Snapshot({
   code: '\n'

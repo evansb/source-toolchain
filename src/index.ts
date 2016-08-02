@@ -1,4 +1,6 @@
 /// <reference path='../typings/index.d.ts' />
+/// <reference path='../typeshims/jshint.d.ts' />
+/// <reference path='../typeshims/estraverse.d.ts' />
 import { Observable } from 'rxjs/Observable'
 import { Observer } from 'rxjs/Observer'
 import 'rxjs/add/operator/map'

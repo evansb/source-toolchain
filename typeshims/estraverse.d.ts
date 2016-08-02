@@ -1,3 +1,4 @@
+/// <reference path='../typings/globals/estree/index.d.ts' />
 declare module estraverse {
   export const version: string;
 

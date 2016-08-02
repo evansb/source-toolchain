@@ -1,7 +1,7 @@
 import test from 'ava'
 import { Observable } from 'rxjs/Observable'
-import { createServer, createRequestStream } from './index'
-import { Snapshot } from './toolchain/common'
+import { createServer, createRequestStream } from '../src/index'
+import { Snapshot } from '../src/toolchain/common'
 import 'rxjs/add/observable/from'
 import 'rxjs/add/operator/take'
 

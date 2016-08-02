@@ -1,5 +1,5 @@
 import test from 'ava'
-import { BANNED_OPERATORS, BANNED, canUse, whenCanUse } from './syntax'
+import { BANNED_OPERATORS, BANNED, canUse, whenCanUse } from '../../src/toolchain/syntax'
 
 test('BANNED', (t) => {
   t.true(typeof BANNED === 'number')
