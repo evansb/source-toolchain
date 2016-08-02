@@ -1,6 +1,7 @@
 import test from 'ava'
 import { Observable } from 'rxjs/Observable'
-import { createServer, createRequestStream } from '../src/index'
+import { Subject } from 'rxjs/Subject'
+import { IRequest, createServer, createRequestStream } from '../src/index'
 import { Snapshot } from '../src/toolchain/common'
 import 'rxjs/add/observable/from'
 import 'rxjs/add/operator/take'
@@ -32,6 +33,27 @@ test('Simple integration', (t) => {
         t.truthy(e)
       }
     }, reject, resolve)
+  })
+})
+
+test('Read parent environment', (t) => {
+  return new Promise<void>((resolve, reject) => {
+    t.plan(2)
+    const subject = new Subject<IRequest>()
+    const server = createServer(subject) 
+    let count = 0
+    server.take(2).subscribe((e) => {
+      if (e instanceof Snapshot) {
+        count++
+        t.deepEqual((<Snapshot> e).value.value, 2)
+        if (count < 2) {
+          subject.next({ code: 'x;', week: 3, parent: e })
+        }
+      } else {
+        t.fail()
+      }
+    }, reject, resolve)
+    subject.next({ code: 'var x = 2; x;', week: 3 })
   })
 })
 

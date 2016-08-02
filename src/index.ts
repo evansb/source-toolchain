@@ -33,6 +33,7 @@ export function createRequestStream(request: (observer: Observer<IRequest>) => a
 export function createServer(request$: Observable<IRequest>): ISink {
   const snapshot$ = request$.map((request) => (new Snapshot({
     week: request.week,
+    parent: request.parent,
     code: request.code,
     timeout: request.timeout || DEFAULT_TIMEOUT,
     maxCallStack: request.maxCallStack

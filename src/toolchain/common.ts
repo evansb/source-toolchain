@@ -72,6 +72,7 @@ export class Snapshot {
   maxCallStack: number
   timeout: number
   currentNode: ESTree.Node
+  parent?: Snapshot
 
   private _code: string 
   private _lines: string[]
@@ -84,7 +85,8 @@ export class Snapshot {
       week?: number,
       context?: any,
       timeout?: number,
-      maxCallStack?: number
+      maxCallStack?: number,
+      parent?: Snapshot
     }) {
     Object.assign(this, fields)
   }
@@ -119,6 +121,8 @@ export class Snapshot {
     })
     if (found) {
       return value
+    } else if (this.parent) {
+      return this.parent.getVar(name)
     } else {
       return Never
     }
