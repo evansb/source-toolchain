@@ -7,4 +7,5 @@ typings
 !./typings/shims
 npm-debug.log
 coverage
+definitions
 .nyc_output
