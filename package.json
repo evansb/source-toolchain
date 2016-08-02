@@ -1,6 +1,6 @@
 {
   "name": "the-source",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Source language toolchain and standard library",
   "typings": "definitions/src/index.d.ts",
   "main": "es5/src/index.js",
