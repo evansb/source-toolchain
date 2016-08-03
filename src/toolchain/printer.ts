@@ -38,9 +38,11 @@ export function printValueToString(val: Any, context = {}): string {
     return generate(val.value)
   } else {
     const value = unbox(val, context)
-    if (typeof value.toString === 'function') {
+    if (isUndefined(val)) {
+      return 'undefined' 
+    } else if (value && typeof value.toString === 'function') {
       return value.toString()
-    } else if (isUndefined(value)) {
+    } else if (typeof value === 'undefined') {
       return 'undefined'
     } else if (typeof value.value === 'object') {
       const cache = []
