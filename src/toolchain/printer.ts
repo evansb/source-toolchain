@@ -38,7 +38,11 @@ export function printValueToString(val: Any, context = {}): string {
     return generate(val.value)
   } else {
     const value = unbox(val, context)
-    if (isUndefined(val)) {
+    if (typeof value === 'function') {
+      const str = value.toString()
+      const lines: string[] = str.replace(/(function .*\(.*\)).*$/m, '$1 {\n    [body omitted]\n}\n').split('\n')
+      return lines.slice(0, 3).join('\n')
+    } else if (isUndefined(val)) {
       return 'undefined' 
     } else if (value && typeof value.toString === 'function') {
       return value.toString()

@@ -61,6 +61,7 @@ export class Snapshot {
   id: string 
   week: number
   ast: ESTree.Program
+  globals: string[] = []
   environment: Array<Map<string, Any>> = [this.initialEnvironment()]
   done: boolean
   node: ESTree.Node
@@ -84,6 +85,7 @@ export class Snapshot {
       id?: string,
       week?: number,
       context?: any,
+      globals?: string[],
       timeout?: number,
       maxCallStack?: number,
       parent?: Snapshot

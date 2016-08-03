@@ -20,7 +20,7 @@ export interface IRequest {
   timeout?: number
   context?: any
   parent?: Snapshot
-  globals?: {[name: string]: any}
+  globals?: string[]
   maxCallStack?: number
 }
 
@@ -35,6 +35,8 @@ export function createServer(request$: Observable<IRequest>): ISink {
     week: request.week,
     parent: request.parent,
     code: request.code,
+    context: request.context,
+    globals: request.globals,
     timeout: request.timeout || DEFAULT_TIMEOUT,
     maxCallStack: request.maxCallStack
   })))

@@ -243,6 +243,7 @@ export function createEvaluator(snapshot$: ISink): ISink {
   return snapshot$.map((s) => {
     if (!(s instanceof Snapshot)) { return s }
     const snapshot = <Snapshot> s
+    init(snapshot, snapshot.globals || [])
     let value
     try {
       value = evaluate(snapshot.ast, snapshot)
