@@ -26,7 +26,7 @@ test('printToString', (t) => {
   const result = printer.printErrorToString(message1) 
   t.true(typeof result === 'string')
   t.regex(result, /Test Message/) 
-  t.regex(result, /\(line 2 col 4\) - \(line 4 col 8\)/)  
+  t.regex(result, /\(2,4\)-\(4,8\)/)  
   t.regex(result, /function foo()/) 
   t.regex(result, /-------\^/)
 })

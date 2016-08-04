@@ -6,9 +6,9 @@ import { ISnapshotError, Any, isUndefined, unbox } from './common'
  */
 export function printErrorToString(error: ISnapshotError): string { 
   const lines = error.snapshot ? error.snapshot.lines : []
-  let header = `${error.message} (line ${error.line} col ${error.column})`
+  let header = `${error.message} \nOn (${error.line},${error.column})`
   if (error.endLine) {
-    header += ` - (line ${error.endLine} col ${error.endColumn})`
+    header += `-(${error.endLine},${error.endColumn})`
   } 
   let affectedCode = ''
   if (lines.length > 0) {
@@ -48,7 +48,7 @@ export function printValueToString(val: Any, context = {}): string {
       return value.toString()
     } else if (typeof value === 'undefined') {
       return 'undefined'
-    } else if (typeof value.value === 'object') {
+    } else if (typeof value === 'object') {
       const cache = []
       return JSON.stringify(value.value, function(key, value) {
         if (typeof value === 'object' && value !== null) {
@@ -59,7 +59,7 @@ export function printValueToString(val: Any, context = {}): string {
         }
       })
     } else {
-      return value.value + ''
+      return value + ''
     }
   }
 }

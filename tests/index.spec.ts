@@ -84,9 +84,10 @@ test('Print eval result', (t) => {
       { code: '1 + 2;', week: 3 },
       { code: 'true;', week: 3 },
       { code: '\'hello\';', week: 3 }, 
-      { code: '(function () { return 2; });', week: 3 }
+      { code: '(function () { return 2; });', week: 3 },
+      { code: '0/0;', week: 3 }
     ])) 
-    server.take(5).subscribe((e) => {
+    server.take(6).subscribe((e) => {
       if (e instanceof Snapshot) {
         result.push(printValueToString(e.value))
       } else {
@@ -98,7 +99,8 @@ test('Print eval result', (t) => {
         '3',
         'true',
         'hello',
-        'function () {\n    return 2;\n}'
+        'function () {\n    return 2;\n}',
+        'NaN'
       ])
       resolve()
     })

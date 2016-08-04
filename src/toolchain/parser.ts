@@ -121,7 +121,7 @@ export function createParser(snapshot$: ISink, week: number = 3): ISink {
         let errored = false
         snapshot.ast = parseResult
         sanitize(parseResult, snapshot.week)
-          .map((s) => Object.assign(s, { id: snapshot.id }))
+          .map((s) => Object.assign(s, { snapshot }))
           .subscribe(
             (e) => { errored = true; observer.next(e) },  
             (e) => observer.next(e),
