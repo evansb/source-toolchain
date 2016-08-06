@@ -130,5 +130,7 @@ export const BANNED_OPERATORS = {
   '>>': true,
   '<<': true,
   '^': true,
-  '~': true
+  '~': true,
+  '!=': true,
+  '==': true
 }

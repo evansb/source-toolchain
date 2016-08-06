@@ -154,7 +154,15 @@ function applyBinaryOperator(operator: string, left: any, right: any): any {
   } else if (operator === '%') {
     return left % right
   } else if (operator === '===') {
-    return left === right
+    return left === right    
+  } else if (operator === '>') {
+    return left > right
+  } else if (operator === '>=') {
+    return left >= right  
+  } else if (operator === '<') {
+    return left < right    
+  } else if (operator === '<=') {
+    return left <= right  
   } else {
     return left !== right
   }
