@@ -18,6 +18,10 @@ const LintOptions = {
   curly: true
 }
 
+const allowedCode = {
+  'W042': true // Leading zeroes
+}
+
 /**
  * Lint the source code
  */
@@ -25,7 +29,9 @@ export function lint(code: string, snapshot?: Snapshot): ISnapshotError[] {
   JSHINT(code, LintOptions)
   return (JSHINT.data().errors || [])
     .filter(r => r && r.reason && !(/Unrecoverable/.test(r.reason)))
+    .filter(r => !allowedCode[r.code])
     .map((r) => {
+      console.log(r.code)
       return {
         from: 'linter',
         snapshot: snapshot,
@@ -44,6 +50,7 @@ export function createLinter(snapshot$: Snapshot$): ISink {
       const lintResult = lint(snapshot.code, snapshot)
       if (lintResult.length > 0) {
         lint(snapshot.code, snapshot).forEach(e => observer.next(e))
+        observer.next(snapshot)
       } else {
         observer.next(snapshot)
       }

@@ -26,6 +26,8 @@ run(``, undefined)
 
 run(`1;`, 1)
 
+run('0011;', 9)
+
 run(`'String Literal';`, 'String Literal')
 
 run(`0.333;`, 0.333)

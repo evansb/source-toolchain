@@ -30,6 +30,8 @@ The end goal of this runtime system is to have:
         npm>=3 and node>=5  To develop
         A good TypeScript editor (Sublime or VSCode recommended)
 
+    Ensure global NPM packages requires non-root access.
+
 2. Install and compile
 
         typings install
