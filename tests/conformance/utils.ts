@@ -1,16 +1,21 @@
 import test from 'ava'
 import { Snapshot, unbox } from '../../src/toolchain/common'
 import { parse as _parse, sanitize } from '../../src/toolchain/parser'
-import { init, evaluate } from '../../src/toolchain/interpreter-legacy'
+import { evaluate } from '../../src/toolchain/interpreter-legacy'
 import { lint as _lint } from '../../src/toolchain/linter'
 
 let testCount = 0
 
-export function lint(code: string) { 
+export function lint(code: string, isNegative = false) { 
   testCount++
   test(`lint-${testCount}`, (t) => {
     const snapshot = new Snapshot({ code }) 
-    t.true(_lint(snapshot.code).length > 0)
+    if (isNegative) {
+      console.log(_lint(snapshot.code))
+      t.false(_lint(snapshot.code).length > 0)
+    } else {
+      t.true(_lint(snapshot.code).length > 0)
+    }
   })
 }
 

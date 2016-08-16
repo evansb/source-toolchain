@@ -21,6 +21,7 @@ const syntaxAvailableInWeek = {
     IfStatement: true,
     Literal: true,
     LogicalExpression: true,
+    MemberExpression: true,
     Program: true,
     ReturnStatement: true,
     UnaryExpression: true,
@@ -34,7 +35,6 @@ const syntaxAvailableInWeek = {
     AssignmentExpression: true
   },
   9: {
-    MemberExpression: true,
     NewExpression: true,
     ObjectExpression: true,
     Property: true,
@@ -49,6 +49,8 @@ const syntaxAvailableInWeek = {
     ForStatement: true,
   },
   [BANNED]: {
+    SwitchStatement: true,
+    SwitchCase: true,
     SequenceExpression: true,
     SpreadElement: true,
     ArrowFunctionExpression: true,

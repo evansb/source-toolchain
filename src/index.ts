@@ -17,6 +17,7 @@ const DEFAULT_TIMEOUT = 10000
 export interface IRequest {
   code: string
   week: number
+  id?: string
   timeout?: number
   context?: any
   parent?: Snapshot
@@ -32,6 +33,7 @@ export function createRequestStream(request: (observer: Observer<IRequest>) => a
 
 export function createServer(request$: Observable<IRequest>): ISink {
   const snapshot$ = request$.map((request) => (new Snapshot({
+    id: request.id,
     week: request.week,
     parent: request.parent,
     code: request.code,

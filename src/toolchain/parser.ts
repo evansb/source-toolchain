@@ -66,16 +66,21 @@ function runSanitizer<N extends ESTree.Node>(
 
 export function sanitizeFeatures(observer: Observer<ISnapshotError>, node: ESTree.Node, week: number) {
   const minWeek = whenCanUse(node.type)
-  if (minWeek > week) {
+  if (minWeek === Infinity) {
+    const message = `${node.type} is only available in JavaScript`
+    observer.next(createError('parser', node, message))
+  } else if (minWeek > week) {
     const message = `Cannot use ${node.type} until week ${minWeek}`
     observer.next(createError('parser', node, message))
   }
 }
 
-export function sanitize(ast: ESTree.Program, week: number): Error$ {
+export function sanitize(ast: ESTree.Program, week: number,
+                         sourceFile = ''): Error$ {
   return Observable.create((observer) => {
     traverse(ast, {
       enter(node: ESTree.Node): void {
+        (<any> node).sourceFile = sourceFile
         sanitizeFeatures(observer, node, week)
         if (saniziters.hasOwnProperty(node.type)) {
           runSanitizer(saniziters[node.type], node, week, observer)
@@ -90,9 +95,10 @@ export function sanitize(ast: ESTree.Program, week: number): Error$ {
   })
 }
 
-export function parse(code: string): ESTree.Program | SyntaxError {
+export function parse(code: string, filename?: string): ESTree.Program | SyntaxError {
   const options = {
     sourceType: 'script',
+    sourceFile: filename || '',
     loc: true
   }
   try {
@@ -107,7 +113,7 @@ export function createParser(snapshot$: ISink, week: number = 3): ISink {
     snapshot$.subscribe(s => {
       if (!(s instanceof Snapshot)) { observer.next(s) }
       const snapshot = <Snapshot> s
-      const parseResult = parse(snapshot.code)
+      const parseResult = parse(snapshot.code, snapshot.id)
       if (parseResult instanceof Error) {
         const r = <any> parseResult
         const error = {
@@ -120,7 +126,7 @@ export function createParser(snapshot$: ISink, week: number = 3): ISink {
       } else {
         let errored = false
         snapshot.ast = parseResult
-        sanitize(parseResult, snapshot.week)
+        sanitize(parseResult, snapshot.week, snapshot.id)
           .map((s) => Object.assign(s, { snapshot }))
           .subscribe(
             (e) => { errored = true; observer.next(e) },  

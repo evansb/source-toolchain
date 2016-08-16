@@ -19,7 +19,8 @@ const LintOptions = {
 }
 
 const allowedCode = {
-  'W042': true // Leading zeroes
+  'W046': true, // Leading zeroes
+  'E030': true   // Weird string error
 }
 
 /**
@@ -30,8 +31,12 @@ export function lint(code: string, snapshot?: Snapshot): ISnapshotError[] {
   return (JSHINT.data().errors || [])
     .filter(r => r && r.reason && !(/Unrecoverable/.test(r.reason)))
     .filter(r => !allowedCode[r.code])
+    .filter(r => {
+      return !((
+        (r.code === 'W033' || r.code === 'E058')
+        && /;/.test(r.evidence.trim())))
+    })
     .map((r) => {
-      console.log(r.code)
       return {
         from: 'linter',
         snapshot: snapshot,
@@ -50,7 +55,6 @@ export function createLinter(snapshot$: Snapshot$): ISink {
       const lintResult = lint(snapshot.code, snapshot)
       if (lintResult.length > 0) {
         lint(snapshot.code, snapshot).forEach(e => observer.next(e))
-        observer.next(snapshot)
       } else {
         observer.next(snapshot)
       }

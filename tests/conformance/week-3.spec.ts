@@ -6,6 +6,8 @@ lint('if (x) 2;')
 
 lint('while (x) x++;')
 
+lint(`"hi" === "hi";`, true)
+
 parse(`[1, [2, 3]];`)
 
 parse(`1 & 2;`)
@@ -58,7 +60,7 @@ run(`!true;`, false)
 
 run(`function foo() {}`, undefined)
 
-run(`(function () { 2; })()`, 2)
+run(`(function () { return 2; })()`, 2)
 
 run(`(function (x) { return x + 2; })(3)`, 5)
 
@@ -112,3 +114,18 @@ run(`var x = 2; x(3)`, false, {}, true)
 run(`function x() { return function() { return 2; } } x() !== x()`, true)
 
 run(`function x() { return function() { return 2; } } x === x;`, true)
+
+run(`function foo(x) { if (x) { return true; } else {} return false; } foo(true);`, true)
+
+run(`Math.floor(2.3)`, 2)
+
+run(`
+function decOne(x) {
+    if (x <= 0) {
+        return x;
+    } else {
+       return decOne(x - 1);
+    }    
+}
+decOne(1000);
+`, 0)

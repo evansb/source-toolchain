@@ -114,29 +114,11 @@ export class Snapshot {
       .replace(new RegExp('\r', 'g'), '\n')
     this._lines = this._code.split('\n')
   }
-
-  getVar(name: string): Any {
-    let value = undefined
-    const found = this.environment.some((env) => {
-      value = env.get(name)
-      return env.has(name)
-    })
-    if (found) {
-      return value
-    } else if (this.parent) {
-      return this.parent.getVar(name)
-    } else {
-      return Never
-    }
-  }
-
-  setVar(name: string, value: Any) {
-    return this.environment[0].set(name, value)
-  }
 }
 
 export interface ISnapshotError {
   from: string 
+  sourceFile?: string
   snapshot?: Snapshot
   line?: number
   endLine?: number
@@ -158,6 +140,7 @@ export function createError(
   let base = { from, message }
   if (node && node.loc) {
     base = Object.assign(base, {
+      sourceFile: (<any> node).sourceFile,
       line: node.loc.start.line,
       column: node.loc.start.column,
       endLine: node.loc.end.line,

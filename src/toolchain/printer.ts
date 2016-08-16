@@ -5,7 +5,23 @@ import { ISnapshotError, Any, isUndefined, unbox } from './common'
  * Pretty print snapshot output message
  */
 export function printErrorToString(error: ISnapshotError): string { 
-  const lines = error.snapshot ? error.snapshot.lines : []
+  let lines: string[]
+  if (error.sourceFile) {
+    let found = false
+    let curr = error.snapshot
+    while (!found) {
+      if (curr.id === error.sourceFile) {
+        lines = curr.lines
+        found = true
+      } else if (curr.parent) {
+        curr = curr.parent
+      } else {
+        break
+      }
+    }
+  } else {
+    lines = error.snapshot ? error.snapshot.lines : []
+  }
   let header = `${error.message} \nOn (${error.line},${error.column})`
   if (error.endLine) {
     header += `-(${error.endLine},${error.endColumn})`
@@ -13,19 +29,26 @@ export function printErrorToString(error: ISnapshotError): string {
   let affectedCode = ''
   if (lines.length > 0) {
     const endLine = error.endLine || error.line
-    for (var li = error.line; li <= endLine; ++li) { 
+    for (var li = Math.max(error.line - 1, 1);
+         li <= Math.min(endLine + 1, lines.length);
+         ++li
+      ) { 
       const codeInLine = lines[li - 1]
       affectedCode += codeInLine + '\n'
-      if (li === error.line) {
-        const leftPadding = Array(error.column).join(' ')
-        const rightPaddingLength = (error.endLine === error.line && error.endColumn)
-        ? error.endColumn - error.column + 1
-        : codeInLine.length - error.column + 1
-        const rightPadding = Array(rightPaddingLength).join('-')
-        affectedCode += leftPadding + '^' + rightPadding + '\n'
-      } else if (li === endLine) {
-        const leftPadding = Array(error.endColumn).join('-')
-        affectedCode += leftPadding + '^\n'
+      try {
+        if (li === error.line) {
+          const leftPadding = Array(error.column).join(' ')
+          const rightPaddingLength = (error.endLine === error.line && error.endColumn)
+          ? error.endColumn - error.column + 1
+          : codeInLine.length - error.column + 1
+          const rightPadding = Array(rightPaddingLength).join('-')
+          affectedCode += leftPadding + '^' + rightPadding + '\n'
+        } else if (li === endLine) {
+          const leftPadding = Array(error.endColumn).join('-')
+          affectedCode += leftPadding + '^\n'
+        }
+      } catch (e) {
+        affectedCode = codeInLine
       }
     }
     affectedCode += '\n'
