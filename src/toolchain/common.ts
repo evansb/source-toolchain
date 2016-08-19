@@ -125,6 +125,7 @@ export class Snapshot {
       parent?: Snapshot
     }) {
     Object.assign(this, fields)
+    this.runtime = fields.parent ? fields.parent.runtime : null
     this.context = fields.context ||
       (fields.parent && fields.parent.context) || this.context
     this.timeout = fields.timeout ||

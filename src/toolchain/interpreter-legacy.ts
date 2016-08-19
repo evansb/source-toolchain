@@ -26,7 +26,6 @@ export function createEvaluator(snapshot$: ISink): ISink {
           undefined, undefined, timeoutAt
         ).value
       } else {
-        snapshot.runtime = snapshot.parent.runtime
         value = snapshot.runtime.execute_more_instruction(
           artifact.instructions, timeoutAt).value
       }
