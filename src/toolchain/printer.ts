@@ -22,10 +22,13 @@ export function printErrorToString(error: ISnapshotError): string {
   } else {
     lines = error.snapshot ? error.snapshot.lines : []
   }
-  let header = `${error.message} \nOn (${error.line},${error.column})`
-  if (error.endLine) {
-    header += `-(${error.endLine},${error.endColumn})`
-  } 
+  let header = `${error.message}\n`
+  if (error.line && error.column)  {
+    header += `On (${error.line},${error.column})`
+    if (error.endLine) {
+      header += `-(${error.endLine},${error.endColumn})`
+    } 
+  }
   let affectedCode = ''
   if (lines.length > 0) {
     const endLine = error.endLine || error.line

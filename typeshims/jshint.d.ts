@@ -8,3 +8,5 @@ declare module 'jshint' {
   }
   export = jshint
 }
+
+declare module 'jedi-runtime'

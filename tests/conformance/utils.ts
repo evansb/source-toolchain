@@ -44,7 +44,6 @@ export function run(code: string, value: any, context?: { [name: string]: any },
   const count = testCount
   const ast = <ESTree.Program> _parse(code) 
   const snapshot = new Snapshot({ code, ast, context })
-  init(snapshot, Object.keys(context || {}).filter((k) => context.hasOwnProperty(k)))
   test(`run-${count}`, (t) => {
     try {
       const result = evaluate(ast, snapshot)

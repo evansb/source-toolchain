@@ -3,20 +3,32 @@ import { Observable } from 'rxjs/Observable'
 const NeverSym = Symbol()
 const UndefinedSym = Symbol()
 
+/**
+ * Bottom value to indicate error
+ * @type {Object}
+ */
 export const Never = {
   type: 'never',
   value: NeverSym
 }
 
+/**
+ * Boxed version of undefined
+ * @type {Object}
+ */
 export const Undefined = {
   type: 'undefined',
   value: UndefinedSym
 }
 
 export type Any = {
-  type: string 
+  type: string
   id?: string
   value?: any
+  isReturn?: boolean
+  isTailCall?: boolean
+  environment?: Environment
+  node?: ESTree.CallExpression
 }
 
 export function isForeign(value: Any) {
@@ -47,7 +59,7 @@ export function unbox(value: Any, context: any): any {
       return undefined
   }
   if (value.type === 'foreign') {
-     if (value.id) {
+    if (value.id) {
       return context[value.id]
     } else {
       return value.value
@@ -57,12 +69,33 @@ export function unbox(value: Any, context: any): any {
   }
 }
 
-export class Snapshot { 
-  id: string 
+export class Environment {
+  private __env: { [name: string]: Any } = {}
+
+  constructor(private parent?: Environment) {
+  }
+
+  get(name: string): [boolean, Any] {
+    if (this.__env.hasOwnProperty(name)) {
+      return [true, this.__env[name]]
+    } else if (this.parent) {
+      return this.parent.get(name)
+    } else {
+      return [false, Undefined]
+    }
+  }
+
+  set(name: string, value: Any) {
+    this.__env[name] = value
+  }
+}
+
+export class Snapshot {
+  id: string
   week: number
   ast: ESTree.Program
   globals: string[] = []
-  environment: Array<Map<string, Any>> = [this.initialEnvironment()]
+  environment: Environment = this.initialEnvironment()
   done: boolean
   node: ESTree.Node
   valueType: string
@@ -74,8 +107,9 @@ export class Snapshot {
   timeout: number
   currentNode: ESTree.Node
   parent?: Snapshot
+  runtime: any
 
-  private _code: string 
+  private _code: string
   private _lines: string[]
 
   constructor(
@@ -91,13 +125,34 @@ export class Snapshot {
       parent?: Snapshot
     }) {
     Object.assign(this, fields)
+    this.context = fields.context ||
+      (fields.parent && fields.parent.context) || this.context
+    this.timeout = fields.timeout ||
+      (fields.parent && fields.parent.timeout) || this.timeout
+    this.week = fields.week ||
+      (fields.parent && fields.parent.week) || this.week
+    this.maxCallStack = fields.maxCallStack ||
+      (fields.parent && fields.parent.maxCallStack) || this.maxCallStack
+    this.globals = fields.globals || []
+    this.globals.forEach(key =>
+      this.environment.set(key, {
+        type: 'foreign',
+        id: key
+      })
+    )
   }
 
-  initialEnvironment() {
-    const map = new Map()
-    map.set('Infinity', { type: 'number', value: Infinity })
-    map.set('NaN', { type: 'number', value: NaN })
-    return map
+  initialEnvironment(): Environment {
+    const env = new Environment(this.parent ? this.parent.environment : null)
+    env.set('Infinity', { type: 'number', value: Infinity })
+    env.set('NaN', { type: 'number', value: NaN })
+    env.set('Math', { type: 'object', value: {
+      floor: Math.floor,
+      sqrt: Math.sqrt,
+      log: Math.log,
+      exp: Math.exp
+    }})
+    return env
   }
 
   get code() {
@@ -117,7 +172,8 @@ export class Snapshot {
 }
 
 export interface ISnapshotError {
-  from: string 
+  from: string
+  severity?: string
   sourceFile?: string
   snapshot?: Snapshot
   line?: number
@@ -136,7 +192,7 @@ export function createError(
   from: string,
   node: ESTree.Node,
   message: string
-): ISnapshotError { 
+): ISnapshotError {
   let base = { from, message }
   if (node && node.loc) {
     base = Object.assign(base, {

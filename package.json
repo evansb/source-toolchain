@@ -1,6 +1,6 @@
 {
   "name": "the-source",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Source language toolchain and standard library",
   "typings": "definitions/src/index.d.ts",
   "main": "es5/src/index.js",
@@ -21,6 +21,7 @@
     "escodegen": "^1.8.0",
     "esprima": "^2.7.2",
     "estraverse": "^4.2.0",
+    "jedi-runtime": "git+https://bitbucket.org/cs1101s/jedi-runtime.git",
     "jshint": "^2.9.2",
     "rxjs": "^5.0.0-beta.10"
   },
@@ -41,7 +42,7 @@
     "sinon": "^1.17.4",
     "tslint": "^3.10.2",
     "typescript": "^2.0.0",
-    "webpack": "^1.13.1"
+    "webpack": "^2.1.0-beta.20"
   },
   "repository": {
     "type": "git",

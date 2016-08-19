@@ -19,14 +19,18 @@ const LintOptions = {
 }
 
 const allowedCode = {
-  'W046': true, // Leading zeroes
   'E030': true   // Weird string error
+}
+
+const isWarning = {
+  'W046': true, // Leading zeroes,
+  'W018': true // Confusing use of !
 }
 
 /**
  * Lint the source code
  */
-export function lint(code: string, snapshot?: Snapshot): ISnapshotError[] { 
+export function lint(code: string, snapshot?: Snapshot): ISnapshotError[] {
   JSHINT(code, LintOptions)
   return (JSHINT.data().errors || [])
     .filter(r => r && r.reason && !(/Unrecoverable/.test(r.reason)))
@@ -44,7 +48,8 @@ export function lint(code: string, snapshot?: Snapshot): ISnapshotError[] {
         endLine: r && r.last,
         column: r && r.character,
         endColumn: r && r.lastcharacter,
-        message: r && (r.reason || (r.code && Messages[r.code]) || '')
+        message: r && (r.reason || (r.code && Messages[r.code]) || ''),
+        severity: isWarning[r.code] ? 'warning' : 'error'
       }
     })
 }
@@ -53,9 +58,9 @@ export function createLinter(snapshot$: Snapshot$): ISink {
   return Observable.create(observer => {
     snapshot$.subscribe(snapshot => {
       const lintResult = lint(snapshot.code, snapshot)
-      if (lintResult.length > 0) {
-        lint(snapshot.code, snapshot).forEach(e => observer.next(e))
-      } else {
+      const errorCount = lintResult.filter((s) => s.severity === 'error').length
+      lintResult.forEach(e => observer.next(e))
+      if (errorCount === 0) {
         observer.next(snapshot)
       }
     })
