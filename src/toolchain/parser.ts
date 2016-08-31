@@ -66,7 +66,12 @@ function runSanitizer<N extends ESTree.Node>(
 
 export function sanitizeFeatures(observer: Observer<ISnapshotError>, node: ESTree.Node, week: number) {
   const minWeek = whenCanUse(node.type)
-  if (minWeek === Infinity) {
+  if (week <= 12 && node.type === 'ArrayExpression'
+        && (<ESTree.ArrayExpression> node).elements.length > 0) {
+    const message = 'You can only use the function "list" or "pair"' +
+      'to construct non-empty-list'
+    observer.next(createError('parser', node, message))
+  } else if (minWeek === Infinity) {
     const message = `${node.type} is only available in JavaScript`
     observer.next(createError('parser', node, message))
   } else if (minWeek > week) {

@@ -18,13 +18,20 @@ const LintOptions = {
   curly: true
 }
 
-const allowedCode = {
-  'E030': true   // Weird string error
+const allowedCode = (week: number) => {
+  let base: any = {
+    'E030': true,   // Weird string error
+    'W014': true    // Bad line breaking before ?
+  }
+  if (week >= 4) {
+    base.W032 = true // Unecccessary Semicolon
+  }
+  return base
 }
 
 const isWarning = {
   'W046': true, // Leading zeroes,
-  'W018': true // Confusing use of !
+  'W018': true  // Confusing use of !
 }
 
 /**
@@ -32,9 +39,10 @@ const isWarning = {
  */
 export function lint(code: string, snapshot?: Snapshot): ISnapshotError[] {
   JSHINT(code, LintOptions)
+  const allowed = allowedCode(snapshot.week)
   return (JSHINT.data().errors || [])
     .filter(r => r && r.reason && !(/Unrecoverable/.test(r.reason)))
-    .filter(r => !allowedCode[r.code])
+    .filter(r => !allowed[r.code])
     .filter(r => {
       return !((
         (r.code === 'W033' || r.code === 'E058')

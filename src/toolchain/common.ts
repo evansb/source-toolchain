@@ -50,8 +50,10 @@ export function isTruthy(value: Any) {
 export function box(value: any, type?: string): Any {
   if (typeof value === 'function') {
     return { type: 'foreign', value }
+  } else if (value instanceof Array) {
+    return { type: 'list', value }
   }
-  return { type: type || typeof value, value: value }
+  return { type: type || typeof value, value }
 }
 
 export function unbox(value: Any, context: any): any {
@@ -174,9 +176,9 @@ export class Snapshot {
 
 export interface ISnapshotError {
   from: string
-  severity?: string
+  severity: string
   sourceFile?: string
-  snapshot?: Snapshot
+  snapshot: Snapshot
   line?: number
   endLine?: number
   column?: number
@@ -194,7 +196,7 @@ export function createError(
   node: ESTree.Node,
   message: string
 ): ISnapshotError {
-  let base = { from, message }
+  let base = { from, message, severity: 'Error' }
   if (node && node.loc) {
     base = Object.assign(base, {
       sourceFile: (<any> node).sourceFile,

@@ -31,6 +31,9 @@ const syntaxAvailableInWeek = {
   4: {
     EmptyStatement: true
   },
+  5: {
+    ArrayExpression: true,
+  },
   8: {
     AssignmentExpression: true
   },
@@ -43,7 +46,6 @@ const syntaxAvailableInWeek = {
     UpdateExpression: true,
   },
   12: {
-    ArrayExpression: true,
     BreakStatement: true,
     ContinueStatement: true,
     ForStatement: true,

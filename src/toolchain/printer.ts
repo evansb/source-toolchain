@@ -59,12 +59,32 @@ export function printErrorToString(error: ISnapshotError): string {
   return `${header}\n${affectedCode}`
 }
 
+export function listToString(item, context = {}) {
+  if ((item instanceof Array) && item.length === 0) {
+    return '[]';
+  } else if (item instanceof Array && item.length === 2) {
+    return '[' + listToString(item[0]) + ', ' + listToString(item[1]) + ']'
+  } else if (item instanceof Array) {
+    return '[' + item.map(function(x) {
+        return printValueToString(x, context)
+    }).join(',') + ']'
+  } else if (typeof item !== 'undefined') {
+    return item.toString() 
+  } else if (typeof item === 'undefined') {
+    return 'undefined'
+  } else {
+    return item.toString()
+  }
+}
+
 export function printValueToString(val: Any, context = {}): string {
   if (val.type === 'function') {
     return generate(val.value)
   } else {
     const value = unbox(val, context)
-    if (typeof value === 'function') {
+    if (value instanceof Array) {
+      return listToString(value, context)
+    } else if (typeof value === 'function') {
       const str = value.toString()
       const lines: string[] = str.replace(/(function .*\(.*\)).*$/m, '$1 {\n    [body omitted]\n}\n').split('\n')
       return lines.slice(0, 3).join('\n')
