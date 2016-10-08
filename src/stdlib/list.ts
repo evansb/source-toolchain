@@ -350,7 +350,7 @@ export function accumulate(op,initial,sequence) {
 // throws an exception if the argument is not a pair
 // LOW-LEVEL FUNCTION, NOT JEDISCRIPT
 
-function set_head(xs,x) {
+export function set_head(xs,x) {
     if (is_pair(xs)) {
         xs[0] = x;
         return undefined;

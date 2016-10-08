@@ -4,7 +4,7 @@ import { ISnapshotError, Any, isUndefined, unbox } from './common'
 /**
  * Pretty print snapshot output message
  */
-export function printErrorToString(error: ISnapshotError): string { 
+export function printErrorToString(error: ISnapshotError): string {
   let lines: string[]
   if (error.sourceFile) {
     let found = false
@@ -27,7 +27,7 @@ export function printErrorToString(error: ISnapshotError): string {
     header += `On (${error.line},${error.column})`
     if (error.endLine) {
       header += `-(${error.endLine},${error.endColumn})`
-    } 
+    }
   }
   let affectedCode = ''
   if (lines.length > 0) {
@@ -35,7 +35,7 @@ export function printErrorToString(error: ISnapshotError): string {
     for (var li = Math.max(error.line - 1, 1);
          li <= Math.min(endLine + 1, lines.length);
          ++li
-      ) { 
+      ) {
       const codeInLine = lines[li - 1]
       affectedCode += codeInLine + '\n'
       try {
@@ -59,17 +59,29 @@ export function printErrorToString(error: ISnapshotError): string {
   return `${header}\n${affectedCode}`
 }
 
-export function listToString(item, context = {}) {
+export function listToString(item, context = {}, lengthSoFar = 0) {
+  if (lengthSoFar > 100) {
+    return '(... list too long, result is truncated)'
+  }
   if ((item instanceof Array) && item.length === 0) {
     return '[]';
   } else if (item instanceof Array && item.length === 2) {
-    return '[' + listToString(item[0]) + ', ' + listToString(item[1]) + ']'
+    return '[' + listToString(item[0], context)
+      + ', ' + listToString(item[1], context, lengthSoFar + 1) + ']'
   } else if (item instanceof Array) {
-    return '[' + item.map(function(x) {
+    let shouldTruncate = item.length > 100
+    let truncate = item
+    let truncateMessage = shouldTruncate
+      ? ' ...(array too long, result is truncated)'
+      : ''
+    if (shouldTruncate) {
+      truncate = item.slice(0, 100)
+    }
+    return '[' + truncate.map(function(x) {
         return printValueToString(x, context)
-    }).join(',') + ']'
+    }).join(',') + truncateMessage + ']'
   } else if (typeof item !== 'undefined') {
-    return item.toString() 
+    return item.toString()
   } else if (typeof item === 'undefined') {
     return 'undefined'
   } else {
@@ -89,7 +101,7 @@ export function printValueToString(val: Any, context = {}): string {
       const lines: string[] = str.replace(/(function .*\(.*\)).*$/m, '$1 {\n    [body omitted]\n}\n').split('\n')
       return lines.slice(0, 3).join('\n')
     } else if (isUndefined(val)) {
-      return 'undefined' 
+      return 'undefined'
     } else if (value && typeof value.toString === 'function') {
       return value.toString()
     } else if (typeof value === 'undefined') {
