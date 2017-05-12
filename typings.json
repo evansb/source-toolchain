@@ -1,7 +1,0 @@
-{
-  "globalDependencies": {
-    "escodegen": "registry:dt/escodegen#0.0.0+20160524140038",
-    "esprima": "registry:dt/esprima#2.1.0+20160621120642",
-    "estree": "registry:dt/estree#0.0.0+20160317120654"
-  }
-}
