@@ -1,0 +1,22 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "module": "es2015",
+    "target": "es2015",
+    "moduleResolution": "node",
+    "removeComments": true,
+    "strictNullChecks": true,
+    "preserveConstEnums": true,
+    "declaration": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "importHelpers": true, 
+    "noEmitHelpers": true, 
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "pretty": true,
+    "lib": ["es2015"]
+  }
+}
