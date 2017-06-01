@@ -6,9 +6,8 @@ import {
   SourceLocation,
 } from 'acorn'
 import * as es from 'estree'
-import { SUntyped } from './types'
-import { Visitors, noop, visitProgram } from './visitors'
-import { StudentError, ErrorCategory, ErrorType } from './types'
+import { Visitors, Visitor, noop, visitProgram } from './visitors'
+import { StudentError, ErrorCategory, ErrorType } from './errorTypes'
 
 type WeekTypes = {
   week: number,
@@ -16,7 +15,10 @@ type WeekTypes = {
 }
 
 export type SymbolTable = {
-  [name: string]: SUntyped,
+  [name: string]: {
+    name: string,
+    loc: es.SourceLocation,
+  },
 }
 
 export type Comment = {
@@ -58,6 +60,13 @@ const week3Types = [
 ]
 
 let counter = 0
+
+const compose = <S extends es.Node>
+  (v1: (parent: es.Node, node: S) => void,
+   v2: (parent: es.Node, node: S) => void) => (parent: es.Node, node: S) => {
+    v1(parent, node)
+    v2(parent, node)
+  }
 
 export const freshId = () => {
   counter++
@@ -126,79 +135,92 @@ const createVisitors = (week: number, state: ParserState) => {
     }
   }
 
-  const iBefore = visitors.IfStatement!.before
-
   // Augment If and Else visitors
-  visitors.IfStatement!.before = (parent: es.Node, node: es.IfStatement) => {
-    iBefore(parent, node)
-    if (!node.consequent) {
-      state.errors.push({
-        type: ErrorType.MissingIfConsequent,
-        node,
-      })
-    } else if (node.consequent && node.consequent.type !== 'BlockStatement') {
-      state.errors.push({
-        type: ErrorType.IfConsequentNotABlockStatement,
-        node,
-      })
-    }
+  visitors.IfStatement!.before = compose(
+    visitors.IfStatement!.before,
+    (parent: es.Node, node: es.IfStatement) => {
+      if (!node.consequent) {
+        state.errors.push({
+          type: ErrorType.MissingIfConsequent,
+          node,
+        })
+      } else if (node.consequent && node.consequent.type !== 'BlockStatement') {
+        state.errors.push({
+          type: ErrorType.IfConsequentNotABlockStatement,
+          node,
+        })
+      }
 
-    if (!node.alternate) {
-      state.errors.push({
-        type: ErrorType.MissingIfAlternate,
-        node,
-      })
-    } else if (node.alternate && node.alternate.type !== 'BlockStatement') {
-      state.errors.push({
-        type: ErrorType.IfAlternateNotABlockStatement,
-        node,
-      })
-    }
-  }
+      if (!node.alternate) {
+        state.errors.push({
+          type: ErrorType.MissingIfAlternate,
+          node,
+        })
+      } else if (node.alternate && node.alternate.type !== 'BlockStatement') {
+        state.errors.push({
+          type: ErrorType.IfAlternateNotABlockStatement,
+          node,
+        })
+      }
+    },
+  )
+
+  // Augment BinaryExpression visitors
+  visitors.BinaryExpression!.before = compose(
+    visitors.BinaryExpression!.before,
+    (parent: es.Node, node: es.BinaryExpression) => {
+      if (node.operator === '==') {
+        state.errors.push({
+          type: ErrorType.UseStrictEquality,
+          node,
+        })
+      } else if (node.operator === '!=') {
+        state.errors.push({
+          type: ErrorType.UseStrictInequality,
+          node,
+        })
+      }
+    },
+  )
 
   // Collect Symbols in the symbol table
-  const pVAfter = visitors.VariableDeclaration!.after
-  const pFAfter = visitors.FunctionDeclaration!.after
+  visitors.VariableDeclaration!.after = compose(
+    (parent: es.Node, node: es.VariableDeclaration) => {
+      const identifier = node.declarations[0]!.id as es.Identifier
+      defineVariable(identifier, state)
+    },
+    visitors.VariableDeclaration!.after,
+  )
 
-  visitors.VariableDeclaration!.after = (parent: es.Node, node: es.VariableDeclaration) => {
-    const identifier = node.declarations[0]!.id as es.Identifier
-    defineVariable(identifier, state)
-    pVAfter(parent, node)
-  }
+  visitors.FunctionDeclaration!.before = compose(
+    visitors.FunctionDeclaration!.before,
+    (parent: es.Node, node: es.FunctionDeclaration) => {
+      defineVariable(node.id, state)
+      const frame: SymbolTable = {}
+      state.environments[node.id.name] = frame
+      state.frames.unshift(frame)
+    },
+  )
 
-  visitors.FunctionDeclaration!.after = (parent: es.Node, node: es.FunctionDeclaration) => {
-    defineVariable(node.id, state)
-    pFAfter(parent, node)
-  }
-
-  const pBefore = visitors.FunctionDeclaration!.before
-  const pAfter = visitors.FunctionDeclaration!.after
-
-  visitors.FunctionDeclaration!.before = (parent: es.Node, node: es.FunctionDeclaration) => {
-    pBefore(parent, node)
-    defineVariable(node.id, state)
-    const frame: SymbolTable = {}
-    state.environments[node.id.name] = frame
-    state.frames.unshift(frame)
-  }
-
-  visitors.FunctionDeclaration!.after = (parent: es.Node, node: es.FunctionDeclaration) => {
-    pAfter(parent, node)
-    state.frames.shift()
-  }
+  visitors.FunctionDeclaration!.after = compose(
+    (parent: es.Node, node: es.FunctionDeclaration) => {
+      state.frames.shift()
+    },
+    visitors.FunctionDeclaration!.after,
+  )
 
   // Identifier must exist when referenced
-  const iAfter = visitors.Identifier!.after
-
-  visitors.Identifier!.after = (parent: es.Node, node: es.Identifier) => {
-    iAfter(parent, node)
-    if (!isVariableDefinedInCurrentFrame(node.name, state)) {
-      state.errors.push({
-        type: ErrorType.UndefinedVariable,
-        node,
-      })
-    }
-  }
+  visitors.Identifier!.after = compose(
+    visitors.Identifier!.after,
+    (parent: es.Node, node: es.Identifier) => {
+      if (!isVariableDefinedInCurrentFrame(node.name, state)) {
+        state.errors.push({
+          type: ErrorType.UndefinedVariable,
+          node,
+        })
+      }
+    },
+  )
 
   visitors.Program!.after = (parent: es.Node, node: es.Program) => {
     state.stopped = true

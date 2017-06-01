@@ -1,6 +1,6 @@
 import * as es from 'estree'
 
-import { ErrorType } from './types'
+import { ErrorType } from './errorTypes'
 
 export type Visitor<S extends es.Node, T> = {
   before: (parent: es.Node | undefined, node: S) => T,

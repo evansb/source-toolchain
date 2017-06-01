@@ -1,5 +1,5 @@
 import { parse } from '../parser'
-import { ErrorType } from '../types'
+import { ErrorType } from '../errorTypes'
 import * as es from 'estree'
 
 it('parses simple statement', () => {
@@ -23,7 +23,7 @@ var e = 5;
   expect(result.environments['*'].foo).toBeDefined()
   expect(Object.keys(result.environments)).toEqual(['*', 'foo'])
   expect(Object.keys(result.environments['*'])).toEqual(['foo', 'c', 'd', 'e'])
-  expect(Object.keys(result.environments.foo)).toEqual(['a', 'b', 'foo'])
+  expect(Object.keys(result.environments.foo)).toEqual(['a', 'b'])
 })
 
 it('produces a SyntaxError for non ES5 features', () => {
@@ -87,4 +87,16 @@ it('detects Else not using curly braces', () => {
   expect(result.errors.length).toBe(1)
   expect(result.errors[0].type).toBe(ErrorType.IfAlternateNotABlockStatement)
   expect(result.errors[0].node.type).toBe('IfStatement')
+})
+
+it('detects not using strict equality', () => {
+  const result = parse(`2 == 2;`, 3)
+  expect(result.errors.length).toBe(1)
+  expect(result.errors[0].type).toBe(ErrorType.UseStrictEquality)
+})
+
+it('detects not using strict inequality', () => {
+  const result = parse(`2 != 2;`, 3)
+  expect(result.errors.length).toBe(1)
+  expect(result.errors[0].type).toBe(ErrorType.UseStrictInequality)
 })

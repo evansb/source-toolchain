@@ -4,7 +4,7 @@
 import { generate } from 'escodegen'
 import { Node } from 'estree'
 
-import { StudentError, ErrorType, ErrorCategory } from './types'
+import { StudentError, ErrorType, ErrorCategory } from './errorTypes'
 
 // Split ESTree node type into two words
 // e.g FunctionDeclaration -> Function Declaration
@@ -51,6 +51,10 @@ export const explainError = (error: StudentError) => {
       return `Syntax Error:\n${error.explanation}`
     case ErrorType.VariableRedeclaration:
       return `Variable redeclaration \n${(error.node as any).name}`
+    case ErrorType.UseStrictEquality:
+      return 'Use (===) instead of (==)'
+    case ErrorType.UseStrictInequality:
+      return 'Use (!==) instead of (!=)'
     case ErrorType.UndefinedVariable:
       return `Undefined variable\n${(error.node as any).name}`
     case ErrorType.CallingNonFunctionValues:
@@ -66,6 +70,8 @@ export const categorizeError = (error: StudentError) => {
     case ErrorType.MissingSemicolon:
     case ErrorType.DeclaratorNotIdentifier:
     case ErrorType.MatchFailure:
+    case ErrorType.UseStrictEquality:
+    case ErrorType.UseStrictInequality:
       return ErrorCategory.SYNTAX_ERROR
 
     case ErrorType.TrailingComma:

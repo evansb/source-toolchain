@@ -2,9 +2,34 @@ import * as es from 'estree'
 import { generate } from 'escodegen'
 import { List, Record, Stack, Map } from 'immutable'
 
-import { ErrorType, StudentError, Scope, Scheduler,
-  EvaluatorState, Step } from './types'
+import { ErrorType, StudentError } from './errorTypes'
 import { freshId } from './parser'
+
+export interface Scope {
+  parent?: number,
+  environment: Map<string, any>,
+}
+
+export type Step = {
+  state: EvaluatorState,
+  before: es.Node,
+  after: es.Node,
+}
+
+export interface EvaluatorState {
+  isRunning: boolean,
+  frames: Stack<number>,
+  result?: any,
+  isReturned?: boolean,
+  scopes: Map<number, Scope>
+  errors: List<StudentError>,
+  value?: any
+  expressions: Stack<es.Node>,
+}
+
+export type Scheduler<T> = (
+  initialState: EvaluatorState,
+  stepper: IterableIterator<Step>) => T
 
 const initialState: EvaluatorState = {
   isRunning: false,
@@ -29,7 +54,6 @@ export class State extends Record(initialState) implements EvaluatorState {
   expressions: Stack<es.Node>
   value?: any
   left?: any
-
 
   popFrame() {
     return this.merge({ frames: this.frames.pop() }) as this
@@ -189,7 +213,7 @@ export function* evalExpression(node: es.Expression, state: State): any {
 
 }
 
-function* evalCallExpression(node: es.CallExpression, state: State): IterableIterator<Step> {
+function* evalCallExpression(node: es.CallExpression, state: State) {
   // Evaluate Callee
   state = yield* evalExpression(node.callee as any, state)
   const callee = state.value
@@ -416,7 +440,8 @@ export const evaluate = <T>(program: es.Program, scheduler: Scheduler<T>) => {
 
   const state: State = new State({
     isRunning: false,
-    frames: Stack.of(globalScope),
+    frames: Stack.of(0),
+    scopes: Map.of(0, globalScope),
     errors: [],
     expressions: [],
   })

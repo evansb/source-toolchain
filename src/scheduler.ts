@@ -1,4 +1,4 @@
-import { Scheduler } from './types'
+import { Scheduler } from './evaluator'
 
 /**
  * Scheduler that exhaust all the step in a blocking manner

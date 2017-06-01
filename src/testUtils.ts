@@ -5,9 +5,8 @@ import * as path from 'path'
 import { parse } from 'acorn'
 import { Map, Stack, List } from 'immutable'
 
-import { evalStatement, State } from './evaluator'
+import { evalStatement, State, Scope } from './evaluator'
 import { blocking } from './scheduler'
-import { EvaluatorState, Scope } from './types'
 
 const fixturesFolderPath = path.resolve(__dirname, '..', 'fixtures')
 
