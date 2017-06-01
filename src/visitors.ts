@@ -32,14 +32,14 @@ export type Visitors<T> = {
   onError(error: ErrorType, parent: es.Node, node: es.Node | null | undefined): T,
 }
 
-export function* visitCallExpression<T>(node: es.CallExpression, visitors: Visitors<T>) {
+function* visitCallExpression<T>(node: es.CallExpression, visitors: Visitors<T>) {
   for (const exp of node.arguments) {
     yield* visitExpression(node, exp as any, visitors)
   }
   yield* visitExpression(node, node.callee as any, visitors)
 }
 
-export function* visitExpression<T>(parent: es.Node, node: es.Expression, visitors: Visitors<T>): any {
+function* visitExpression<T>(parent: es.Node, node: es.Expression, visitors: Visitors<T>): any {
   switch (node.type) {
     case 'CallExpression':
       yield visitors.CallExpression.before(parent, node)
@@ -83,33 +83,33 @@ export function* visitExpression<T>(parent: es.Node, node: es.Expression, visito
   }
 }
 
-export function* visitUnaryExpression<T>(node: es.UnaryExpression, visitors: Visitors<T>) {
+function* visitUnaryExpression<T>(node: es.UnaryExpression, visitors: Visitors<T>) {
   yield* visitExpression(node, node.argument, visitors)
 }
 
-export function* visitBinaryExpression<T>(node: es.BinaryExpression, visitors: Visitors<T>) {
+function* visitBinaryExpression<T>(node: es.BinaryExpression, visitors: Visitors<T>) {
   yield* visitExpression(node, node.left, visitors)
   yield* visitExpression(node, node.right, visitors)
 }
 
-export function* visitLogicalExpression<T>(node: es.LogicalExpression, visitors: Visitors<T>) {
+function* visitLogicalExpression<T>(node: es.LogicalExpression, visitors: Visitors<T>) {
   yield* visitExpression(node, node.left, visitors)
   yield* visitExpression(node, node.right, visitors)
 }
 
-export function* visitConditionalExpression<T>(node: es.ConditionalExpression, visitors: Visitors<T>) {
+function* visitConditionalExpression<T>(node: es.ConditionalExpression, visitors: Visitors<T>) {
   yield* visitExpression(node, node.test, visitors)
   yield* visitExpression(node, node.consequent, visitors)
   yield* visitExpression(node, node.alternate, visitors)
 }
 
-export function* visitFunctionExpression<T>(node: es.FunctionExpression, visitors: Visitors<T>) {
+function* visitFunctionExpression<T>(node: es.FunctionExpression, visitors: Visitors<T>) {
   if (!visitors.skip) {
     yield* visitBlockStatement(node, node.body, visitors)
   }
 }
 
-export function* visitIfStatement<T>(node: es.IfStatement, visitors: Visitors<T>) {
+function* visitIfStatement<T>(node: es.IfStatement, visitors: Visitors<T>) {
   yield* visitExpression(node, node.test, visitors)
   if (node.consequent) {
     if (node.consequent.type === 'BlockStatement') {
@@ -127,11 +127,11 @@ export function* visitIfStatement<T>(node: es.IfStatement, visitors: Visitors<T>
   }
 }
 
-export function* visitFunctionDeclaration<T>(node: es.FunctionDeclaration, visitors: Visitors<T>) {
+function* visitFunctionDeclaration<T>(node: es.FunctionDeclaration, visitors: Visitors<T>) {
   yield* visitBlockStatement(node, node.body, visitors)
 }
 
-export function* visitVariableDeclaration<T>(node: es.VariableDeclaration, visitors: Visitors<T>) {
+function* visitVariableDeclaration<T>(node: es.VariableDeclaration, visitors: Visitors<T>) {
   if (node.declarations.length === 1) {
     const declarator = node.declarations[0]
     if (declarator.id.type !== 'Identifier') {
@@ -144,11 +144,11 @@ export function* visitVariableDeclaration<T>(node: es.VariableDeclaration, visit
   }
 }
 
-export function* visitReturnStatement<T>(node: es.ReturnStatement, visitors: Visitors<T>) {
+function* visitReturnStatement<T>(node: es.ReturnStatement, visitors: Visitors<T>) {
   yield* visitExpression(node, node.argument as any, visitors)
 }
 
-export function* visitStatement<T>(parent: es.Node, node: es.Statement, visitors: Visitors<T>): any {
+function* visitStatement<T>(parent: es.Node, node: es.Statement, visitors: Visitors<T>): any {
   switch (node.type) {
     case 'ExpressionStatement':
       yield visitors.ExpressionStatement.before(parent, node)
@@ -181,11 +181,11 @@ export function* visitStatement<T>(parent: es.Node, node: es.Statement, visitors
   }
 }
 
-export function* visitExpressionStatement<T>(node: es.ExpressionStatement, visitors: Visitors<T>) {
+function* visitExpressionStatement<T>(node: es.ExpressionStatement, visitors: Visitors<T>) {
   yield* visitExpression(node, node.expression, visitors)
 }
 
-export function* visitBlockStatement<T>(parent: es.Node | undefined, node: es.BlockStatement, visitors: Visitors<T>) {
+function* visitBlockStatement<T>(parent: es.Node | undefined, node: es.BlockStatement, visitors: Visitors<T>) {
   for (const stmt of node.body) {
     yield* visitStatement(node, stmt as any, visitors)
   }
