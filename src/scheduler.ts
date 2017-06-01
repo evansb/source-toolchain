@@ -1,4 +1,6 @@
-import { Scheduler } from './evaluator'
+import { Step, EvaluatorState } from './evaluator'
+
+export type Scheduler<T> = (initialState: EvaluatorState, stepper: IterableIterator<Step>) => T
 
 /**
  * Scheduler that exhaust all the step in a blocking manner

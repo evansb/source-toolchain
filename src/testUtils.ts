@@ -69,23 +69,19 @@ export const runConformationTests = (fixtureFilePath: string) => {
 
   tests.forEach(t => {
     const generator = evalStatement(t.statement, state)
-    let value
     let isDone = false
 
     while (!isDone) {
       const g = generator.next()
       isDone = g.done
-      if (g.value instanceof State) {
-        state = g.value
-        value = g.value.value
-      }
+      state = g.value
     }
 
-    if (value !== t.expectedValue) {
+    if (state.value !== t.expectedValue) {
       // tslint:disable-next-line
       console.log(`L${t.statement.loc!.start.line}: ${generate(t.statement)}`)
     }
 
-    expect(value).toBe(t.expectedValue)
+    expect(state.value).toBe(t.expectedValue)
   })
 }

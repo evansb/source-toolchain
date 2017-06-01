@@ -10,12 +10,6 @@ export interface Scope {
   environment: Map<string, any>,
 }
 
-export type Step = {
-  state: EvaluatorState,
-  before: es.Node,
-  after: es.Node,
-}
-
 export interface EvaluatorState {
   isRunning: boolean,
   frames: Stack<number>,
@@ -25,11 +19,9 @@ export interface EvaluatorState {
   errors: List<StudentError>,
   value?: any
   expressions: Stack<es.Node>,
+  done: boolean,
+  node?: es.Node,
 }
-
-export type Scheduler<T> = (
-  initialState: EvaluatorState,
-  stepper: IterableIterator<Step>) => T
 
 const initialState: EvaluatorState = {
   isRunning: false,
@@ -40,6 +32,8 @@ const initialState: EvaluatorState = {
   errors: List<StudentError>(),
   expressions: Stack<es.Node>(),
   value: undefined,
+  node: undefined,
+  done: false,
 }
 
 let frameCtr = 0
@@ -54,6 +48,8 @@ export class State extends Record(initialState) implements EvaluatorState {
   expressions: Stack<es.Node>
   value?: any
   left?: any
+  done: boolean
+  node?: es.Node
 
   popFrame() {
     return this.merge({ frames: this.frames.pop() }) as this
@@ -162,6 +158,8 @@ const getEnv = (name: string, state: State) => {
 }
 
 export function* evalExpression(node: es.Expression, state: State): any {
+  yield state.merge({ node, done: false })
+
   let value: any
   let selfEvaluating = false
 
@@ -197,20 +195,13 @@ export function* evalExpression(node: es.Expression, state: State): any {
       break
   }
 
+  yield state.merge({ node })
+
   if (!selfEvaluating) {
-    const step: Step = {
-      state,
-      before: node,
-      after: mkNode(value, state),
-    }
-
-    yield step
-
-    return state
+    return state.merge({ done: true })
   } else {
-    return state.merge({ value })
+    return state.merge({ done: true, value })
   }
-
 }
 
 function* evalCallExpression(node: es.CallExpression, state: State) {
@@ -335,6 +326,8 @@ function* evalConditionalExpression(node: es.ConditionalExpression, state: State
 }
 
 export function* evalStatement(node: es.Statement, state: State): any {
+  yield state.merge({ node, done: false })
+
   switch (node.type) {
     case 'VariableDeclaration':
       return yield* evalVariableDeclaration(node, state)
@@ -359,14 +352,6 @@ function* evalVariableDeclaration(node: es.VariableDeclaration, state: State) {
 
   state = state.defineVariable(ident.name, state.value)
 
-  const step: Step = {
-    state,
-    before: node,
-    after: mkNode(undefined, state),
-  }
-
-  yield step
-
   return state.merge({ value: undefined })
 }
 
@@ -375,12 +360,6 @@ function* evalFunctionDeclaration(node: es.FunctionDeclaration, state: State) {
   const closure = new Closure(node as any, state.frames.first())
 
   state = state.defineVariable(ident.name, closure)
-
-  yield {
-    state,
-    before: node,
-    after: mkNode(undefined, state),
-  }
 
   return state.merge({ value: undefined })
 }
@@ -392,23 +371,12 @@ function* evalIfStatement(node: es.IfStatement, state: State) {
     ? yield* evalBlockStatement(node.consequent as es.BlockStatement, state)
     : yield* evalBlockStatement(node.alternate as es.BlockStatement, state)
 
-  yield {
-    state,
-    before: node,
-    after: mkNode(state.value, state),
-  }
-
   return state
 }
 
 function* evalExpressionStatement(node: es.ExpressionStatement, state: State) {
   state = yield* evalExpression(node.expression, state)
-  yield {
-    state,
-    before: node,
-    after: mkNode(state.value, state),
-  }
-  return state.merge()
+  return state
 }
 
 function* evalReturnStatement(node: es.ReturnStatement, state: State) {
@@ -430,23 +398,4 @@ export function* evalProgram(node: es.Program, state: State) {
   state = yield* evalBlockStatement(node as any, state.start())
 
   return state.stop()
-}
-
-export const evaluate = <T>(program: es.Program, scheduler: Scheduler<T>) => {
-  const globalScope: Scope = {
-    parent: undefined,
-    environment: Map<string, any>(),
-  }
-
-  const state: State = new State({
-    isRunning: false,
-    frames: Stack.of(0),
-    scopes: Map.of(0, globalScope),
-    errors: [],
-    expressions: [],
-  })
-
-  const stepper = evalProgram(program, state)
-
-  return scheduler(state, stepper)
 }
