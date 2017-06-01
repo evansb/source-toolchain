@@ -10,6 +10,16 @@ it('parses simple statement', () => {
   expect(program.body[0].type).toBe('ExpressionStatement')
 })
 
+it('recursively attaches unique ID to all nodes', () => {
+  const program = parse('1 + 2;', 3).node! as any
+
+  expect(program.__id).toBeDefined()
+  expect(program.body[0].__id).toBeDefined()
+  expect(program.body[0].expression.__id).toBeDefined()
+  expect(program.body[0].expression.left.__id).toBeDefined()
+  expect(program.body[0].expression.right.__id).toBeDefined()
+})
+
 it('produces symbol table correctly', () => {
   const result = parse(`
 function foo() {
