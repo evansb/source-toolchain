@@ -1,6 +1,6 @@
 import * as es from 'estree'
 
-import { ErrorType } from './errors'
+import { ErrorType } from './types'
 
 export type Visitor<S extends es.Node, T> = {
   before: (parent: es.Node | undefined, node: S) => T,
@@ -12,6 +12,7 @@ export function noop<S>(parent: es.Node | undefined, node: S): void {
 }
 
 export type Visitors<T> = {
+  skip?: boolean,
   Program: Visitor<es.Program, T>,
   ExpressionStatement: Visitor<es.ExpressionStatement, T>,
   IfStatement: Visitor<es.IfStatement, T>,
@@ -19,7 +20,6 @@ export type Visitors<T> = {
   VariableDeclaration: Visitor<es.VariableDeclaration, T>,
   ReturnStatement: Visitor<es.ReturnStatement, T>,
 
-  Expression: Visitor<es.Expression, T>,
   Literal: Visitor<es.Literal, T>,
   Identifier: Visitor<es.Identifier, T>,
   CallExpression: Visitor<es.CallExpression, T>,
@@ -36,47 +36,50 @@ export function* visitCallExpression<T>(node: es.CallExpression, visitors: Visit
   for (const exp of node.arguments) {
     yield* visitExpression(node, exp as any, visitors)
   }
+  yield* visitExpression(node, node.callee as any, visitors)
 }
 
 export function* visitExpression<T>(parent: es.Node, node: es.Expression, visitors: Visitors<T>): any {
   switch (node.type) {
     case 'CallExpression':
-      visitors.CallExpression.before(parent, node)
+      yield visitors.CallExpression.before(parent, node)
       yield* visitCallExpression(node, visitors)
-      visitors.CallExpression.after(parent, node)
+      yield visitors.CallExpression.after(parent, node)
       break
     case 'UnaryExpression':
       yield* visitUnaryExpression(node, visitors)
-      visitors.UnaryExpression.after(parent, node)
+      yield visitors.UnaryExpression.after(parent, node)
       break
     case 'BinaryExpression':
-      visitors.BinaryExpression.before(parent, node)
+      yield visitors.BinaryExpression.before(parent, node)
       yield* visitBinaryExpression(node, visitors)
-      visitors.BinaryExpression.after(parent, node)
+      yield visitors.BinaryExpression.after(parent, node)
       break
     case 'LogicalExpression':
-      visitors.LogicalExpression.before(parent, node)
+      yield visitors.LogicalExpression.before(parent, node)
       yield* visitLogicalExpression(node, visitors)
-      visitors.LogicalExpression.after(parent, node)
+      yield visitors.LogicalExpression.after(parent, node)
       break
     case 'ConditionalExpression':
-      visitors.ConditionalExpression.before(parent, node)
+      yield visitors.ConditionalExpression.before(parent, node)
       yield* visitConditionalExpression(node, visitors)
-      visitors.ConditionalExpression.after(parent, node)
+      yield visitors.ConditionalExpression.after(parent, node)
       break
     case 'FunctionExpression':
-      visitors.FunctionExpression.before(parent, node)
+      yield visitors.FunctionExpression.before(parent, node)
       yield* visitFunctionExpression(node, visitors)
-      visitors.FunctionExpression.after(parent, node)
+      yield visitors.FunctionExpression.after(parent, node)
       break
     case 'Identifier':
-      visitors.Identifier.after(parent, node)
+      yield visitors.Identifier.before(parent, node)
+      yield visitors.Identifier.after(parent, node)
       break
     case 'Literal':
-      visitors.Literal.after(parent, node)
+      yield visitors.Literal.before(parent, node)
+      yield visitors.Literal.after(parent, node)
       break
     default:
-      visitors.onError(ErrorType.MatchFailure, parent, node)
+      yield visitors.onError(ErrorType.MatchFailure, parent, node)
   }
 }
 
@@ -101,7 +104,9 @@ export function* visitConditionalExpression<T>(node: es.ConditionalExpression, v
 }
 
 export function* visitFunctionExpression<T>(node: es.FunctionExpression, visitors: Visitors<T>) {
-  yield* visitBlockStatement(node, node.body, visitors)
+  if (!visitors.skip) {
+    yield* visitBlockStatement(node, node.body, visitors)
+  }
 }
 
 export function* visitIfStatement<T>(node: es.IfStatement, visitors: Visitors<T>) {
@@ -130,12 +135,12 @@ export function* visitVariableDeclaration<T>(node: es.VariableDeclaration, visit
   if (node.declarations.length === 1) {
     const declarator = node.declarations[0]
     if (declarator.id.type !== 'Identifier') {
-      visitors.onError(ErrorType.DeclaratorNotIdentifier, node, declarator)
+      yield visitors.onError(ErrorType.DeclaratorNotIdentifier, node, declarator)
     } else {
       yield* visitExpression(node, declarator.init as es.Expression, visitors)
     }
   } else {
-    visitors.onError(ErrorType.DeclaratorNotIdentifier, node, null)
+    yield visitors.onError(ErrorType.DeclaratorNotIdentifier, node, null)
   }
 }
 
@@ -146,32 +151,32 @@ export function* visitReturnStatement<T>(node: es.ReturnStatement, visitors: Vis
 export function* visitStatement<T>(parent: es.Node, node: es.Statement, visitors: Visitors<T>): any {
   switch (node.type) {
     case 'ExpressionStatement':
-      visitors.ExpressionStatement.before(parent, node)
+      yield visitors.ExpressionStatement.before(parent, node)
       yield* visitExpressionStatement(node, visitors)
-      visitors.ExpressionStatement.after(parent, node)
+      yield visitors.ExpressionStatement.after(parent, node)
       break
     case 'IfStatement':
-      visitors.IfStatement.before(parent, node)
+      yield visitors.IfStatement.before(parent, node)
       yield* visitIfStatement(node, visitors)
-      visitors.IfStatement.after(parent, node)
+      yield visitors.IfStatement.after(parent, node)
       break
     case 'FunctionDeclaration':
-      visitors.FunctionDeclaration.before(parent, node)
+      yield visitors.FunctionDeclaration.before(parent, node)
       yield* visitFunctionDeclaration(node, visitors)
-      visitors.FunctionDeclaration.after(parent, node)
+      yield visitors.FunctionDeclaration.after(parent, node)
       break
     case 'VariableDeclaration':
-      visitors.VariableDeclaration.before(parent, node)
+      yield visitors.VariableDeclaration.before(parent, node)
       yield* visitVariableDeclaration(node, visitors)
-      visitors.VariableDeclaration.after(parent, node)
+      yield visitors.VariableDeclaration.after(parent, node)
       break
     case 'ReturnStatement':
-      visitors.ReturnStatement.before(parent, node)
+      yield visitors.ReturnStatement.before(parent, node)
       yield* visitReturnStatement(node, visitors)
-      visitors.ReturnStatement.after(parent, node)
+      yield visitors.ReturnStatement.after(parent, node)
       break
     default:
-      visitors.onError(ErrorType.MatchFailure, parent, node)
+      yield visitors.onError(ErrorType.MatchFailure, parent, node)
       break
   }
 }
@@ -187,9 +192,9 @@ export function* visitBlockStatement<T>(parent: es.Node | undefined, node: es.Bl
 }
 
 export function* visitProgram<T>(node: es.Program, visitors: Visitors<T>) {
-  visitors.Program.before(undefined, node)
+  yield visitors.Program.before(undefined, node)
   for (const stmt of node.body) {
     yield* visitStatement(node, stmt as any, visitors)
   }
-  visitors.Program.after(undefined, node)
+  yield visitors.Program.after(undefined, node)
 }

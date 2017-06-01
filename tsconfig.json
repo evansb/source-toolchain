@@ -17,6 +17,6 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "pretty": true,
-    "lib": ["es2015"]
+    "lib": ["es2015", "dom"]
   }
 }

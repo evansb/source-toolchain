@@ -1,37 +1,20 @@
-import { Node, Identifier } from 'estree'
+/**
+ * Error reporting utilities.
+ */
+import { generate } from 'escodegen'
+import { Node } from 'estree'
 
-export enum ErrorType {
-  AcornParseError,
-  MatchFailure,
-  MissingIfConsequent,
-  MissingIfAlternate,
-  MissingSemicolon,
-  TrailingComma,
-  IfConsequentNotABlockStatement,
-  IfAlternateNotABlockStatement,
-  DeclaratorNotIdentifier,
-  VariableRedeclaration,
-  UndefinedVariable,
-}
+import { StudentError, ErrorType, ErrorCategory } from './types'
 
-export enum ErrorCategory {
-  SYNTAX_ERROR,
-  SYNTAX_STYLE,
-  TYPE_ERROR,
-}
-
-export type StudentError = {
-  type: ErrorType,
-  node: Node,
-  explanation?: string,
-}
-
+// Split ESTree node type into two words
+// e.g FunctionDeclaration -> Function Declaration
 const splitNodeType = (nodeType: string) => {
   const tokens: string[] = []
   let soFar = ''
 
   for (let i = 0; i <= nodeType.length; i++) {
-    if (nodeType[i] === nodeType[i].toUpperCase() && i > 0) {
+    const isUppercase = nodeType[i] === nodeType[i].toUpperCase()
+    if (isUppercase && i > 0) {
       tokens.push(soFar)
       soFar = ''
     } else {
@@ -42,7 +25,11 @@ const splitNodeType = (nodeType: string) => {
   return tokens
 }
 
-export const getErrorExplanation = (error: StudentError) => {
+/**
+ * Get the explanation string of an error object in English.
+ * @param error the error object
+ */
+export const explainError = (error: StudentError) => {
   switch (error.type) {
     case ErrorType.MatchFailure:
       return `Disallowed language construct (${splitNodeType(error.node.type)})`
@@ -63,17 +50,17 @@ export const getErrorExplanation = (error: StudentError) => {
     case ErrorType.AcornParseError:
       return `Syntax Error:\n${error.explanation}`
     case ErrorType.VariableRedeclaration:
-      const name = (error.node as Identifier).name
-      return `Variable redeclaration \n${name}`
+      return `Variable redeclaration \n${(error.node as any).name}`
     case ErrorType.UndefinedVariable:
-      const unName = (error.node as Identifier).name
-      return `Undefined variable\n${unName}`
+      return `Undefined variable\n${(error.node as any).name}`
+    case ErrorType.CallingNonFunctionValues:
+      return `Trying to call non-function value ${generate(error.node)}`
     default:
       return 'Cannot find any explanation, please report this to your Avenger'
   }
 }
 
-export const getErrorCategory = (error: StudentError) => {
+export const categorizeError = (error: StudentError) => {
   switch (error.type) {
     case ErrorType.AcornParseError:
     case ErrorType.MissingSemicolon:
@@ -90,6 +77,7 @@ export const getErrorCategory = (error: StudentError) => {
 
     case ErrorType.VariableRedeclaration:
     case ErrorType.UndefinedVariable:
+    case ErrorType.CallingNonFunctionValues:
       return ErrorCategory.TYPE_ERROR
   }
 }

@@ -1,5 +1,5 @@
 import { parse } from '../parser'
-import { ErrorType } from '../errors'
+import { ErrorType } from '../types'
 import * as es from 'estree'
 
 it('parses simple statement', () => {

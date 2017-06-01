@@ -3,11 +3,12 @@ import {
   Token,
   parse as acornParse,
   Options as AcornOptions,
+  SourceLocation,
 } from 'acorn'
 import * as es from 'estree'
 import { SUntyped } from './types'
 import { Visitors, noop, visitProgram } from './visitors'
-import { StudentError, ErrorCategory, ErrorType } from './errors'
+import { StudentError, ErrorCategory, ErrorType } from './types'
 
 type WeekTypes = {
   week: number,
@@ -18,11 +19,20 @@ export type SymbolTable = {
   [name: string]: SUntyped,
 }
 
+export type Comment = {
+  type: 'Line' | 'Block',
+  value: string,
+  start: number,
+  end: number,
+  loc: SourceLocation | undefined,
+}
+
 export type ParserState = {
   stopped: boolean,
   node: es.Node | undefined,
   errors: StudentError[],
   frames: SymbolTable[],
+  comments: Comment[],
   environments: {
     [name: string]: SymbolTable,
   },
@@ -46,6 +56,13 @@ const week3Types = [
   'Identifier',
   'Literal',
 ]
+
+let counter = 0
+
+export const freshId = () => {
+  counter++
+  return `__node${counter}`
+}
 
 const weekTypes: WeekTypes[] = [
   {
@@ -97,7 +114,8 @@ const createVisitors = (week: number, state: ParserState) => {
   for (const type of week3Types) {
     (visitors as any)[type] = {
       before: (parent: es.Node | undefined, node: es.Node) => {
-        state.node = node
+        state.node = node;
+        (node as any).__id = freshId()
 
         if (!allowedTypes[node.type]) {
           state.errors.push()
@@ -108,8 +126,11 @@ const createVisitors = (week: number, state: ParserState) => {
     }
   }
 
+  const iBefore = visitors.IfStatement!.before
+
   // Augment If and Else visitors
   visitors.IfStatement!.before = (parent: es.Node, node: es.IfStatement) => {
+    iBefore(parent, node)
     if (!node.consequent) {
       state.errors.push({
         type: ErrorType.MissingIfConsequent,
@@ -214,6 +235,7 @@ const createParserOptions = (filename: string, state: ParserState): AcornOptions
       node: state.node!,
     })
   },
+  onComment: state.comments,
 })
 
 export const parse = (source: string, week: number, filename = 'unknown') => {
@@ -224,6 +246,7 @@ export const parse = (source: string, week: number, filename = 'unknown') => {
     node: undefined,
     stopped: false,
     errors: [],
+    comments: [],
     frames: [initialFrame],
     environments: {
       '*': initialFrame,
