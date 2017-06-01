@@ -53,7 +53,6 @@ export const loadAndParseConformation = (fixtureFilePath: string): ConformationT
  * @param fixtureFilePath the path to fixture file, relative to fixtures directory
  */
 export const runConformationTests = (fixtureFilePath: string) => {
-  const deadline = (+new Date()) + 5000
   const tests = loadAndParseConformation(fixtureFilePath)
 
   const globalScope: Scope = {
@@ -66,6 +65,7 @@ export const runConformationTests = (fixtureFilePath: string) => {
     scopes: Map.of(0, globalScope),
     errors: List(),
     expressions: Stack(),
+    value: undefined,
   })
 
   tests.forEach(t => {
@@ -76,11 +76,9 @@ export const runConformationTests = (fixtureFilePath: string) => {
     while (!isDone) {
       const g = generator.next()
       isDone = g.done
-      if (+new Date() > deadline) {
-        throw new Error('Test did not finish in 5 seconds')
-      }
-      if (g.value instanceof Array) {
-        [value, state] = g.value
+      if (g.value instanceof State) {
+        state = g.value
+        value = g.value.value
       }
     }
 

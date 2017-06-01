@@ -14,6 +14,7 @@ const initialState: EvaluatorState = {
   isReturned: false,
   errors: List<StudentError>(),
   expressions: Stack<es.Node>(),
+  value: undefined,
 }
 
 let frameCtr = 0
@@ -26,6 +27,9 @@ export class State extends Record(initialState) implements EvaluatorState {
   isReturned?: boolean
   errors: List<StudentError>
   expressions: Stack<es.Node>
+  value?: any
+  left?: any
+
 
   popFrame() {
     return this.merge({ frames: this.frames.pop() }) as this
@@ -139,19 +143,19 @@ export function* evalExpression(node: es.Expression, state: State): any {
 
   switch (node.type) {
     case 'CallExpression':
-      [value, state] = yield* evalCallExpression(node, state)
+      state = yield* evalCallExpression(node, state)
       break
     case 'UnaryExpression':
-      [value, state] = yield* evalUnaryExpression(node, state)
+      state = yield* evalUnaryExpression(node, state)
       break
     case 'BinaryExpression':
-      [value, state] = yield* evalBinaryExpression(node, state)
+      state = yield* evalBinaryExpression(node, state)
       break
     case 'LogicalExpression':
-      [value, state] = yield* evalLogicalExpression(node, state)
+      state = yield* evalLogicalExpression(node, state)
       break
     case 'ConditionalExpression':
-      [value, state] = yield* evalConditionalExpression(node, state)
+      state = yield* evalConditionalExpression(node, state)
       break
     case 'FunctionExpression':
       value = new Closure(node, state.frames.first())
@@ -177,32 +181,34 @@ export function* evalExpression(node: es.Expression, state: State): any {
     }
 
     yield step
+
+    return state
+  } else {
+    return state.merge({ value })
   }
 
-  return [value, state]
 }
 
 function* evalCallExpression(node: es.CallExpression, state: State): IterableIterator<Step> {
   // Evaluate Callee
-  let callee;
-  [callee, state] = yield* evalExpression(node.callee as any, state)
+  state = yield* evalExpression(node.callee as any, state)
+  const callee = state.value
 
   // Internal Function Call
   if (callee instanceof Closure) {
-    let result: any
     const args: any[] = []
 
     // Evaluate each arguments from left to right
     for (const exp of node.arguments) {
-      [result, state] = yield* evalExpression(exp as es.Expression, state)
-      args.push(result)
+      state = yield* evalExpression(exp as es.Expression, state)
+      args.push(state.value)
     }
 
     state = state.pushFrame(callee.createScope(args));
 
-    [result, state] = yield* evalBlockStatement(callee.node.body, state)
+    state = yield* evalBlockStatement(callee.node.body, state)
 
-    return [result, state.popFrame()]
+    return state.popFrame()
   } else {
     const error: StudentError = {
       type: ErrorType.CallingNonFunctionValues,
@@ -215,34 +221,33 @@ function* evalCallExpression(node: es.CallExpression, state: State): IterableIte
       },
     }
 
-    return [undefined, state.fatalError(error)]
+    return state.fatalError(error)
   }
 }
 
 function* evalUnaryExpression(node: es.UnaryExpression, state: State) {
   let value
-  [value, state] = yield* evalExpression(node.argument, state)
+  state = yield* evalExpression(node.argument, state)
 
   // tslint:disable-next-line
   if (node.operator === '!') {
-    value = !value
+    value = !state.value
   } else if (node.operator === '-') {
-    value = -value
+    value = -state.value
   } else {
-    value =  +value
+    value =  +state.value
   }
 
-  return [value, state]
+  return state.merge({ value })
 }
 
 function* evalBinaryExpression(node: es.BinaryExpression, state: State) {
-  let left
-  let right
+  state = yield* evalExpression(node.left, state)
+  const left = state.value
+  state = yield* evalExpression(node.right, state)
+  const right = state.value
+
   let result
-
-  [left, state] = yield* evalExpression(node.left, state);
-  [right, state] = yield* evalExpression(node.right, state)
-
   switch (node.operator) {
     case '+':
       result = left + right
@@ -281,13 +286,12 @@ function* evalBinaryExpression(node: es.BinaryExpression, state: State) {
       result = undefined
   }
 
-  return [result, state]
+  return state.merge({ value: result })
 }
 
 function* evalLogicalExpression(node: es.LogicalExpression, state: State) {
-  let left
-
-  [left, state] = yield* evalExpression(node.left, state)
+  state = yield* evalExpression(node.left, state)
+  const left = state.value
 
   if (node.operator === '&&' && left) {
     return yield* evalExpression(node.right, state)
@@ -297,11 +301,9 @@ function* evalLogicalExpression(node: es.LogicalExpression, state: State) {
 }
 
 function* evalConditionalExpression(node: es.ConditionalExpression, state: State) {
-  let test
+  state = yield* evalExpression(node.test, state)
 
-  [test, state] = yield* evalExpression(node.test, state)
-
-  if (test) {
+  if (state.value) {
     return yield* evalExpression(node.consequent, state)
   } else {
     return yield* evalExpression(node.alternate, state)
@@ -321,18 +323,17 @@ export function* evalStatement(node: es.Statement, state: State): any {
     case 'ReturnStatement':
       return yield* evalReturnStatement(node, state)
     default:
-      return [undefined, state]
+      return state.merge({ value: undefined })
   }
 }
 
 function* evalVariableDeclaration(node: es.VariableDeclaration, state: State) {
-  let value
   const declarator = node.declarations[0]
   const ident = declarator.id as es.Identifier
 
-  [value, state] = yield* evalExpression(declarator.init as es.Expression, state)
+  state = yield* evalExpression(declarator.init as es.Expression, state)
 
-  state = state.defineVariable(ident.name, value)
+  state = state.defineVariable(ident.name, state.value)
 
   const step: Step = {
     state,
@@ -342,7 +343,7 @@ function* evalVariableDeclaration(node: es.VariableDeclaration, state: State) {
 
   yield step
 
-  return [undefined, state]
+  return state.merge({ value: undefined })
 }
 
 function* evalFunctionDeclaration(node: es.FunctionDeclaration, state: State) {
@@ -357,55 +358,54 @@ function* evalFunctionDeclaration(node: es.FunctionDeclaration, state: State) {
     after: mkNode(undefined, state),
   }
 
-  return [undefined, state]
+  return state.merge({ value: undefined })
 }
 
 function* evalIfStatement(node: es.IfStatement, state: State) {
-  let value: any
-  [value, state] = yield* evalExpression(node.test, state);
+  state = yield* evalExpression(node.test, state)
 
-  [value, state] = value
+  state = state.value
     ? yield* evalBlockStatement(node.consequent as es.BlockStatement, state)
     : yield* evalBlockStatement(node.alternate as es.BlockStatement, state)
 
   yield {
     state,
     before: node,
-    after: mkNode(value, state),
+    after: mkNode(state.value, state),
   }
 
-  return [value, state]
+  return state
 }
 
 function* evalExpressionStatement(node: es.ExpressionStatement, state: State) {
-  return yield* evalExpression(node.expression, state)
+  state = yield* evalExpression(node.expression, state)
+  yield {
+    state,
+    before: node,
+    after: mkNode(state.value, state),
+  }
+  return state.merge()
 }
 
 function* evalReturnStatement(node: es.ReturnStatement, state: State) {
-  let value
-  [value, state] = yield* evalExpression(node.argument as es.Expression, state)
-  return [value, state.merge({ isReturned: true })]
+  state = yield* evalExpression(node.argument as es.Expression, state)
+  return state.merge({ isReturned: true })
 }
 
 function* evalBlockStatement(node: es.BlockStatement, state: State) {
-  let result
-
   for (const stmt of node.body) {
-    [result, state] = yield* evalStatement(stmt as es.Statement, state)
+    state = yield* evalStatement(stmt as es.Statement, state)
     if (state.isReturned) {
       break
     }
   }
-
-  return [result, state.merge({ isReturned: false })]
+  return state.merge({ isReturned: false })
 }
 
 export function* evalProgram(node: es.Program, state: State) {
-  let result
+  state = yield* evalBlockStatement(node as any, state.start())
 
-  [result, state] = yield* evalBlockStatement(node as any, state.start())
-
-  return [result, state.stop()]
+  return state.stop()
 }
 
 export const evaluate = <T>(program: es.Program, scheduler: Scheduler<T>) => {

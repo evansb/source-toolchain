@@ -67,6 +67,9 @@ export interface EvaluatorState {
   scopes: Map<number, Scope>
   errors: List<StudentError>,
 
+  // Registers
+  value?: any
+
   // Visualization Stuff
   expressions: Stack<es.Node>,
 }
