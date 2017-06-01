@@ -1,12 +1,9 @@
 sudo: false
 language: node_js
 node_js:
-  - "5"
+  - "6"
 
-cache:
-  directories:
-    - $(npm config get prefix)/bin/typings
-    - node_modules
+cache: yarn
 
 install:
   - npm install
@@ -14,6 +11,3 @@ install:
 script:
   - npm run lint
   - npm run test
-  - npm run dist
-
-after_success: npm run coverage
