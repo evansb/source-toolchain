@@ -1,6 +1,6 @@
 {
-  "name": "demo",
-  "version": "0.1.0",
+  "name": "source-toolchain-docs",
+  "version": "2.0.0",
   "private": true,
   "homepage": "https://evansb.github.io/source-toolchain",
   "dependencies": {
