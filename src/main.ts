@@ -9,7 +9,7 @@ export { parse } from './parser'
 
 export {
   blocking as blockingScheduler,
-  interval as intervalScheduler
+  interval as intervalScheduler,
 } from './scheduler'
 
 export const evaluate = <T>(program: es.Program, scheduler: Scheduler<T>) => {
