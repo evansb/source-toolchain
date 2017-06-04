@@ -4,8 +4,11 @@
   "private": true,
   "homepage": "https://evansb.github.io/source-toolchain",
   "dependencies": {
+    "ayu-ace": "^2.0.3",
+    "brace": "^0.10.0",
     "react": "^15.5.4",
-    "react-dom": "^15.5.4"
+    "react-dom": "^15.5.4",
+    "spectre.css": "^0.2.14"
   },
   "devDependencies": {
     "gh-pages": "^1.0.0",

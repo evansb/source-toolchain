@@ -1,5 +1,79 @@
+@import '~spectre.css/dist/spectre.css';
+@import '~spectre.css/dist/spectre-icons.css';
+
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans');
+
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
+  font-family: 'Noto Sans', sans-serif;
+  background-color: #161824;
 }
+
+.container {
+  margin: 0 auto;
+  max-width: 960px;
+}
+
+.Section h3,h4,h5,h6 {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.Section p {
+  letter-spacing: 1px;
+  color: #CCCCCC;
+}
+
+.Section {
+  padding: 0px 15px;
+}
+
+.Section-control {
+  padding: 5px;
+}
+
+.Section-editor {
+  height: 480px;
+}
+
+.Section-weeks {
+  margin-top: 50px;
+}
+
+span.Section-week {
+  font-weight: 700;
+  font-size: 0.95em;
+  text-transform: uppercase;
+  color: white;
+}
+
+.Section-visualizer h6 {
+  font-size: 1em;
+}
+
+.Section-visualizer pre {
+  font-family: 'Menlo', 'Consolas', monospace;
+  font-size: 1.2em;
+  margin: 0;
+  margin-left: 10px;
+}
+
+.Section-visualizer-frame  {
+  margin-top: 10px;
+}	
+
+.Section-visualizer-expression .columns {
+  margin-left: 5px;
+}
+
+.Section-visualizer-environment-control  {
+  margin-left: 5px;
+}
+
+.Section-visualizer td, .Section-visualizer th {
+  padding: 5px;
+  font-family: 'Menlo', 'Consolas', monospace;
+}
+

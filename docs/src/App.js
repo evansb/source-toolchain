@@ -1,18 +1,30 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
+import WeekByWeek from './WeekByWeek'
+import SingleStepInterpreter from './SingleStepInterpreter'
+import FriendlyErrorMessages from './FriendlyErrorMessages'
+import Footer from './Footer'
 
 class App extends Component {
   render() {
     return (
       <div className="App">
         <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>Welcome to React</h2>
+          <div className="container">
+            <div className="App-logo">
+              <img alt="Logo" src="logo.png" className="img-fit" />
+            </div>
+            <h2>source<span className="App-subtitle">toolchain</span></h2>
+            <h6 className="App-subheading">A Subset of ES5 Optimised for Education</h6>
+            <button className="btn btn-primary btn-lg">View on GitHub</button>
+          </div>
         </div>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+        <div className="App-main">
+          <WeekByWeek />
+          <SingleStepInterpreter />
+          <FriendlyErrorMessages />
+        </div>
+        <Footer />
       </div>
     );
   }
