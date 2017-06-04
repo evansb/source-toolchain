@@ -68,6 +68,12 @@ function loo(x) {
 
 1 + 2 + (true ? (3 + 4) : 5) + (false ? (2 * 4 * (true ? 2 : 3)) : 4); // 14
 
+1 || 2; // 1
+
+1 && 2; // 2
+
+false && true; // false
+
 function arith(n) {
   if (n === 0) {
     return 0;

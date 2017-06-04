@@ -1,6 +1,6 @@
 import { parse } from 'acorn'
-import { runConformationTests } from '../testUtils'
-import { evalProgram, State } from '../evaluator'
+import { runConformationTests } from './harness/conformation'
+import { evalProgram, State } from '../src/evaluator'
 
 it('evaluates program', () => {
   const generator = evalProgram(parse('1 + 2;'), new State())

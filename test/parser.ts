@@ -1,6 +1,7 @@
-import { parse } from '../parser'
-import { ErrorType } from '../errorTypes'
 import * as es from 'estree'
+
+import { parse } from '../src/parser'
+import { ErrorType } from '../src/errorTypes'
 
 it('parses simple statement', () => {
   const program = parse('1 + 2;', 3).node! as es.Program

@@ -40,26 +40,24 @@ export type ParserState = {
   },
 }
 
-const week3Types = [
-  'Program',
+const syntaxTypes: {[nodeName: string]: number} = {
+  Program: 3,
   // Statements
-  'ExpressionStatement',
-  'IfStatement',
-  'FunctionDeclaration',
-  'VariableDeclaration',
-  'ReturnStatement',
+  ExpressionStatement: 3,
+  IfStatement: 3,
+  FunctionDeclaration: 3,
+  VariableDeclaration: 3,
+  ReturnStatement: 3,
   // Expressions
-  'CallExpression',
-  'UnaryExpression',
-  'BinaryExpression',
-  'LogicalExpression',
-  'ConditionalExpression',
-  'FunctionExpression',
-  'Identifier',
-  'Literal',
-]
-
-let counter = 0
+  CallExpression: 3,
+  UnaryExpression: 3,
+  BinaryExpression: 3,
+  LogicalExpression: 3,
+  ConditionalExpression: 3,
+  FunctionExpression: 3,
+  Identifier: 3,
+  Literal: 3,
+}
 
 const compose = <S extends es.Node>
   (v1: (parent: es.Node, node: S) => void,
@@ -68,17 +66,12 @@ const compose = <S extends es.Node>
     v2(parent, node)
   }
 
+let counter = 0
+
 export const freshId = () => {
   counter++
   return `__node${counter}`
 }
-
-const weekTypes: WeekTypes[] = [
-  {
-    week: 3,
-    types: week3Types,
-  },
-]
 
 const defineVariable = (identifier: es.Identifier, state: ParserState) => {
   if (state.frames[0]![identifier.name]) {
@@ -91,14 +84,10 @@ const defineVariable = (identifier: es.Identifier, state: ParserState) => {
       name: identifier.name,
       loc: identifier.loc!,
     }
-    state.frames[0]![identifier.name] = {
-      name: identifier.name,
-      loc: identifier.loc!,
-    }
   }
 }
 
-const isVariableDefinedInCurrentFrame = (name: string, state: ParserState) => {
+const isVariableDefined = (name: string, state: ParserState) => {
   for (const frame of state.frames) {
     if (frame.hasOwnProperty(name)) {
       return true
@@ -108,7 +97,7 @@ const isVariableDefinedInCurrentFrame = (name: string, state: ParserState) => {
 }
 
 const createVisitors = (week: number, state: ParserState) => {
-  const visitors: Partial<Visitors<void>> = {
+  const visitors: Partial<Visitors> = {
     onError(error: ErrorType, parent: es.Node, node: es.Node | null | undefined) {
       state.errors.push({
         type: error,
@@ -120,16 +109,11 @@ const createVisitors = (week: number, state: ParserState) => {
   // Checking for allowed syntax types
   const allowedTypes = getAllowedSyntaxTypes(week)
 
-  for (const type of week3Types) {
+  for (const type of allowedTypes) {
     (visitors as any)[type] = {
       before: (parent: es.Node | undefined, node: es.Node) => {
         state.node = node;
         (node as any).__id = freshId()
-
-        if (!allowedTypes[node.type]) {
-          state.errors.push()
-          state.stopped = true
-        }
       },
       after: noop,
     }
@@ -213,7 +197,7 @@ const createVisitors = (week: number, state: ParserState) => {
   visitors.Identifier!.after = compose(
     visitors.Identifier!.after,
     (parent: es.Node, node: es.Identifier) => {
-      if (!isVariableDefinedInCurrentFrame(node.name, state)) {
+      if (!isVariableDefined(node.name, state)) {
         state.errors.push({
           type: ErrorType.UndefinedVariable,
           node,
@@ -226,19 +210,16 @@ const createVisitors = (week: number, state: ParserState) => {
     state.stopped = true
   }
 
-  return (visitors as Visitors<void>)
+  return (visitors as Visitors)
 }
 
 const getAllowedSyntaxTypes = (week: number) => {
-  const types: {[type: string]: boolean} = {}
-
-  for (const wt of weekTypes) {
-    for (const type of wt.types) {
-      types[type] = wt.week <= week
+  return Object.keys(syntaxTypes).reduce((acc, type) => {
+    if (syntaxTypes[type] <= week) {
+      acc.push(type)
     }
-  }
-
-  return types
+    return acc
+  }, ([] as string[]))
 }
 
 const createParserOptions = (filename: string, state: ParserState): AcornOptions => ({

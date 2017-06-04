@@ -1,5 +1,5 @@
-import { State } from '../evaluator'
-import { blocking, interval } from '../scheduler'
+import { State } from '../src/evaluator'
+import { blocking, interval } from '../src/scheduler'
 
 describe('Blocking scheduler', () => {
   it('calls next on generator until state is not running', () => {

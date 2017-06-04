@@ -312,6 +312,8 @@ function* evalLogicalExpression(node: es.LogicalExpression, state: State) {
     return yield* evalExpression(node.right, state)
   } else if (node.operator === '||' && !left) {
     return yield* evalExpression(node.right, state)
+  } else {
+    return state
   }
 }
 

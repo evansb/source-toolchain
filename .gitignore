@@ -3,9 +3,7 @@ node_modules
 dist
 es6
 es5
-typings
-!./typings/shims
+definitions
 npm-debug.log
 coverage
-definitions
 .nyc_output
