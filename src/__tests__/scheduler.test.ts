@@ -29,13 +29,13 @@ describe('Interval scheduler', () => {
         yield state.isRunning = false
         yield foo(3)
       }
-      const scheduler = interval(50)
+      const scheduler = interval(10)
       setTimeout(() => {
         expect(foo.mock.calls.length).toBe(1)
-      }, 25)
+      }, 5)
       setTimeout(() => {
         expect(foo.mock.calls.length).toBe(2)
-      }, 75)
+      }, 15)
       scheduler(state as State, mockEvaluator()).then(() => {
         expect(foo.mock.calls.length).toBe(3)
         resolve()
