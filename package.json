@@ -3,13 +3,13 @@
   "version": "2.0.0",
   "description": "Toolchain for Source",
   "main": "index.js",
+  "typings": "definitions/main.d.ts",
   "repository": "https://github.com/evansb/source-toolchain",
   "author": "Evan Sebastian <evanlhoini@gmail.com>",
   "license": "MIT",
-  "typings": "definitions/main.d.ts",
   "scripts": {
     "clean": "rimraf definitions es6 es5",
-    "compile": "npm run clean && tsc --rootDir src --outDir es6 --declarationDir definitions && babel es6 --out-dir es5",
+    "compile": "npm run clean && tsc -p tsconfig.compile.json --rootDir src --outDir es6 --declarationDir definitions && babel es6 --out-dir es5",
     "lint": "tslint --type-check --project tsconfig.json ./src/**/*.ts",
     "test-watch": "DEBUG=test jest --watch --verbose",
     "test": "jest --coverage"

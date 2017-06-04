@@ -4,7 +4,13 @@ import { Map, Stack } from 'immutable'
 
 import { Scheduler } from './scheduler'
 import { evalProgram, Scope, State } from './evaluator'
+
 export { parse } from './parser'
+
+export {
+  blocking as blockingScheduler,
+  interval as intervalScheduler
+} from './scheduler'
 
 export const evaluate = <T>(program: es.Program, scheduler: Scheduler<T>) => {
   const globalScope: Scope = {
