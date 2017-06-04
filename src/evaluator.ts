@@ -1,5 +1,4 @@
 import * as es from 'estree'
-import { generate } from 'escodegen'
 import { List, Record, Stack, Map } from 'immutable'
 
 import { ErrorType, StudentError } from './errorTypes'
@@ -219,7 +218,7 @@ function* evalCallExpression(node: es.CallExpression, state: State) {
       args.push(state.value)
     }
 
-    state = state.pushFrame(callee.createScope(args));
+    state = state.pushFrame(callee.createScope(args))
 
     state = yield* evalBlockStatement(callee.node.body, state)
 

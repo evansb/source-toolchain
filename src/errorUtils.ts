@@ -2,8 +2,6 @@
  * Error reporting utilities.
  */
 import { generate } from 'escodegen'
-import { Node } from 'estree'
-
 import { StudentError, ErrorType, ErrorCategory } from './errorTypes'
 
 // Split ESTree node type into two words

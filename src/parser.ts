@@ -1,18 +1,11 @@
 import {
-  tokenizer,
-  Token,
   parse as acornParse,
   Options as AcornOptions,
   SourceLocation,
 } from 'acorn'
 import * as es from 'estree'
-import { Visitors, Visitor, noop, visitProgram } from './visitors'
-import { StudentError, ErrorCategory, ErrorType } from './errorTypes'
-
-type WeekTypes = {
-  week: number,
-  types: string[],
-}
+import { Visitors, noop, visitProgram } from './visitors'
+import { StudentError, ErrorType } from './errorTypes'
 
 export type SymbolTable = {
   [name: string]: {
