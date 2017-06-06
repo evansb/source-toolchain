@@ -1,3 +1,4 @@
+import { State } from '../src/evaluator'
 import { createSession, Session } from '../src/server'
 
 it('createSession correctly creates a session instance', () => {
@@ -68,7 +69,7 @@ describe('Session', () => {
     expect.assertions(2)
     return new Promise((resolve, reject) => {
       let counter = 0
-      let state
+      let state: State
       session.on('done', () => {
         if (counter === 0) {
           counter++
