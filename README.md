@@ -1,5 +1,7 @@
 Source Toolchain
 -------------------
+[![Build Status](https://travis-ci.org/evansb/source-toolchain.svg?branch=master)](https://travis-ci.org/evansb/source-toolchain)
+[![Coverage Status](https://coveralls.io/repos/github/evansb/source-toolchain/badge.svg)](https://coveralls.io/github/evansb/source-toolchain)
 
 [Website + Demo](https://evansb.github.io/source-toolchain)
 
