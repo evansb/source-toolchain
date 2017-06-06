@@ -18,5 +18,9 @@
     "noImplicitThis": true,
     "pretty": true,
     "lib": ["es2015", "dom"]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "docs"
+  ]
 }
