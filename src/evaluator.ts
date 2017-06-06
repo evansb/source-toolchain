@@ -6,49 +6,52 @@ import { freshId } from './parser'
 
 export interface Scope {
   parent?: number,
+  name: string,
   environment: Map<string, any>,
 }
 
 export interface EvaluatorState {
   isRunning: boolean,
   frames: Stack<number>,
-  result?: any,
-  isReturned?: boolean,
   scopes: Map<number, Scope>
   errors: List<StudentError>,
-  value?: any
   expressions: Stack<es.Node>,
-  done: boolean,
   node?: es.Node,
+  value?: any
+  _isReturned?: boolean,
+  _done: boolean,
 }
 
 const initialState: EvaluatorState = {
   isRunning: false,
   frames: Stack<number>(),
   scopes: Map<number, Scope>(),
-  result: undefined,
-  isReturned: false,
   errors: List<StudentError>(),
   expressions: Stack<es.Node>(),
-  value: undefined,
   node: undefined,
-  done: false,
+  value: undefined,
+
+  _isReturned: false,
+  _done: false,
 }
 
 let frameCtr = 0
+let lambdaCtr = 0
 
 export class State extends Record(initialState) implements EvaluatorState {
   isRunning: boolean
   frames: Stack<number>
   scopes: Map<number, Scope>
-  result?: any
-  isReturned?: boolean
   errors: List<StudentError>
   expressions: Stack<es.Node>
   value?: any
   left?: any
-  done: boolean
   node?: es.Node
+
+  // tslint:disable:variable-name
+  _result?: any
+  _isReturned?: boolean
+  _done: boolean
 
   popFrame() {
     return this.merge({ frames: this.frames.pop() }) as this
@@ -94,7 +97,8 @@ export class State extends Record(initialState) implements EvaluatorState {
 
 export class Closure {
   constructor(public node: es.FunctionExpression,
-              public enclosing: number) {
+              public enclosing: number,
+              public id?: number) {
   }
 
   createScope(args: any[]): Scope {
@@ -102,9 +106,30 @@ export class Closure {
       s.set((p as es.Identifier).name, args[idx])
     , Map<string, any>())
     return {
+      name: this.getScopeName(args),
       parent: this.enclosing,
       environment,
     }
+  }
+
+  get name() {
+    return this.node.id ? this.node.id.name : `<lambda-${this.id!}>`
+  }
+
+  getScopeName(args: any[]) {
+    let name = `${this.name}(`
+    args.forEach((arg, idx) => {
+      if (arg instanceof Closure) {
+        name += arg.name
+      } else {
+        name += arg.toString()
+      }
+      if (idx < args.length - 1) {
+        name += ', '
+      }
+    })
+    name += ')'
+    return name
   }
 }
 
@@ -157,7 +182,7 @@ const getEnv = (name: string, state: State) => {
 }
 
 export function* evalExpression(node: es.Expression, state: State): any {
-  yield state.merge({ node, done: false })
+  yield state.merge({ node, _done: false })
 
   let value: any
   let selfEvaluating = false
@@ -179,7 +204,8 @@ export function* evalExpression(node: es.Expression, state: State): any {
       state = yield* evalConditionalExpression(node, state)
       break
     case 'FunctionExpression':
-      value = new Closure(node, state.frames.first())
+      value = new Closure(node, state.frames.first(), lambdaCtr)
+      lambdaCtr++
       selfEvaluating = true
       break
     case 'Identifier':
@@ -197,9 +223,9 @@ export function* evalExpression(node: es.Expression, state: State): any {
   yield state.merge({ node })
 
   if (!selfEvaluating) {
-    return state.merge({ done: true })
+    return state.merge({ _done: true })
   } else {
-    return state.merge({ done: true, value })
+    return state.merge({ _done: true, value })
   }
 }
 
@@ -327,7 +353,7 @@ function* evalConditionalExpression(node: es.ConditionalExpression, state: State
 }
 
 export function* evalStatement(node: es.Statement, state: State): any {
-  yield state.merge({ node, done: false })
+  yield state.merge({ node, _done: false })
 
   switch (node.type) {
     case 'VariableDeclaration':
@@ -382,17 +408,17 @@ function* evalExpressionStatement(node: es.ExpressionStatement, state: State) {
 
 function* evalReturnStatement(node: es.ReturnStatement, state: State) {
   state = yield* evalExpression(node.argument as es.Expression, state)
-  return state.merge({ isReturned: true })
+  return state.merge({ _isReturned: true })
 }
 
 function* evalBlockStatement(node: es.BlockStatement, state: State) {
   for (const stmt of node.body) {
     state = yield* evalStatement(stmt as es.Statement, state)
-    if (state.isReturned) {
+    if (state._isReturned) {
       break
     }
   }
-  return state.merge({ isReturned: false })
+  return state.merge({ _isReturned: false })
 }
 
 export function* evalProgram(node: es.Program, state: State) {

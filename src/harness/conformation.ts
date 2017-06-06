@@ -53,6 +53,7 @@ export const runConformationTests = (fixtureFilePath: string) => {
   const tests = loadAndParseConformation(fixtureFilePath)
 
   const globalScope: Scope = {
+    name: '_global',
     environment: Map<string, any>(),
   }
 

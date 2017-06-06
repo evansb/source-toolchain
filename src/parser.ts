@@ -234,11 +234,11 @@ const createParserOptions = (filename: string, state: ParserState): AcornOptions
   onComment: state.comments,
 })
 
-export const parse = (source: string, week: number, filename = 'unknown') => {
+export const parse = (source: string, week: number, filename = 'unknown', previousState?: ParserState) => {
   const initialFrame: SymbolTable = {
   }
 
-  const state: ParserState = {
+  const state: ParserState = previousState || {
     node: undefined,
     stopped: false,
     errors: [],
@@ -248,6 +248,8 @@ export const parse = (source: string, week: number, filename = 'unknown') => {
       '*': initialFrame,
     },
   }
+
+  state.stopped = false
 
   try {
     const program = acornParse(source, createParserOptions(filename, state))

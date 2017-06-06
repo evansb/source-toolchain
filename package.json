@@ -21,6 +21,7 @@
     "@types/estree": "^0.0.35",
     "acorn": "^5.0.3",
     "escodegen": "^1.8.1",
+    "eventemitter2": "^4.1.0",
     "immutable": "^3.8.1"
   },
   "devDependencies": {
