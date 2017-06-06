@@ -1,5 +1,5 @@
 import { parse } from 'acorn'
-import { runConformationTests } from './harness/conformation'
+import { runConformationTests } from '../src/harness/conformation'
 import { evalProgram, State } from '../src/evaluator'
 
 it('evaluates program', () => {
