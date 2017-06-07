@@ -1,5 +1,7 @@
 import 'babel-polyfill'
 
-export {
+import {
   createSession,
 } from './server'
+
+export { createSession }

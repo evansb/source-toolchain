@@ -1,58 +1,14 @@
 {
-  "name": "source-toolchain",
-  "version": "2.0.0",
-  "description": "Toolchain for Source",
-  "main": "index.js",
-  "typings": "definitions/main.d.ts",
+  "private": true,
+  "name": "source-toolchain-packages",
   "repository": "https://github.com/evansb/source-toolchain",
   "author": "Evan Sebastian <evanlhoini@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "clean": "rimraf definitions es6 es5",
-    "compile": "npm run clean && tsc -p tsconfig.compile.json --rootDir src --outDir es6 --declarationDir definitions && babel es6 --out-dir es5",
-    "lint": "tslint --type-check --project tsconfig.json ./src/**/*.ts",
-    "test-watch": "DEBUG=test jest --watch --verbose",
-    "test": "jest --coverage",
-    "test-ci": "npm run test && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
-  },
-  "dependencies": {
-    "@types/acorn": "^4.0.2",
-    "@types/escodegen": "^0.0.6",
-    "@types/estree": "^0.0.35",
-    "acorn": "^5.0.3",
-    "escodegen": "^1.8.1",
-    "eventemitter2": "^4.1.0",
-    "immutable": "^3.8.1"
+    "postinstall": "lerna bootstrap",
+    "test": "lerna run lint && lerna run test-ci"
   },
   "devDependencies": {
-    "@types/debug": "^0.0.29",
-    "@types/jest": "^19.2.3",
-    "@types/node": "^7.0.22",
-    "babel-cli": "^6.24.1",
-    "babel-core": "^6.24.1",
-    "babel-preset-es2015": "^6.24.1",
-    "coveralls": "^2.13.1",
-    "debug": "^2.6.8",
-    "jest": "^20.0.3",
-    "rimraf": "^2.6.1",
-    "ts-jest": "^20.0.4",
-    "tslint": "^5.2.0",
-    "typescript": "^2.3.2"
-  },
-  "jest": {
-    "mapCoverage": true,
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js"
-    ],
-    "transform": {
-      "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
-    },
-    "testRegex": "/test/.*\\.(ts|tsx|js)$",
-    "testPathIgnorePatterns": [
-      "/fixtures/.*\\.(ts|tsx|js)$",
-      "/harness/.*\\.(ts|tsx|js)$"
-    ]
+    "lerna": "^2.0.0-rc.5"
   }
 }

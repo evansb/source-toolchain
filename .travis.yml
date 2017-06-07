@@ -1,12 +1,15 @@
 sudo: false
 language: node_js
 node_js:
-  - "6"
+- stable
 
-cache: yarn
+cache:
+  yarn: true
+  directories:
+  - node_modules
 
 install:
-  - npm install
+  - yarn
 
 script:
   - npm run lint

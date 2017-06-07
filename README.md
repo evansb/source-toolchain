@@ -29,6 +29,7 @@ and has three main features.
 
 ## Installation
 
+The only package published to NPM is `source-toolchain`, the rests are private.
 You will need Node >=6 and NPM >=3. Yarn is recommended.
 
 ```
@@ -39,6 +40,17 @@ yarn add source-toolchain --save
 
 ## Developing
 
+This project uses Lerna to manage dependencies between 4 internal packages.
+
+```
+packages/source-toolchain   Parser & Analyzer & Interpreter
+packages/source-stdlib      Standard Library that Student Uses
+packages/source-server      A microservice for running Sourcelang code
+packages/source-website     Source code of the website
+```
+
+The main source code (the toolchain) is `packages/source-toolchain`.
+
 Install dependencies.
 ```
 npm install 
@@ -46,7 +58,8 @@ npm install
 yarn 
 ```
 
-Run the task that you need.
+Run the task that you need, the script name is standardized among
+packages.
 
 ```
 npm run lint             # Lint the code using tslint
