@@ -1,7 +1,19 @@
-Source Toolchain
--------------------
-[![Build Status](https://travis-ci.org/evansb/source-toolchain.svg?branch=master)](https://travis-ci.org/evansb/source-toolchain)
-[![Coverage Status](https://coveralls.io/repos/github/evansb/source-toolchain/badge.svg)](https://coveralls.io/github/evansb/source-toolchain)
+<p align="center">
+  <a href="https://evansb.github.io/source-toolchain/">
+    <img alt="source-toolchain" src="https://evansb.github.io/source-toolchain/logo.png" width="144">
+  </a>
+</p>
+
+<h3 align="center">
+  Source Toolchain
+</h3>
+
+<p align="center">
+  <a href="https://travis-ci.org/evansb/source-toolchain"><img src="https://travis-ci.org/evansb/source-toolchain.svg?branch=master"></a>
+  <a href="https://coveralls.io/github/evansb/source-toolchain"><img src="https://coveralls.io/repos/github/evansb/source-toolchain/badge.svg"></a>
+</p>
+
+<hr />
 
 [Website + Demo](https://evansb.github.io/source-toolchain)
 
