@@ -3,9 +3,8 @@ import * as es from 'estree'
 import * as fs from 'fs'
 import * as path from 'path'
 import { parse } from 'acorn'
-import { Map, Stack, List } from 'immutable'
 
-import { evalStatement, State, Scope } from '../../src/evaluator'
+import { evalStatement, createState } from '../../src/evaluator'
 
 const fixturesFolderPath = path.resolve(__dirname, '..', '..', 'test', 'fixtures')
 
@@ -52,19 +51,7 @@ export const loadAndParseConformation = (fixtureFilePath: string): ConformationT
 export const runConformationTests = (fixtureFilePath: string) => {
   const tests = loadAndParseConformation(fixtureFilePath)
 
-  const globalScope: Scope = {
-    name: '_global',
-    environment: Map<string, any>(),
-  }
-
-  let state = new State({
-    isRunning: false,
-    frames: Stack.of(0),
-    scopes: Map.of(0, globalScope),
-    errors: List(),
-    expressions: Stack(),
-    value: undefined,
-  })
+  let state = createState()
 
   tests.forEach(t => {
     const generator = evalStatement(t.statement, state)
