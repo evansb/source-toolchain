@@ -175,6 +175,13 @@ const createVisitors = (week: number, state: ParserState) => {
       defineVariable(node.id, state)
       const frame: SymbolTable = {}
       state.environments[node.id.name] = frame
+      node.params.forEach(p => {
+        const ident = p as es.Identifier
+        frame[ident.name] = {
+          name: ident.name,
+          loc: ident.loc!
+        }
+      })
       state.frames.unshift(frame)
     },
   )

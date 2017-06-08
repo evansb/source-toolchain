@@ -6,9 +6,15 @@ import { categorizeError } from './errorUtils'
 import { parse, ParserState } from './parser'
 import { Scope } from './evaluatorTypes'
 import { State, evalProgram } from './evaluator'
+import {
+  VisualizerState,
+  create as createVisualizer,
+  next as nextVisualizer
+} from './visualizer'
 
 export class Session extends EventEmitter.EventEmitter2 {
   public state: State
+  public visualizer: VisualizerState
   private backup?: State
   private inProgress: boolean
   private evaluator: Iterator<State>
@@ -33,6 +39,7 @@ export class Session extends EventEmitter.EventEmitter2 {
       } else {
         this.inProgress = result.value.isRunning
         this.state = result.value
+        this.visualizer = nextVisualizer(this.visualizer, this.state)
         if (!this.inProgress) {
           this.emit('done')
         } else {
@@ -72,6 +79,7 @@ export class Session extends EventEmitter.EventEmitter2 {
       this.emit('errors', this.parserState.errors)
     }
     if (this.inProgress && this.parserState.node) {
+      this.visualizer = createVisualizer()
       this.state = this.state || this.createInitialState()
       this.evaluator = evalProgram(
         this.parserState.node as es.Program, this.state)

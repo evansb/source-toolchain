@@ -1,4 +1,5 @@
 import { createSession } from 'source-toolchain'
+import { generate } from 'escodegen'
 import React, { Component } from 'react'
 
 class Editor extends Component {
@@ -25,44 +26,62 @@ const Controls = ({ isNextDisabled, isPreviousDisabled,
   </div>
 )
 
-const CurrentExpression = () => (
+const CurrentExpression = ({ visualizer }) => (
   <div className="Section-visualizer-expression">
     <h6>Current Expression</h6>
     <div className="columns">
-      <button className="btn btn-primary btn-sm">Details</button>
-      <pre>4 * factorial(n)</pre>
+      { visualizer && visualizer.root && <pre>{generate(visualizer.root)}</pre> }
     </div>
   </div>
 )
 
-const EnvironmentVisualizer = () => (
-  <div className="Section-visualizer-frame">
-    <h6>Environment</h6>
-    <div className="Section-visualizer-environment-control columns">
-      <button className="btn btn-primary btn-sm">
-        <i className="icon icon-arrow-left" />
-      </button>
-      <button className="btn btn-primary btn-sm">
-        <i className="icon icon-arrow-right" />
-      </button>
-      <pre>factorial(4)</pre>
+const valueToString = (v) => {
+  if (v.constructor && v.constructor.name === 'Closure') {
+    return v.node.id ? `<function ${v.node.id.name}>` : '<lambda>'
+  } else {
+    return v.toString()
+  }
+}
+
+const EnvironmentVisualizer = ({ scopes, frames }) => {
+  const scope = scopes && frames && scopes.get(frames.first())
+  const content = []
+  if (scope) {
+    for (const [key, value] of scope.environment.entries()) {
+      content.push(
+        <tr key={key}>
+          <td>{key}</td>
+          <td>{valueToString(value)}</td>
+        </tr>
+      )
+    }
+  }
+  return (
+    <div className="Section-visualizer-frame">
+      <h6>Environment</h6>
+      <div className="Section-visualizer-environment-control columns">
+        <button className="btn btn-primary btn-sm">
+          <i className="icon icon-arrow-left" />
+        </button>
+        <button className="btn btn-primary btn-sm">
+          <i className="icon icon-arrow-right" />
+        </button>
+        <pre>{scope && scope.name}</pre>
+      </div>
+      <table className="Section-visualizer-environment table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {content}
+        </tbody>
+      </table>
     </div>
-    <table className="Section-visualizer-environment table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>x</td>
-          <td>4</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-)
+  )
+}
 
 class Interpreter extends Component {
 
@@ -71,7 +90,9 @@ class Interpreter extends Component {
     this.state = {
       editor: null,
       session: null,
+      visualizer: null,
       states: [],
+      visualizers: [],
       isRunning: false
     }
   }
@@ -101,12 +122,20 @@ class Interpreter extends Component {
 
     session.on('next', () => {
       const state = session.state
+      const visualizer = session.visualizer
       const states = this.state.states.concat([state])
+      const visualizers = this.state.visualizers.concat([visualizer])
       this.setState({
         isRunning: true,
         state,
-        states
+        states,
+        visualizer,
+        visualizers
       })
+    })
+
+    session.on('errors', (errors) => {
+      console.log(errors)
     })
 
     session.on('done', () => {
@@ -122,26 +151,27 @@ class Interpreter extends Component {
   }
 
   handleNext = () => {
-    const { session, state, states } = this.state
+    const { session, state, states, visualizers } = this.state
     if (!session || !session.inProgress) {
       return
     }
     const idx = states.indexOf(state)
     if (states.indexOf(state) !== states.length - 1) {
-      this.setState({ state: states[idx + 1] })
+      this.setState({ state: states[idx + 1], visualizer: visualizers[idx + 1] })
     } else {
       session.next()
     }
   }
 
   handlePrevious = () => {
-    const { session, state, states } = this.state
+    const { session, state, states, visualizers } = this.state
     if (!session || !session.inProgress || states.length <= 1) {
       return
     }
     const index = states.indexOf(state)
     const newState = states[index - 1] || state
-    this.setState({ state: newState })
+    const newVisualizer = visualizers[index - 1]
+    this.setState({ state: newState, visualizer: newVisualizer })
   }
 
   handleStartOver = () => { 
@@ -174,14 +204,15 @@ class Interpreter extends Component {
   }
 
   render() {
+    const { session, state, visualizer, isRunning } = this.state
     return (
       <div className="columns">
         <div className="column col-6 col-sm-12">
           <Controls
-            isNextDisabled={!this.state.session || !this.state.isRunning}
-            isPreviousDisabled={!this.state.session || !this.state.isRunning}
-            isStartOverDisabled={!this.state.session}
-            isUntilEndDisabled={!this.state.session}
+            isNextDisabled={!session || !isRunning}
+            isPreviousDisabled={!session || !isRunning}
+            isStartOverDisabled={!session}
+            isUntilEndDisabled={!session}
             handleNext={this.handleNext}
             handlePrevious={this.handlePrevious}
             handleStartOver={this.handleStartOver}
@@ -189,8 +220,8 @@ class Interpreter extends Component {
           <Editor setupEditor={this.setupEditor} />
         </div>
         <div className="Section-visualizer column col-6 col-sm-12">
-          <CurrentExpression />
-          <EnvironmentVisualizer />
+          <CurrentExpression visualizer={visualizer} />
+          <EnvironmentVisualizer scopes={state && state.scopes} frames={state && state.frames} />
         </div>
       </div>
     )

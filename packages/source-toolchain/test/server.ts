@@ -44,6 +44,20 @@ describe('Session', () => {
     })
   })
 
+  it('next() calls visualizer correctly', () => {
+    const session = new Session(3)
+    return new Promise((resolve, reject) => {
+      let done = false
+      session.on('next', () => {
+        expect(session.visualizer).toBeDefined()
+        expect(session.visualizer.root!.type).toBe('BinaryExpression')
+        resolve()
+      })
+      session.start('1 + 2;')
+      session.exhaust()
+    })
+  })
+
   it('addCode() evaluates more code', () => {
     const session = new Session(3)
     return new Promise((resolve, reject) => {
