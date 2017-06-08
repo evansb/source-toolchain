@@ -101,6 +101,11 @@
   content: '.'
 }
 
+.Editor-highlight {
+  position:absolute;
+  z-index:20;
+  border: 1px solid #5BFF92;
+}
 
 .Footer li a {
   color: white;

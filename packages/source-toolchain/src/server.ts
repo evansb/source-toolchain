@@ -20,6 +20,7 @@ export class Session extends EventEmitter.EventEmitter2 {
   start(code: string) {
     delete this.state
     this.evalCode(code)
+    this.emit('start')
   }
 
   next() {

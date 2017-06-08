@@ -220,12 +220,13 @@ export function* evalExpression(node: es.Expression, state: State): any {
       break
   }
 
-  yield state.merge({ node })
-
-  if (!selfEvaluating) {
-    return state.merge({ _done: true })
+  if (selfEvaluating) {
+    const nextState = state.merge({ _done: true, node, value })
+    yield nextState
+    return nextState
   } else {
-    return state.merge({ _done: true, value })
+    yield state
+    return state
   }
 }
 
@@ -248,7 +249,7 @@ function* evalCallExpression(node: es.CallExpression, state: State) {
 
     state = yield* evalBlockStatement(callee.node.body, state)
 
-    return state.popFrame()
+    return state.popFrame().merge({ _done: true })
   } else {
     const error: StudentError = {
       type: ErrorType.CallingNonFunctionValues,
@@ -278,7 +279,7 @@ function* evalUnaryExpression(node: es.UnaryExpression, state: State) {
     value =  +state.value
   }
 
-  return state.merge({ value })
+  return state.merge({ _done: true, value })
 }
 
 function* evalBinaryExpression(node: es.BinaryExpression, state: State) {
@@ -326,7 +327,7 @@ function* evalBinaryExpression(node: es.BinaryExpression, state: State) {
       result = undefined
   }
 
-  return state.merge({ value: result })
+  return state.merge({ _done: true, node, value: result })
 }
 
 function* evalLogicalExpression(node: es.LogicalExpression, state: State) {
@@ -357,18 +358,25 @@ export function* evalStatement(node: es.Statement, state: State): any {
 
   switch (node.type) {
     case 'VariableDeclaration':
-      return yield* evalVariableDeclaration(node, state)
+      state = yield* evalVariableDeclaration(node, state)
+      break
     case 'FunctionDeclaration':
-      return yield* evalFunctionDeclaration(node, state)
+      state = yield* evalFunctionDeclaration(node, state)
+      break
     case 'IfStatement':
-      return yield* evalIfStatement(node, state)
+      state = yield* evalIfStatement(node, state)
+      break
     case 'ExpressionStatement':
-      return yield* evalExpressionStatement(node, state)
+      state = yield* evalExpressionStatement(node, state)
+      break
     case 'ReturnStatement':
-      return yield* evalReturnStatement(node, state)
+      state = yield* evalReturnStatement(node, state)
+      break
     default:
-      return state.merge({ value: undefined })
+      break
   }
+
+  return state.merge({ _done: true, node })
 }
 
 function* evalVariableDeclaration(node: es.VariableDeclaration, state: State) {
