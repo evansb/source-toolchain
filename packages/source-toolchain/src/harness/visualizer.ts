@@ -4,7 +4,6 @@ import { createState, evalProgram } from '../evaluator'
 import { create, next } from '../visualizer'
 
 export const testVisualizer = (program: string, expectedOutput: string[]) => {
-  let gen
   let state = createState()
   let visualizer = create()
 
@@ -12,7 +11,8 @@ export const testVisualizer = (program: string, expectedOutput: string[]) => {
   const evaluator = evalProgram(node, state)
   const prints = []
 
-  while (gen = evaluator.next()) {
+  let gen = evaluator.next()
+  while (gen) {
     state = gen.value
     if (!state) { break }
     const prev = visualizer
@@ -20,6 +20,7 @@ export const testVisualizer = (program: string, expectedOutput: string[]) => {
     if (visualizer.root && (visualizer.id !== prev.id)) {
       prints.push(generate(visualizer.root))
     }
+    gen = evaluator.next()
   }
   expect(prints).toEqual(expectedOutput)
 }
