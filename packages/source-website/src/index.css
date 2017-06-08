@@ -77,3 +77,115 @@ span.Section-week {
   font-family: 'Menlo', 'Consolas', monospace;
 }
 
+.App {
+  color: white;
+}
+
+.App-header {
+  background-color: #272134;
+  height: 350px;
+  padding: 20px;
+  color: #fafafa;
+  text-align: center
+}
+
+.App-intro {
+  font-size: large;
+}
+
+.App-logo {
+  width: 100px;
+  margin: 0 auto;
+}
+
+.App-logo img {
+  width: 100%;
+  height: 100%;
+}
+
+.App-subtitle {
+  font-size: 0.5em;
+  margin-left: 0.3em;
+  color: #5BFF92;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.App-subheading {
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 2em;
+}
+
+.App-tags {
+  text-align: center;
+  margin: 0 auto;
+}
+
+.App-tags.columns {
+  margin: 0 auto;
+}
+
+.App-tags span.label {
+  border-radius: 0;
+  padding: 0.25em;
+  text-align: center;
+  margin: 0px 5px;
+}
+
+.Section {
+  margin-top: 75px;
+  margin-bottom: 75px;
+}
+
+.Section-control { 
+  text-align: center;
+}
+
+.Section-control button {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.Section-img-container {
+  display: table-cell;
+  padding: 0px 15px;
+  margin-bottom: 20px;
+  vertical-align: middle;
+  text-align: center;
+  max-width: 300px;
+}
+
+.Footer {
+  background-color: black;
+  padding: 50px;
+  padding-top: 75px;
+  color: #cccccc;
+}
+
+.Footer ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  margin-bottom: 10px;
+}
+
+.Footer li {
+  display: inline;
+  font-weight: 700;
+  margin-right: 5px;
+}
+
+.Footer li:after {
+  content: '.'
+}
+
+.Editor-highlight {
+  position:absolute;
+  z-index:20;
+  border: 1px solid #5BFF92;
+}
+
+.Footer li a {
+  color: white;
+}

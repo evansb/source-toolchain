@@ -12,23 +12,6 @@ class Editor extends Component {
   }
 }
 
-const Description = () => (
-  <div className="columns">
-    <div className="Section-img-container col-2 col-sm-12">
-      <img alt='' className="img-responsive" src="interpreter.png" />
-    </div>
-    <div className="col-10 col-sm-12">
-      <h4>Time-Travelling Interpreter</h4>
-      <h6>Evaluates Expression Step-by-Step</h6>
-      <p>
-        The sandboxed interpreter runs in browsers and NodeJS. Unlike most interpreters and debuggers, it reduces expressions
-        step-by-step according to the substitution model. The environment and the stack frame is using immutable data structures,
-        making time travelling possible. Interop with JavaScript code is also supported.
-      </p>
-    </div>
-  </div>
-)
-
 const Controls = ({ isNextDisabled, isPreviousDisabled,
     isStartOverDisabled, isUntilEndDisabled,
     handleNext, handlePrevious, handleStartOver, handleUntilEnd }) => (
@@ -81,7 +64,7 @@ const EnvironmentVisualizer = () => (
   </div>
 )
 
-class SingleStepInterpreter extends Component {
+class Interpreter extends Component {
 
   constructor(props) {
     super(props)
@@ -192,32 +175,26 @@ class SingleStepInterpreter extends Component {
 
   render() {
     return (
-      <div className="Section">
-        <div className="container">
-          <Description /> 
-          <br />
-          <div className="columns">
-            <div className="column col-6 col-sm-12">
-              <Controls
-                isNextDisabled={!this.state.session || !this.state.isRunning}
-                isPreviousDisabled={!this.state.session || !this.state.isRunning}
-                isStartOverDisabled={!this.state.session}
-                isUntilEndDisabled={!this.state.session}
-                handleNext={this.handleNext}
-                handlePrevious={this.handlePrevious}
-                handleStartOver={this.handleStartOver}
-              />
-              <Editor setupEditor={this.setupEditor} />
-            </div>
-            <div className="Section-visualizer column col-6 col-sm-12">
-              <CurrentExpression />
-              <EnvironmentVisualizer />
-            </div>
-          </div>
+      <div className="columns">
+        <div className="column col-6 col-sm-12">
+          <Controls
+            isNextDisabled={!this.state.session || !this.state.isRunning}
+            isPreviousDisabled={!this.state.session || !this.state.isRunning}
+            isStartOverDisabled={!this.state.session}
+            isUntilEndDisabled={!this.state.session}
+            handleNext={this.handleNext}
+            handlePrevious={this.handlePrevious}
+            handleStartOver={this.handleStartOver}
+          />
+          <Editor setupEditor={this.setupEditor} />
+        </div>
+        <div className="Section-visualizer column col-6 col-sm-12">
+          <CurrentExpression />
+          <EnvironmentVisualizer />
         </div>
       </div>
     )
   }
 }
 
-export default SingleStepInterpreter
+export default Interpreter
