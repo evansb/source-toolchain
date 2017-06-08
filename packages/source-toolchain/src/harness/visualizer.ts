@@ -22,5 +22,4 @@ export const testVisualizer = (program: string, expectedOutput: string[]) => {
     }
   }
   expect(prints).toEqual(expectedOutput)
-  console.log(prints.join('\n'))
 }
