@@ -16,6 +16,8 @@ true; // true
 true ? 2 : 3; // 2
 false ? 2 : 3; // 3
 
+-(-(-3)); // -3
+
 var a = true; // undefined
 var b = false; // undefined
 

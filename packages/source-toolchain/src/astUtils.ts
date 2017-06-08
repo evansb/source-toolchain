@@ -19,7 +19,15 @@ const freshId = (() => {
  */
 export const isNodeEqual = (n1: es.Node, n2: es.Node) => {
   if (n1.hasOwnProperty('__id') && n2.hasOwnProperty('__id')) {
-    return (n1 as any).__id === (n2 as any).__id
+    const first = (n1 as any).__id === (n2 as any).__id
+    if (!first) {
+      return false
+    }
+    if (n1.hasOwnProperty('__call') && n2.hasOwnProperty('__call')) {
+      return (n1 as any).__call === (n2 as any).__call
+    } else {
+      return true
+    }
   } else {
     return n1 === n2
   }
@@ -40,24 +48,6 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
 
     if (found) {
       return n;
-    }
-
-    if (n.type === 'BinaryExpression' || n.type === 'LogicalExpression') {
-      const right = go(n.right)
-      if (found) {
-        return {...n, right }
-      }
-      const left = go(n.left)
-      if (found) {
-        return {...n, left }
-      }
-    }
-
-    if (n.type === 'UnaryExpression') {
-      const argument = go(n.argument)
-      if (found) {
-        return {...n, argument }
-      }
     }
 
     if (isNodeEqual(n, before)) {
@@ -114,12 +104,6 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
           callee: go(n.callee),
           arguments: n.arguments.map(go),
         }
-      case 'UnaryExpression':
-        n = (n as es.UnaryExpression)
-        return {
-          ...n,
-          argument: go(n.argument),
-        }
       case 'ConditionalExpression':
         n = (n as es.ConditionalExpression)
         return {
@@ -128,6 +112,16 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
           consequent: go(n.consequent),
           alternate: go(n.alternate),
         }
+      case 'UnaryExpression':
+        n = (n as es.UnaryExpression)
+        return {
+          ...n,
+          argument: go(n.argument)
+        }
+      case 'BinaryExpression':
+      case 'LogicalExpression':
+        n = (n as es.BinaryExpression)
+        return {...n, left: go(n.left), right: go(n.right) } 
       case 'FunctionExpression':
       case 'Identifier':
       case 'Literal':

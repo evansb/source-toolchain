@@ -1,9 +1,9 @@
 import * as es from 'estree'
 import { Stack } from 'immutable'
-import { generate } from 'escodegen'
 import { parse } from '../src/parser'
 import { next, create, VisualizerState } from '../src/visualizer'
 import { evalProgram, createState } from '../src/evaluator'
+import { testVisualizer } from '../src/harness/visualizer'
 
 it('create() correctly creates initial visualizer state', () => {
   const state = create()
@@ -79,77 +79,121 @@ describe('next(v, e)', () => {
 })
 
 it('visualizes complex expression without function calls', () => {
-  const program = parse('1 + (1 && 3) + (true ? 1 : 2);', 3).node!
-  let gen
-  let state = createState()
-  let visualizer = create()
-  const evaluator = evalProgram(program, state)
-
-  const expectedPrints = [
+  testVisualizer(
+   '1 + (1 && 3) + (true ? 1 : 2);'
+  , [
     '1 + (1 && 3) + (true ? 1 : 2)',
     '1 + 3 + (true ? 1 : 2)',
     '4 + (true ? 1 : 2)',
     '4 + 1',
     '5'
-  ]
-
-  const prints = []
-
-  while (gen = evaluator.next()) {
-    state = gen.value
-    if (!state) { break }
-    const prev = visualizer
-    visualizer = next(visualizer, state)
-    if (visualizer.root && (visualizer !== prev)) {
-      prints.push(generate(visualizer.root))
-    }
-  }
-
-  expect(expectedPrints).toEqual(prints)
+  ])
 })
 
-it('visualizes complex expression with calls', () => {
-  const program = parse(
-`function factorial(n) {
-  if (n <= 1) {
-    return 1;
-  } else {
-    return n * factorial(n - 1);
-  }
-}
-factorial(3);
-`, 3).node!
-  let gen
-  let state = createState()
-  let visualizer = create()
-  const evaluator = evalProgram(program, state)
-
-  const expectedPrints = [
-    'factorial(3)',
-    'n * factorial(n - 1)',
-    '3 * factorial(n - 1)',
-    '3 * factorial(3 - 1)',
-    '3 * factorial(2)',
-    '3 * (n * factorial(n - 1))',
-    '3 * (2 * factorial(n - 1))',
-    '3 * (2 * factorial(2 - 1))',
-    '3 * (2 * factorial(1))',
-    '3 * (2 * 1)',
-    '3 * 2',
-    '6'
-  ]
-
-  const prints = []
-
-  while (gen = evaluator.next()) {
-    state = gen.value
-    if (!state) { break }
-    const prev = visualizer
-    visualizer = next(visualizer, state)
-    if (visualizer.root && (visualizer.id !== prev.id)) {
-      prints.push(generate(visualizer.root))
+it('visualizes recursive calls (binary expression)', () => {
+  testVisualizer(
+    `function factorial(n) {
+      if (n <= 1) {
+        return 1;
+      } else {
+        return n * factorial(n - 1);
+      }
     }
-  }
-  expect(prints).toEqual(expectedPrints)
+    factorial(3);
+    `, [
+      'factorial(3)',
+      'n * factorial(n - 1)',
+      '3 * factorial(n - 1)',
+      '3 * factorial(3 - 1)',
+      '3 * factorial(2)',
+      '3 * (n * factorial(n - 1))',
+      '3 * (2 * factorial(n - 1))',
+      '3 * (2 * factorial(2 - 1))',
+      '3 * (2 * factorial(1))',
+      '3 * (2 * 1)',
+      '3 * 2',
+      '6'
+    ]
+  )
 })
+
+it('visualizes recursive calls (logical expression)', () => {
+  testVisualizer(
+    `function doo(n) {
+      if (n >= 4) {
+        return true;
+      } else {
+        return false || doo(n + 1);
+      }
+    }
+    doo(1);
+    `, [
+      'doo(1)',
+      'false || doo(n + 1)',
+      'false || doo(1 + 1)',
+      'false || doo(2)',
+      'false || (false || doo(n + 1))',
+      'false || (false || doo(2 + 1))',
+      'false || (false || doo(3))',
+      'false || (false || (false || doo(n + 1)))',
+      'false || (false || (false || doo(3 + 1)))',
+      'false || (false || (false || doo(4)))',
+      'false || (false || (false || true))',
+      'false || (false || true)',
+      'false || true',
+      'true',
+    ]
+  )
+})
+
+it('visualizes recursive calls (fibonacci)', () => {
+   testVisualizer(
+    `function fib(n) {
+      if (n === 0) {
+        return 0;
+      } else {
+        if (n === 1) {
+          return 1;
+        } else {
+          return fib(n - 1) + fib(n - 2);
+        }
+      }
+    }
+    fib(4);
+    `, [
+      'fib(4)',
+      'fib(n - 1) + fib(n - 2)',
+      'fib(4 - 1) + fib(n - 2)',
+      'fib(3) + fib(n - 2)',
+      'fib(n - 1) + fib(n - 2) + fib(n - 2)',
+      'fib(3 - 1) + fib(n - 2) + fib(n - 2)',
+      'fib(2) + fib(n - 2) + fib(n - 2)',
+      'fib(n - 1) + fib(n - 2) + fib(n - 2) + fib(n - 2)',
+      'fib(2 - 1) + fib(n - 2) + fib(n - 2) + fib(n - 2)',
+      'fib(1) + fib(n - 2) + fib(n - 2) + fib(n - 2)',
+      '1 + fib(n - 2) + fib(n - 2) + fib(n - 2)',
+      '1 + fib(2 - 2) + fib(n - 2) + fib(n - 2)',
+      '1 + fib(0) + fib(n - 2) + fib(n - 2)',
+      '1 + 0 + fib(n - 2) + fib(n - 2)',
+      '1 + fib(n - 2) + fib(n - 2)',
+      '1 + fib(3 - 2) + fib(n - 2)',
+      '1 + fib(1) + fib(n - 2)',
+      '1 + 1 + fib(n - 2)',
+      '2 + fib(n - 2)',
+      '2 + fib(4 - 2)',
+      '2 + fib(2)',
+      '2 + (fib(n - 1) + fib(n - 2))',
+      '2 + (fib(2 - 1) + fib(n - 2))',
+      '2 + (fib(1) + fib(n - 2))',
+      '2 + (1 + fib(n - 2))',
+      '2 + (1 + fib(2 - 2))',
+      '2 + (1 + fib(0))',
+      '2 + (1 + 0)',
+      '2 + 1',
+      '3',
+    ]
+  )
+})
+
+ 
 

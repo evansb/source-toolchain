@@ -69,8 +69,11 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
           return visualizer
         }
         if (!_suppress && root) {
-          const toReplace = evaluator.node
-          const replaceWith = createNode(evaluator.value)
+          const callId = visualizer._calls.peek()
+            ? (visualizer._calls.peek() as any).__call
+            : undefined
+          const toReplace = {...evaluator.node, __call: callId}
+          const replaceWith = {...createNode(evaluator.value), __call: callId}
           return {
             ...visualizer,
             id: nextId(),
@@ -117,21 +120,23 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
         }
       case 'ReturnStatement':
         const returnStmt = evaluator.node as es.ReturnStatement
+        const callId = (visualizer._calls.peek() as any).__call
+        const argNode = {...evaluator.node.argument!, __call: callId }
         if (root) {
           return {
             ...visualizer,
             id: nextId(),
-            root: replace(root, visualizer._calls.peek(), evaluator.node.argument!),
-            _calls: _calls.pop().push(evaluator.node.argument!),
+            root: replace(root, visualizer._calls.peek(), argNode),
             _suppress: false
           }
         } else {
           return visualizer
         }
       case 'CallExpression':
+        const callNode = {...evaluator.node, __call: nextId() }
         return {
           ...visualizer,
-          _calls: visualizer._calls.push(evaluator.node)
+          _calls: visualizer._calls.push(callNode)
         }
       case 'FunctionDeclaration':
       case 'IfStatement':
