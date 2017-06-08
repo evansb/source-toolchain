@@ -105,7 +105,7 @@ const createVisitors = (week: number, state: ParserState) => {
   for (const type of allowedTypes) {
     (visitors as any)[type] = {
       before: (parent: es.Node | undefined, node: es.Node) => {
-        state.node = node;
+        state.node = node as es.Program;
         (node as any).__id = freshId()
       },
       after: noop,
