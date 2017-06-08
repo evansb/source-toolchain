@@ -1,28 +1,12 @@
 import * as es from 'estree'
 import { List, Record, Stack, Map } from 'immutable'
 
-import { ErrorType, StudentError } from './errorTypes'
 import { freshId } from './parser'
 
-export interface Scope {
-  parent?: number,
-  name: string,
-  environment: Map<string, any>,
-}
-
-export interface InspectableState {
-  node?: es.Node
-  value?: any
-  _done: boolean
-}
-
-export interface EvaluatorState extends InspectableState {
-  isRunning: boolean,
-  frames: Stack<number>,
-  scopes: Map<number, Scope>
-  errors: List<StudentError>,
-  _isReturned?: boolean,
-}
+import { Scope, EvaluatorState } from './evaluatorTypes'
+import { ErrorType, StudentError } from './errorTypes'
+import { createNode } from './astUtils'
+import Closure from './Closure'
 
 const initialState: EvaluatorState = {
   isRunning: false,
@@ -44,128 +28,70 @@ export class State extends Record(initialState) implements EvaluatorState {
   frames: Stack<number>
   scopes: Map<number, Scope>
   errors: List<StudentError>
-  expressions: Stack<es.Node>
   value?: any
-  left?: any
   node?: es.Node
 
   // tslint:disable:variable-name
   _result?: any
   _isReturned?: boolean
   _done: boolean
-
-  popFrame() {
-    return this.merge({ frames: this.frames.pop() }) as this
-  }
-
-  defineVariable(name: string, value: any) {
-    const f = this.frames.peek()
-    const scope = this.scopes.get(f)
-    return this.merge({
-      scopes: this.scopes.set(
-        f,
-        {
-          ...scope,
-          environment: scope.environment.set(name, value),
-        },
-      ),
-    }) as this
-  }
-
-  pushFrame(scope: Scope) {
-    frameCtr++
-    return this.merge({
-      scopes: this.scopes.set(frameCtr, scope),
-      frames: this.frames.push(frameCtr),
-    }) as this
-  }
-
-  fatalError(error: StudentError) {
-    return this.merge({
-      errors: this.errors.push(error),
-      isRunning: false,
-    }) as this
-  }
-
-  stop() {
-    return this.merge({ isRunning: false }) as this
-  }
-
-  start() {
-    return this.merge({ isRunning: true }) as this
-  }
 }
 
-export class Closure {
-  constructor(public node: es.FunctionExpression,
-              public enclosing: number,
-              public id?: number) {
+export const createState = (): State => {
+  const globalEnv: Scope = {
+    name: '_global_',
+    parent: undefined,
+    environment: Map<string, any>()
   }
-
-  createScope(args: any[]): Scope {
-    const environment = this.node.params.reduce((s, p, idx) =>
-      s.set((p as es.Identifier).name, args[idx])
-    , Map<string, any>())
-    return {
-      name: this.getScopeName(args),
-      parent: this.enclosing,
-      environment,
-    }
-  }
-
-  get name() {
-    return this.node.id ? this.node.id.name : `<lambda-${this.id!}>`
-  }
-
-  getScopeName(args: any[]) {
-    let name = `${this.name}(`
-    args.forEach((arg, idx) => {
-      if (arg instanceof Closure) {
-        name += arg.name
-      } else {
-        name += arg.toString()
-      }
-      if (idx < args.length - 1) {
-        name += ', '
-      }
-    })
-    name += ')'
-    return name
-  }
+  return new State({
+    _done: false,
+    _isReturned: false,
+    _result: undefined,
+    isRunning:false,
+    frames: Stack.of(0),
+    scopes: Map.of(0, globalEnv),
+    errors: List(),
+    value: undefined,
+    node: undefined,
+  })
 }
 
-export class NativeValue {
-  constructor(public value: any, public node: es.Node) {
-  }
+const stop = (state: State): State =>
+  state.merge({ isRunning: false }) as State
+
+const start = (state: State): State =>
+  state.merge({ isRunning: true }) as State
+
+const defineVariable = (state: State, name: string, value: any): State => {
+  const currentFrame = state.frames.peek()
+  const scope = state.scopes.get(currentFrame)
+  return state.merge({
+    scopes: state.scopes.set(
+      currentFrame,
+      {
+        ...scope,
+        environment: scope.environment.set(name, value),
+      },
+    ),
+  }) as State
 }
 
-const mkLiteralNode = (value: any): es.Node => {
-  let node: any
-  if (typeof value === 'undefined') {
-    node = {
-      type: 'Identifier',
-      name: 'undefined',
-      __id: freshId(),
-    }
-  } else {
-    node = {
-      type: 'Literal',
-      value,
-      raw: value,
-      __id: freshId(),
-    }
-  }
-  return node
+const popFrame = (state: State): State =>
+  state.merge({ frames: state.frames.pop() }) as State
+
+const pushFrame = (state: State, scope: Scope): State => {
+  frameCtr++
+  return state.merge({
+    scopes: state.scopes.set(frameCtr, scope),
+    frames: state.frames.push(frameCtr),
+  }) as State
 }
 
-const mkNode = (value: any, state: State): es.Node => {
-  if (value instanceof Closure) {
-    return value.node
-  }
-  if (value instanceof NativeValue) {
-    return value.node
-  }
-  return mkLiteralNode(value)
+const fatalError = (state: State, error: StudentError): State => {
+  return state.merge({
+    errors: state.errors.push(error),
+    isRunning: false,
+  }) as State
 }
 
 const getEnv = (name: string, state: State) => {
@@ -226,7 +152,7 @@ export function* evalExpression(node: es.Expression, state: State): any {
     yield nextState
     return nextState
   } else {
-    yield state
+    yield state.merge({ _done: true, node })
     return state
   }
 }
@@ -246,11 +172,11 @@ function* evalCallExpression(node: es.CallExpression, state: State) {
       args.push(state.value)
     }
 
-    state = state.pushFrame(callee.createScope(args))
+    state = pushFrame(state, callee.createScope(args))
 
     state = yield* evalBlockStatement(callee.node.body, state)
 
-    return state.popFrame().merge({ _done: true })
+    return popFrame(state).merge({ _done: true })
   } else {
     const error: StudentError = {
       type: ErrorType.CallingNonFunctionValues,
@@ -259,11 +185,11 @@ function* evalCallExpression(node: es.CallExpression, state: State) {
         operator: '=',
         loc: node.callee.loc!,
         left: node.callee as any,
-        right: mkNode(callee, state) as es.FunctionExpression,
+        right: createNode(callee) as es.FunctionExpression,
       },
     }
 
-    return state.fatalError(error)
+    return fatalError(state, error)
   }
 }
 
@@ -328,7 +254,7 @@ function* evalBinaryExpression(node: es.BinaryExpression, state: State) {
       result = undefined
   }
 
-  return state.merge({ _done: true, node, value: result })
+  return state.merge({ value: result })
 }
 
 function* evalLogicalExpression(node: es.LogicalExpression, state: State) {
@@ -336,12 +262,12 @@ function* evalLogicalExpression(node: es.LogicalExpression, state: State) {
   const left = state.value
 
   if (node.operator === '&&' && left) {
-    return yield* evalExpression(node.right, state)
+    state =  yield* evalExpression(node.right, state)
   } else if (node.operator === '||' && !left) {
-    return yield* evalExpression(node.right, state)
-  } else {
-    return state
+    state = yield* evalExpression(node.right, state)
   }
+
+  return state
 }
 
 function* evalConditionalExpression(node: es.ConditionalExpression, state: State) {
@@ -386,7 +312,7 @@ function* evalVariableDeclaration(node: es.VariableDeclaration, state: State) {
 
   state = yield* evalExpression(declarator.init as es.Expression, state)
 
-  state = state.defineVariable(ident.name, state.value)
+  state = defineVariable(state, ident.name, state.value)
 
   return state.merge({ value: undefined })
 }
@@ -395,7 +321,7 @@ function* evalFunctionDeclaration(node: es.FunctionDeclaration, state: State) {
   const ident = node.id as es.Identifier
   const closure = new Closure(node as any, state.frames.first())
 
-  state = state.defineVariable(ident.name, closure)
+  state = defineVariable(state, ident.name, closure)
 
   return state.merge({ value: undefined })
 }
@@ -431,7 +357,7 @@ function* evalBlockStatement(node: es.BlockStatement, state: State) {
 }
 
 export function* evalProgram(node: es.Program, state: State) {
-  state = yield* evalBlockStatement(node as any, state.start())
+  state = yield* evalBlockStatement(node as any, start(state))
 
-  return state.stop()
+  return stop(state)
 }

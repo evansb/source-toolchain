@@ -24,7 +24,7 @@ export type Comment = {
 
 export type ParserState = {
   stopped: boolean,
-  node: es.Node | undefined,
+  node?: es.Program,
   errors: StudentError[],
   frames: SymbolTable[],
   comments: Comment[],

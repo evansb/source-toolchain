@@ -4,7 +4,8 @@ import { Map, Stack, List } from 'immutable'
 import { StudentError, ErrorCategory } from './errorTypes'
 import { categorizeError } from './errorUtils'
 import { parse, ParserState } from './parser'
-import { State, Scope, evalProgram } from './evaluator'
+import { Scope } from './evaluatorTypes'
+import { State, evalProgram } from './evaluator'
 
 export class Session extends EventEmitter.EventEmitter2 {
   public state: State

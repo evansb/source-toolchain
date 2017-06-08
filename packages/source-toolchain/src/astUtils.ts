@@ -2,6 +2,7 @@
  * Utility functions to work with the AST (Abstract Syntax Tree)
  */
 import * as es from 'estree'
+import { freshId } from './parser'
 
 /**
  * Check whether two nodes are equal
@@ -116,76 +117,27 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
   return go(node)
 }
 
-/**
- * Find a node with specified hidden ID property
- * @param node the node
- * @param id  the __id property
- */
-export const findNodeById = (node: es.Node, id: string) => {
-  let found: es.Node | undefined
-
-  const go = (n: es.Node): void => {
-    if (found) { return }
-    if (n.hasOwnProperty('__id') && (n as any).__id === id) {
-      found = n
-    }
-    switch (n.type) {
-      case 'Program':
-      case 'BlockStatement':
-        (n as es.BlockStatement).body.forEach(go)
-        break
-      case 'ExpressionStatement':
-        go(n.expression)
-        break
-      case 'IfStatement':
-        n = (n as es.IfStatement)
-        go(n.test)
-        go(n.consequent)
-        if (n.alternate) { go(n.alternate) }
-        break
-      case 'FunctionDeclaration':
-        n = (n as es.FunctionDeclaration)
-        go(n.id)
-        n.params.forEach(go)
-        go(n.body)
-        break
-      case 'VariableDeclaration':
-        n = (n as es.VariableDeclaration)
-        n.declarations.forEach(go)
-        break
-      case 'ReturnStatement':
-        n = (n as es.ReturnStatement)
-        if (n.argument) { go(n.argument) }
-        break
-      case 'CallExpression':
-        n = (n as es.CallExpression)
-        go(n.callee)
-        n.arguments.forEach(go)
-        break
-      case 'UnaryExpression':
-        n = (n as es.UnaryExpression)
-        go(n.argument)
-        break
-      case 'BinaryExpression':
-        n = (n as es.BinaryExpression)
-        go(n.left)
-        go(n.right)
-        break
-      case 'LogicalExpression':
-        n = (n as es.LogicalExpression)
-        go(n.left)
-        go(n.right)
-        break
-      case 'ConditionalExpression':
-        n = (n as es.ConditionalExpression)
-        go(n.test)
-        go(n.consequent)
-        go(n.alternate)
-        break
-      default:
-        break
-    }
+const mkLiteralNode = (value: any): es.Node => {
+  if (typeof value === 'undefined') {
+    return ({
+      type: 'Identifier',
+      name: 'undefined',
+      __id: freshId(),
+    }) as any
+  } else {
+    return ({
+      type: 'Literal',
+      value,
+      raw: value,
+      __id: freshId(),
+    }) as any
   }
-  go(node)
-  return found
+}
+
+export const createNode = (value: any): es.Node => {
+  if (value && value.node && value.constructor
+      && value.constructor.name === 'Closure') {
+    return value.node
+  }
+  return mkLiteralNode(value)
 }
