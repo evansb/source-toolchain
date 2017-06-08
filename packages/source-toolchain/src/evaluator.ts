@@ -10,16 +10,18 @@ export interface Scope {
   environment: Map<string, any>,
 }
 
-export interface EvaluatorState {
+export interface InspectableState {
+  node?: es.Node
+  value?: any
+  _done: boolean
+}
+
+export interface EvaluatorState extends InspectableState {
   isRunning: boolean,
   frames: Stack<number>,
   scopes: Map<number, Scope>
   errors: List<StudentError>,
-  expressions: Stack<es.Node>,
-  node?: es.Node,
-  value?: any
   _isReturned?: boolean,
-  _done: boolean,
 }
 
 const initialState: EvaluatorState = {
@@ -27,7 +29,6 @@ const initialState: EvaluatorState = {
   frames: Stack<number>(),
   scopes: Map<number, Scope>(),
   errors: List<StudentError>(),
-  expressions: Stack<es.Node>(),
   node: undefined,
   value: undefined,
 
