@@ -3,22 +3,32 @@
  */
 import * as es from 'estree'
 import { Stack } from 'immutable'
+import Closure from './Closure'
 import { InspectableState } from './evaluatorTypes'
 import { createNode, replace } from './astUtils'
 
+let num = 0
+
+const nextId = () => {
+  num++
+  return num
+}
+
 export type VisualizerState = {
-  suppress: boolean
+  id: number
   root?: es.Node
-  calls: Stack<es.Node>
+  _suppress: boolean
+  _calls: Stack<es.Node>
 }
 
 export const create = (): VisualizerState => ({
-  suppress: false,
-  calls: Stack<es.Node>(),
+  id: num,
+  _suppress: true,
+  _calls: Stack<es.Node>(),
 })
 
 export const next = (visualizer: VisualizerState, evaluator: InspectableState): VisualizerState => {
-  const { calls, root, suppress } = visualizer
+  const { _calls, root, _suppress } = visualizer
 
   if (!evaluator.node) {
     return visualizer
@@ -36,15 +46,11 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
       case 'ReturnStatement':
         return visualizer
       case 'CallExpression':
-        if (!suppress && root) {
-          const parent = visualizer.calls.peek()
-          const toReplace = evaluator.node
-          const replaceWith = createNode(evaluator.value)
+        if (!_suppress && root) {
           return {
             ...visualizer,
-            suppress: false,
-            root: replace(parent, toReplace, replaceWith),
-            calls: visualizer.calls.pop(),
+            _suppress: false,
+            _calls: visualizer._calls.pop(),
           }
         } else {
           return visualizer
@@ -59,11 +65,15 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
       case 'LogicalExpression':
       case 'ConditionalExpression':
       case 'Identifier':
-        if (!suppress && root) {
+        if (evaluator.node.type === 'Identifier' && evaluator.value instanceof Closure) {
+          return visualizer
+        }
+        if (!_suppress && root) {
           const toReplace = evaluator.node
           const replaceWith = createNode(evaluator.value)
           return {
             ...visualizer,
+            id: nextId(),
             root: replace(root, toReplace, replaceWith)
           }
         } else {
@@ -77,28 +87,52 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
     }
   } else {
     switch (evaluator.node.type) {
+      case 'BlockStatement':
+        return {
+          ...visualizer,
+          _suppress: true
+        }
       case 'ExpressionStatement':
         const node = evaluator.node as es.ExpressionStatement
-        if (calls.isEmpty()) {
+        if (_calls.isEmpty()) {
           return {
             ...visualizer,
+            id: nextId(),
             root: node.expression,
+            _suppress: false,
           }
         } else {
           return visualizer
         }
       case 'VariableDeclaration':
         const decl = evaluator.node as es.VariableDeclaration
-        if (calls.isEmpty()) {
+        if (_calls.isEmpty()) {
           return {
             ...visualizer,
+            id: nextId(),
             root: decl.declarations[0].init!,
           }
         } else {
           return visualizer
         }
       case 'ReturnStatement':
+        const returnStmt = evaluator.node as es.ReturnStatement
+        if (root) {
+          return {
+            ...visualizer,
+            id: nextId(),
+            root: replace(root, visualizer._calls.peek(), evaluator.node.argument!),
+            _calls: _calls.pop().push(evaluator.node.argument!),
+            _suppress: false
+          }
+        } else {
+          return visualizer
+        }
       case 'CallExpression':
+        return {
+          ...visualizer,
+          _calls: visualizer._calls.push(evaluator.node)
+        }
       case 'FunctionDeclaration':
       case 'IfStatement':
       case 'UnaryExpression':

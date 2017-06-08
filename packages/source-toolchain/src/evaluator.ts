@@ -174,7 +174,11 @@ function* evalCallExpression(node: es.CallExpression, state: State) {
 
     state = pushFrame(state, callee.createScope(args))
 
+    yield state.merge({ _done: false, node: callee.node.body })
+
     state = yield* evalBlockStatement(callee.node.body, state)
+
+    yield state.merge({ _done: true, node: callee.node.body })
 
     return popFrame(state).merge({ _done: true })
   } else {

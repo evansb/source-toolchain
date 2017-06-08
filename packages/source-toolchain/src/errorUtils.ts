@@ -30,17 +30,17 @@ const splitNodeType = (nodeType: string) => {
 export const explainError = (error: StudentError) => {
   switch (error.type) {
     case ErrorType.MatchFailure:
-      return `Disallowed language construct (${splitNodeType(error.node.type)})`
+      return `(${splitNodeType(error.node.type)}) is not allowed`
     case ErrorType.DeclaratorNotIdentifier:
-      return 'Declaring a variable usin a non-identifier'
+      return 'Declaring a variable using a non-identifier'
     case ErrorType.MissingIfAlternate:
-      return 'Missing Else case'
+      return 'Missing "else" case'
     case ErrorType.IfAlternateNotABlockStatement:
-      return 'Missing a pair of curly braces around Else'
+      return 'Missing a pair of curly braces around "else"'
     case ErrorType.MissingIfConsequent:
-      return 'Missing If case'
+      return 'Missing "if" case'
     case ErrorType.IfConsequentNotABlockStatement:
-      return 'Missing a pair ofcurly braces around If'
+      return 'Missing a pair ofcurly braces around "if"'
     case ErrorType.TrailingComma:
       return 'Trailing comma'
     case ErrorType.MissingSemicolon:
@@ -56,9 +56,9 @@ export const explainError = (error: StudentError) => {
     case ErrorType.UndefinedVariable:
       return `Undefined variable\n${(error.node as any).name}`
     case ErrorType.CallingNonFunctionValues:
-      return `Trying to call non-function value ${generate(error.node)}`
+      return `Trying to call non-function value\n${generate(error.node)}`
     default:
-      return 'Cannot find any explanation, please report this to your Avenger'
+      return 'Cannot find any explanation, please report this issue'
   }
 }
 
@@ -68,15 +68,15 @@ export const categorizeError = (error: StudentError) => {
     case ErrorType.MissingSemicolon:
     case ErrorType.DeclaratorNotIdentifier:
     case ErrorType.MatchFailure:
+    case ErrorType.MissingIfConsequent:
+    case ErrorType.MissingIfAlternate:
+    case ErrorType.IfConsequentNotABlockStatement:
+    case ErrorType.IfAlternateNotABlockStatement:
     case ErrorType.UseStrictEquality:
     case ErrorType.UseStrictInequality:
       return ErrorCategory.SYNTAX_ERROR
 
     case ErrorType.TrailingComma:
-    case ErrorType.MissingIfConsequent:
-    case ErrorType.MissingIfAlternate:
-    case ErrorType.IfConsequentNotABlockStatement:
-    case ErrorType.IfAlternateNotABlockStatement:
       return ErrorCategory.SYNTAX_STYLE
 
     case ErrorType.VariableRedeclaration:

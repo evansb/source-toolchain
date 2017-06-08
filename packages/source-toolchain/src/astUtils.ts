@@ -2,7 +2,15 @@
  * Utility functions to work with the AST (Abstract Syntax Tree)
  */
 import * as es from 'estree'
-import { freshId } from './parser'
+
+const freshId = (() => {
+  let id = 0
+
+  return () => {
+    id++
+    return '__syn' + id
+  }
+})()
 
 /**
  * Check whether two nodes are equal
@@ -25,11 +33,39 @@ export const isNodeEqual = (n1: es.Node, n2: es.Node) => {
  * @param after Replacement node
  */
 export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
+  let found = false
+
   const go = (n: es.Node): any => {
+    const type = n.type
+
+    if (found) {
+      return n;
+    }
+
+    if (n.type === 'BinaryExpression' || n.type === 'LogicalExpression') {
+      const right = go(n.right)
+      if (found) {
+        return {...n, right }
+      }
+      const left = go(n.left)
+      if (found) {
+        return {...n, left }
+      }
+    }
+
+    if (n.type === 'UnaryExpression') {
+      const argument = go(n.argument)
+      if (found) {
+        return {...n, argument }
+      }
+    }
+
     if (isNodeEqual(n, before)) {
+      found = true
       return after
     }
-    switch (n.type) {
+
+    switch (type) {
       case 'Program':
       case 'BlockStatement':
         n = (n as es.BlockStatement)
@@ -76,27 +112,13 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
         return {
           ...n,
           callee: go(n.callee),
-          arguements: n.arguments.map(go),
+          arguments: n.arguments.map(go),
         }
       case 'UnaryExpression':
         n = (n as es.UnaryExpression)
         return {
           ...n,
           argument: go(n.argument),
-        }
-      case 'BinaryExpression':
-        n = (n as es.BinaryExpression)
-        return {
-          ...n,
-          left: go(n.left),
-          right: go(n.right),
-        }
-      case 'LogicalExpression':
-        n = (n as es.LogicalExpression)
-        return {
-          ...n,
-          left: go(n.left),
-          right: go(n.right),
         }
       case 'ConditionalExpression':
         n = (n as es.ConditionalExpression)
@@ -109,7 +131,6 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
       case 'FunctionExpression':
       case 'Identifier':
       case 'Literal':
-        return n
       default:
         return n
     }
