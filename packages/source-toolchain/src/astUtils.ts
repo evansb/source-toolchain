@@ -44,8 +44,6 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
   let found = false
 
   const go = (n: es.Node): any => {
-    const type = n.type
-
     if (found) {
       return n;
     }
@@ -55,79 +53,21 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
       return after
     }
 
-    switch (type) {
-      case 'Program':
-      case 'BlockStatement':
-        n = (n as es.BlockStatement)
-        return {
-          ...n,
-          body: n.body.map(go),
-        }
-      case 'ExpressionStatement':
-        n = (n as es.ExpressionStatement)
-        return {
-          ...n,
-          expression: go(n.expression),
-        }
-      case 'IfStatement':
-        n = (n as es.IfStatement)
-        return {
-          ...n,
-          test: go(n.test),
-          consequent: go(n.consequent),
-          alternate: n.alternate && go(n.alternate),
-        }
-      case 'FunctionDeclaration':
-        n = (n as es.FunctionDeclaration)
-        return {
-          ...n,
-          test: go(n.body),
-          consequent: go(n.id),
-          params: n.params.map(go),
-        }
-      case 'VariableDeclaration':
-        n = (n as es.VariableDeclaration)
-        return {
-          ...n,
-          declarations: n.declarations.map(go),
-        }
-      case 'ReturnStatement':
-        n = (n as es.ReturnStatement)
-        return {
-          ...n,
-          argument: n.argument && go(n.argument),
-        }
-      case 'CallExpression':
-        n = (n as es.CallExpression)
-        return {
-          ...n,
-          callee: go(n.callee),
-          arguments: n.arguments.map(go),
-        }
-      case 'ConditionalExpression':
-        n = (n as es.ConditionalExpression)
-        return {
-          ...n,
-          test: go(n.test),
-          consequent: go(n.consequent),
-          alternate: go(n.alternate),
-        }
-      case 'UnaryExpression':
-        n = (n as es.UnaryExpression)
-        return {
-          ...n,
-          argument: go(n.argument)
-        }
-      case 'BinaryExpression':
-      case 'LogicalExpression':
-        n = (n as es.BinaryExpression)
-        return {...n, left: go(n.left), right: go(n.right) } 
-      case 'FunctionExpression':
-      case 'Identifier':
-      case 'Literal':
-      default:
-        return n
-    }
+    if (n.type === 'CallExpression')
+      return { ...n, callee: go(n.callee), arguments: n.arguments.map(go), }
+    else if (n.type === 'ConditionalExpression')
+      return {
+        ...n,
+        test: go(n.test),
+        consequent: go(n.consequent),
+        alternate: go(n.alternate),
+      }
+    else if (n.type === 'UnaryExpression')
+      return { ...n, argument: go(n.argument) }
+    else if (n.type === 'BinaryExpression' || n.type === 'LogicalExpression')
+      return {...n, left: go(n.left), right: go(n.right) }
+    else
+      return n
   }
   return go(node)
 }

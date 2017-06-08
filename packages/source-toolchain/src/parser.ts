@@ -116,12 +116,7 @@ const createVisitors = (week: number, state: ParserState) => {
   visitors.IfStatement!.before = compose(
     visitors.IfStatement!.before,
     (parent: es.Node, node: es.IfStatement) => {
-      if (!node.consequent) {
-        state.errors.push({
-          type: ErrorType.MissingIfConsequent,
-          node,
-        })
-      } else if (node.consequent && node.consequent.type !== 'BlockStatement') {
+      if (node.consequent! && node.consequent.type !== 'BlockStatement') {
         state.errors.push({
           type: ErrorType.IfConsequentNotABlockStatement,
           node,

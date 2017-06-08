@@ -1,8 +1,7 @@
 import * as es from 'estree'
 import * as EventEmitter from 'eventemitter2'
 import { Map, Stack, List } from 'immutable'
-import { StudentError, ErrorCategory } from './errorTypes'
-import { categorizeError } from './errorUtils'
+import { StudentError } from './errorTypes'
 import { parse, ParserState } from './parser'
 import { Scope } from './evaluatorTypes'
 import { State, evalProgram } from './evaluator'
@@ -69,12 +68,8 @@ export class Session extends EventEmitter.EventEmitter2 {
     this.parserState = parse(code, this.week, '1.js', this.parserState)
     if (this.parserState.errors.length > 0) {
       for (const error of this.parserState.errors) {
-        const category = categorizeError(error)
-        if (category === ErrorCategory.SYNTAX_ERROR ||
-            category === ErrorCategory.TYPE_ERROR) {
-          this.inProgress = false
-          this.emit('done')
-        }
+        this.inProgress = false
+        this.emit('done')
       }
       this.emit('errors', this.parserState.errors)
     }

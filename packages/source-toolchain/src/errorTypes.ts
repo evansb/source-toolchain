@@ -8,19 +8,12 @@ export enum ErrorType {
   IfConsequentNotABlockStatement,
   MatchFailure,
   MissingIfAlternate,
-  MissingIfConsequent,
   MissingSemicolon,
   TrailingComma,
   UndefinedVariable,
   UseStrictEquality,
   UseStrictInequality,
   VariableRedeclaration,
-}
-
-export enum ErrorCategory {
-  SYNTAX_ERROR,
-  SYNTAX_STYLE,
-  TYPE_ERROR,
 }
 
 export type StudentError = {
