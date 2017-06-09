@@ -6,6 +6,8 @@ import * as es from 'estree'
 import * as EventEmitter from 'eventemitter2'
 import * as invariant from 'invariant'
 
+import { StudentError } from './errorTypes'
+import { explainError } from './errorUtils'
 import { ParserState, parse } from './parser'
 import { InterpreterState, evalProgram, createState } from './evaluator'
 import { VisualizerState, create as createVisualizer, next as nextVisualizer } from './visualizer'
@@ -64,7 +66,11 @@ export class Session extends EventEmitter.EventEmitter2 {
       // Stop interpreter on error
       if (!nextInterpreter.errors.isEmpty) {
         this.isInterpreting = false
-        this.emit('errors', nextInterpreter.errors.toJS())
+        const errors = nextInterpreter.errors.map(error => ({
+          ...error,
+          explanation: explainError(error!),
+        }))
+        this.emit('errors', errors.toJS())
       }
 
       // Update states
@@ -111,6 +117,9 @@ export class Session extends EventEmitter.EventEmitter2 {
 
     if (this.parser.errors.length > 0) {
       this.isInterpreting = false
+      this.parser.errors.forEach(error => {
+        error.explanation = explainError(error)
+      })
       this.emit('errors', this.parser.errors)
       this.emit('done')
     } else {

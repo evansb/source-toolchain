@@ -1,5 +1,5 @@
 @import '~spectre.css/dist/spectre.css';
-@import '~spectre.css/dist/spectre-icons.css';
+@import '~spectre.css/dist/spectre-exp.css';
 
 @import url('https://fonts.googleapis.com/css?family=Noto+Sans');
 
@@ -56,25 +56,32 @@ span.Section-week {
 .Section-visualizer pre {
   font-family: 'Menlo', 'Consolas', monospace;
   font-size: 1.2em;
-  margin: 0;
-  margin-left: 10px;
+  margin: 0 0 0 10px;
 }
 
 .Section-visualizer-frame  {
   margin-top: 20px;
-}	
-
-.Section-visualizer-expression .columns {
-  margin-left: 5px;
 }
 
-.Section-visualizer-environment-control  {
-  margin-left: 5px;
-}
-
-.Section-visualizer td, .Section-visualizer th {
-  padding: 5px;
+.Section-visualizer-frame .accordion-header {
   font-family: 'Menlo', 'Consolas', monospace;
+  background: #222436 !important;
+  color: white;
+  border-left: 5px solid #5764c6;
+  border-top: 1px solid #5764c6;
+}
+
+.Section-visualizer-frame .accordion-body {
+  font-family: 'Menlo', 'Consolas', monospace;
+  color: white !important;
+  padding: 0 10px;
+  background: #454d5d;
+}
+
+.Section-visualizer-frame td {
+  border-right: 1px solid #5764c6;;
+  border-bottom: none;
+  padding: 4px 8px;
 }
 
 .App {
@@ -130,7 +137,7 @@ span.Section-week {
   border-radius: 0;
   padding: 0.25em;
   text-align: center;
-  margin: 0px 5px;
+  margin: 0 5px;
 }
 
 .Section {
@@ -147,9 +154,19 @@ span.Section-week {
   margin-right: 5px;
 }
 
+.Section-error div {
+  padding: 5px;
+  font-family: 'Menlo', 'Consolas', monospace;
+}
+
+.Section-error-line {
+  font-weight: 700;
+  color: #FF5B92;
+}
+
 .Section-img-container {
   display: table-cell;
-  padding: 0px 15px;
+  padding: 0 15px;
   margin-bottom: 20px;
   vertical-align: middle;
   text-align: center;
@@ -158,16 +175,14 @@ span.Section-week {
 
 .Footer {
   background-color: black;
-  padding: 50px;
-  padding-top: 75px;
+  padding: 75px 50px 50px;
   color: #cccccc;
 }
 
 .Footer ul {
   list-style: none;
   padding: 0;
-  margin: 0;
-  margin-bottom: 10px;
+  margin: 0 0 10px;
 }
 
 .Footer li {
@@ -181,9 +196,16 @@ span.Section-week {
 }
 
 .Editor-highlight {
-  position:absolute;
-  z-index:20;
+  position: absolute;
+  z-index: 20;
   border: 1px solid #5BFF92;
+}
+
+.Editor-highlight-error {
+  position: absolute;
+  z-index: 20;
+  border-bottom: 3px dotted #FF5B92;
+  border-radius: 0 !important;
 }
 
 .Footer li a {

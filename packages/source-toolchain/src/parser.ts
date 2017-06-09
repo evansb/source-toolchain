@@ -1,5 +1,6 @@
 import * as es from 'estree'
-import { parse as acornParse, Options as AcornOptions, SourceLocation } from 'acorn'
+import { parse as acornParse, Options as AcornOptions,
+  SourceLocation, Position } from 'acorn'
 
 import { Visitors, noop, visitProgram } from './visitors'
 import { StudentError, ErrorType } from './errorTypes'
@@ -171,7 +172,7 @@ const createVisitors = (week: number, state: ParserState) => {
         const ident = p as es.Identifier
         frame[ident.name] = {
           name: ident.name,
-          loc: ident.loc!
+          loc: ident.loc!,
         }
       })
       state.frames.unshift(frame)
@@ -218,16 +219,27 @@ const createParserOptions = (filename: string, state: ParserState): AcornOptions
   sourceType: 'script',
   ecmaVersion: 5,
   locations: true,
-  onInsertedSemicolon() {
+  onInsertedSemicolon(_end: any, loc: any) {
+    const node = ({
+      type: 'Statement',
+      loc: {
+        end: {line: loc.line, column: loc.column + 1},
+        start: loc,
+      },
+    }) as any
     state.errors.push({
       type: ErrorType.MissingSemicolon,
-      node: state.node!,
+      node,
     })
   },
-  onTrailingComma() {
+  onTrailingComma(end: any, loc: Position) {
+    const node = ({
+      type: 'Statement',
+      loc,
+    }) as any
     state.errors.push({
       type: ErrorType.TrailingComma,
-      node: state.node!,
+      node,
     })
   },
   onComment: state.comments,
@@ -259,11 +271,19 @@ export const parse = (source: string, week: number, filename = 'unknown', previo
     }
     state.node = program
   } catch (error) {
-    if (error.toString().match(/SyntaxError/)) {
+    if (error instanceof SyntaxError) {
+      const loc = (error as any).loc
+
       state.errors.push({
         type: ErrorType.AcornParseError,
         explanation: error.toString(),
-        node: state.node!,
+        node: ({
+          type: 'Statement',
+          loc: {
+            start: { line: loc.line, column: loc.column },
+            end: { line: loc.line, column: loc.column + 1 }
+          },
+        }) as any,
       })
     } else {
       throw error
