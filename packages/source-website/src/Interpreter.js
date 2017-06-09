@@ -221,7 +221,6 @@ arithmetic(3);
     } else if (errors.length !== 0) {
       this.removeMarkers()
       errors.forEach(e => {
-        console.log(e)
         const range = new this.Range(
           e.node.loc.start.line - 1,
           e.node.loc.start.column - 1,
