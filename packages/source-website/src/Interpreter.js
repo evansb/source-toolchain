@@ -137,9 +137,7 @@ arithmetic(3);
       this.removeMarkers()
     })
 
-    const session = this.resetSession(editor)
-
-    this.setState({ editor, session })
+    this.setState({ editor, session: this.resetSession() })
   }
 
   handleNext = () => {
@@ -183,8 +181,7 @@ arithmetic(3);
     })
   }
 
-  resetSession(editor) {
-    editor = editor || this.state.editor
+  resetSession() {
     const session = createSession(3)
 
     session.on('start', () => {
@@ -233,7 +230,7 @@ arithmetic(3);
     if (editor && interpreter && prevState.interpreter !== interpreter && interpreter.node) {
       const range = new this.Range(
         interpreter.node.loc.start.line - 1,
-        interpreter.node.loc.start.column - 1,
+        interpreter.node.loc.start.column,
         interpreter.node.loc.end.line - 1,
         interpreter.node.loc.end.column,
       )
@@ -244,7 +241,7 @@ arithmetic(3);
       errors.forEach(e => {
         const range = new this.Range(
           e.node.loc.start.line - 1,
-          e.node.loc.start.column - 1,
+          e.node.loc.start.column,
           e.node.loc.end.line - 1,
           e.node.loc.end.column,
         )
@@ -282,8 +279,12 @@ arithmetic(3);
         <h6>Errors</h6>
         {errors.sort(this.compareLine).map((e, idx) => (
           <div key={idx} className="Section-error columns">
-            <div className="Section-error-line col-1">{e.node ? e.node.loc.start.line: '<unknown>'}</div>
-            <div className="Section-error-explanation col-11">{e.explanation}</div>
+            <div className="Section-error-line col-1">
+              {e.node ? e.node.loc.start.line: '<unknown>'}
+            </div>
+            <div className="Section-error-explanation col-11">
+              {e.explanation}
+            </div>
           </div>
         ))
         }

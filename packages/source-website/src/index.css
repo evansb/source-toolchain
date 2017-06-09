@@ -198,7 +198,8 @@ span.Section-week {
 .Editor-highlight {
   position: absolute;
   z-index: 20;
-  border: 1px solid #5BFF92;
+  background: #454d5d;
+  border-radius: 0 !important;
 }
 
 .Editor-highlight-error {
