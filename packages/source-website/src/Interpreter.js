@@ -5,7 +5,7 @@ import React, { Component } from 'react'
 class Editor extends Component {
 
   async componentDidMount() {
-    this.props.setupEditor(this.editor)
+    await this.props.setupEditor(this.editor)
   }
 
   render() {
@@ -26,7 +26,7 @@ const Controls = ({ isNextDisabled, isPreviousDisabled,
   </div>
 )
 
-const CurrentExpression = ({ visualizer }) => (
+const Visualizer = ({ visualizer }) => (
   <div className="Section-visualizer-expression">
     <h6>Current Expression</h6>
     <div className="columns">
@@ -43,7 +43,7 @@ const valueToString = (v) => {
   }
 }
 
-const EnvironmentVisualizer = ({ scopes, frames }) => {
+const EnvironmentTable = ({ scopes, frames }) => {
   const scope = scopes && frames && scopes.get(frames.first())
   const content = []
   if (scope) {
@@ -85,13 +85,14 @@ const EnvironmentVisualizer = ({ scopes, frames }) => {
 
 class Interpreter extends Component {
 
-  constructor(props) {
-    super(props)
+  constructor(props, context) {
+    super(props, context)
     this.state = {
       editor: null,
       session: null,
       visualizer: null,
-      states: [],
+      interpreter: null,
+      interpreters: [],
       visualizers: [],
       isRunning: false
     }
@@ -102,6 +103,7 @@ class Interpreter extends Component {
     this.Range = ace.acequire('ace/range').Range
     await import('brace/mode/javascript')
     await import('ayu-ace')
+
     const editor = ace.edit(editorRef)
     editor.getSession().setUseWorker(false)
     editor.getSession().setMode('ace/mode/javascript')
@@ -115,22 +117,23 @@ class Interpreter extends Component {
     session.on('start', () => {
       this.setState({
         isRunning: true,
-        state: session.state,
-        states: [session.state]
+        interpreter: session.interpreter,
+        interpreters: [session.interpreter],
+        visualizers: [session.visualizer],
+        visualizer: session.visualizer,
       })
     })
 
     session.on('next', () => {
-      const state = session.state
-      const visualizer = session.visualizer
-      const states = this.state.states.concat([state])
-      const visualizers = this.state.visualizers.concat([visualizer])
+      const { interpreter, visualizer } = session
+      const { interpreters, visualizers } = this.state
+
       this.setState({
         isRunning: true,
-        state,
-        states,
+        interpreter,
         visualizer,
-        visualizers
+        interpreters: interpreters.concat([interpreter]),
+        visualizers: visualizers.concat([visualizer])
       })
     })
 
@@ -139,78 +142,74 @@ class Interpreter extends Component {
     })
 
     session.on('done', () => {
-      const session = editor.getSession()
-      const markers = session.getMarkers()
-      Object.keys(markers).forEach(m => session.removeMarker(m))
-      this.setState({
-        isRunning: false
-      })
+      const editSession = editor.getSession()
+      const markers = editSession.getMarkers()
+      Object.keys(markers).forEach(m => editSession.removeMarker(m))
+      this.setState({ isRunning: false })
     })
 
     this.setState({ editor, session })
   }
 
   handleNext = () => {
-    const { session, state, states, visualizers } = this.state
-    if (!session || !session.inProgress) {
-      return
-    }
-    const idx = states.indexOf(state)
-    if (states.indexOf(state) !== states.length - 1) {
-      this.setState({ state: states[idx + 1], visualizer: visualizers[idx + 1] })
+    const { session, interpreter, interpreters, visualizers } = this.state
+    const index = interpreters.indexOf(interpreter)
+    if (index !== interpreters.length - 1) {
+      this.setState({
+        interpreter: interpreters[index + 1],
+        visualizer: visualizers[index + 1]
+      })
     } else {
       session.next()
     }
   }
 
   handlePrevious = () => {
-    const { session, state, states, visualizers } = this.state
-    if (!session || !session.inProgress || states.length <= 1) {
-      return
-    }
-    const index = states.indexOf(state)
-    const newState = states[index - 1] || state
-    const newVisualizer = visualizers[index - 1]
-    this.setState({ state: newState, visualizer: newVisualizer })
+    const { session, interpreter, interpreters, visualizer, visualizers } = this.state
+    const index = interpreters.indexOf(interpreter)
+    this.setState({
+      interpreter: interpreters[index - 1] || interpreter,
+      visualizer: visualizers[index - 1] || visualizer
+    })
   }
 
   handleStartOver = () => { 
-    const { session } = this.state
-    if (!session) {
-      return
+    const { session, editor } = this.state
+    if (session) {
+      session.start(editor.getValue())
     }
-    session.start(this.state.editor.getValue())
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { editor, isRunning, state } = this.state
+    const { editor, isRunning, interpreter } = this.state
 
     if (editor) {
       editor.setReadOnly(isRunning)
     }
 
-    if (editor && state && prevState.state !== state && state.node) {
-      const session = editor.getSession()
-      const markers = session.getMarkers()
-      Object.keys(markers).forEach(m => session.removeMarker(m))
+    if (editor && interpreter && prevState.interpreter !== interpreter && interpreter.node) {
+      const editSession = editor.getSession()
+      const markers = editSession.getMarkers()
+      Object.keys(markers).forEach(m => editSession.removeMarker(m))
       const range = new this.Range(
-        state.node.loc.start.line - 1,
-        state.node.loc.start.column - 1,
-        state.node.loc.end.line - 1,
-        state.node.loc.end.column,
+        interpreter.node.loc.start.line - 1,
+        interpreter.node.loc.start.column - 1,
+        interpreter.node.loc.end.line - 1,
+        interpreter.node.loc.end.column,
       )
-      session.addMarker(range, 'Editor-highlight')
+      editSession.addMarker(range, 'Editor-highlight')
     }
   }
 
   render() {
-    const { session, state, visualizer, isRunning } = this.state
+    const { session, interpreter, interpreters, visualizer, isRunning } = this.state
+    const index = interpreters && interpreter && interpreters.indexOf(interpreter)
     return (
       <div className="columns">
         <div className="column col-6 col-sm-12">
           <Controls
             isNextDisabled={!session || !isRunning}
-            isPreviousDisabled={!session || !isRunning}
+            isPreviousDisabled={!session || !isRunning || !index || index <= 0}
             isStartOverDisabled={!session}
             isUntilEndDisabled={!session}
             handleNext={this.handleNext}
@@ -220,8 +219,10 @@ class Interpreter extends Component {
           <Editor setupEditor={this.setupEditor} />
         </div>
         <div className="Section-visualizer column col-6 col-sm-12">
-          <CurrentExpression visualizer={visualizer} />
-          <EnvironmentVisualizer scopes={state && state.scopes} frames={state && state.frames} />
+          <Visualizer visualizer={visualizer} />
+          <EnvironmentTable
+            scopes={interpreter && interpreter.scopes}
+            frames={interpreter && interpreter.frames} />
         </div>
       </div>
     )

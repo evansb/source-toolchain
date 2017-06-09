@@ -1,102 +1,132 @@
+/**
+ * Interactive toolchain Session.
+ */
+
 import * as es from 'estree'
 import * as EventEmitter from 'eventemitter2'
-import { Map, Stack, List } from 'immutable'
-import { StudentError } from './errorTypes'
-import { parse, ParserState } from './parser'
-import { Scope } from './evaluatorTypes'
-import { State, evalProgram } from './evaluator'
-import {
-  VisualizerState,
-  create as createVisualizer,
-  next as nextVisualizer
-} from './visualizer'
+import * as invariant from 'invariant'
 
+import { ParserState, parse } from './parser'
+import { InterpreterState, evalProgram, createState } from './evaluator'
+import { VisualizerState, create as createVisualizer, next as nextVisualizer } from './visualizer'
+
+/**
+ * The instance of this class models an interactive toolchain session.
+ *
+ * @example
+ * const
+ */
 export class Session extends EventEmitter.EventEmitter2 {
-  public state: State
+
+  /** Current interpreter of the interpreter */
+  public interpreter: InterpreterState
+
+  /** Current interpreter of the expression visualizer */
   public visualizer: VisualizerState
-  private backup?: State
-  private inProgress: boolean
-  private evaluator: Iterator<State>
-  private parserState: ParserState
+
+  /** Current interpreter of the parser visualizer */
+  public parser: ParserState
+
+  private isInterpreting: boolean
+  private genInterpreter: Iterator<InterpreterState>
 
   constructor(public week: number) {
     super()
   }
 
+  /**
+   * Re-start the parser, interpreter, and visualizer with
+   * a new code. Emits start event when done.
+   *
+   * @param code The JavaScript code
+   */
   start(code: string) {
-    delete this.state
+    delete this.interpreter
+    delete this.parser
+    delete this.visualizer
+
     this.evalCode(code)
-    this.emit('start')
+
+    if (this.isInterpreting) {
+      this.emit('start')
+    }
   }
 
+  /**
+   * Evaluate single step of the program.
+   */
   next() {
-    if (this.evaluator && this.inProgress) {
-      const result = this.evaluator.next()
-      if (!result.value.errors.isEmpty) {
-        this.inProgress = false
-        this.emit('errors', result.value.errors.toJS())
+    invariant(this.genInterpreter, 'start() must be called before calling next')
+
+    if (this.isInterpreting) {
+      const { value: nextInterpreter } = this.genInterpreter.next()
+
+      // Stop interpreter on error
+      if (!nextInterpreter.errors.isEmpty) {
+        this.isInterpreting = false
+        this.emit('errors', nextInterpreter.errors.toJS())
+      }
+
+      // Update states
+      this.isInterpreting = nextInterpreter.isRunning
+      this.interpreter = nextInterpreter
+      this.visualizer = nextVisualizer(this.visualizer, this.interpreter)
+
+      // Emit appropriate events
+      if (!this.isInterpreting) {
+        this.emit('done')
       } else {
-        this.inProgress = result.value.isRunning
-        this.state = result.value
-        this.visualizer = nextVisualizer(this.visualizer, this.state)
-        if (!this.inProgress) {
-          this.emit('done')
-        } else {
-          this.emit('next')
-        }
+        this.emit('next')
       }
     }
   }
 
-  exhaust() {
-    while (this.inProgress) {
+  /**
+   * Evaluate the remaining program until end.
+   */
+  untilEnd() {
+    while (this.isInterpreting) {
       this.next()
     }
   }
 
+  /**
+   * Evaluate another code.
+   *
+   * @param code The code to be evaluated.
+   */
   addCode(code: string) {
-    if (this.inProgress) {
-      throw new Error('Cannot add more code when previous evaluation is in progress')
-    } else {
-      this.evalCode(code)
-    }
+    invariant(!this.isInterpreting,
+      'Cannot add more code when previous evaluation is in progress')
+
+    this.evalCode(code)
+    this.emit('start')
   }
 
   private evalCode(code: string) {
-    delete this.evaluator
-    this.inProgress = true
-    this.parserState = parse(code, this.week, '1.js', this.parserState)
-    if (this.parserState.errors.length > 0) {
-      for (const error of this.parserState.errors) {
-        this.inProgress = false
-        this.emit('done')
-      }
-      this.emit('errors', this.parserState.errors)
-    }
-    if (this.inProgress && this.parserState.node) {
+    delete this.genInterpreter
+
+    this.isInterpreting = true
+    this.parser = parse(code, this.week, '1.js', this.parser)
+
+    if (this.parser.errors.length > 0) {
+      this.isInterpreting = false
+      this.emit('errors', this.parser.errors)
+      this.emit('done')
+    } else {
       this.visualizer = createVisualizer()
-      this.state = this.state || this.createInitialState()
-      this.evaluator = evalProgram(
-        this.parserState.node as es.Program, this.state)
+      this.interpreter = this.interpreter || createState()
+      this.genInterpreter = evalProgram(this.parser.node as es.Program, this.interpreter)
     }
-  }
-
-  private createInitialState() {
-    const globalScope: Scope = {
-      parent: undefined,
-      name: '_global_',
-      environment: Map<string, any>(),
-    }
-
-    return new State({
-      isRunning: false,
-      frames: Stack.of(0),
-      scopes: Map.of(0, globalScope),
-      errors: List(),
-    })
   }
 }
 
+/**
+ * Create a new session from some configuration.
+ *
+ * @param week The week of the language to be used.
+ * @returns {Session}
+ */
 export const createSession = (week: number): Session => {
   return new Session(week)
 }

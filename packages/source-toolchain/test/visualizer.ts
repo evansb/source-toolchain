@@ -5,7 +5,7 @@ import { next, create, VisualizerState } from '../src/visualizer'
 import { evalProgram, createState } from '../src/evaluator'
 import { testVisualizer } from '../src/harness/visualizer'
 
-it('create() correctly creates initial visualizer state', () => {
+it('create() correctly creates initial visualizer interpreter', () => {
   const state = create()
   expect(state._calls).toBeInstanceOf(Stack)
   expect(state._calls.isEmpty()).toBe(true)

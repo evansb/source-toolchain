@@ -2,23 +2,44 @@ import * as es from 'estree'
 import { Scope } from './evaluatorTypes'
 import { Map } from 'immutable'
 
-export default class Closure {
-  constructor(public node: es.FunctionExpression,
-              public enclosing: number,
-              public id?: number) {
+/**
+ * Models function value in the interpreter environment.
+ */
+class Closure {
+
+  /** The Function Expression */
+  public node: es.FunctionExpression
+
+  /** The enclosingScope scope */
+  public enclosingScope: number
+
+  /** Unique ID defined for anonymous closure */
+  public id?: number
+
+  constructor(node: es.FunctionExpression, enclosingScope: number, id?: number) {
+    this.node = node
+    this.enclosingScope = enclosingScope
+    this.id = id
   }
 
+  /**
+   * Open a new scope from this function value by suppling list of arguments.
+   * @param args List of arguments to be defined in the scope environment
+   *
+   * @returns {Scope}
+   */
   createScope(args: any[]): Scope {
     const environment = this.node.params.reduce((s, p, idx) =>
       s.set((p as es.Identifier).name, args[idx])
     , Map<string, any>())
     return {
       name: this.getScopeName(args),
-      parent: this.enclosing,
+      parent: this.enclosingScope,
       environment,
     }
   }
 
+  /** Get name of the scope */
   get name() {
     return this.node.id ? this.node.id.name : `<lambda-${this.id!}>`
   }
@@ -39,3 +60,5 @@ export default class Closure {
     return name
   }
 }
+
+export default Closure

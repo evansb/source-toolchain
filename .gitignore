@@ -1,9 +1,7 @@
 .awcache
+.idea
 node_modules
 dist
-es6
-es5
-definitions
 npm-debug.log
 coverage
 .nyc_output

@@ -1,4 +1,4 @@
-import { State } from '../src/evaluator'
+import { InterpreterState } from '../src/evaluator'
 import { createSession, Session } from '../src/server'
 
 it('createSession correctly creates a session instance', () => {
@@ -8,16 +8,16 @@ it('createSession correctly creates a session instance', () => {
 })
 
 describe('Session', () => {
-  it('initially has undefined state', () => {
+  it('initially has undefined interpreter', () => {
     const session = new Session(3)
-    expect(session.state).not.toBeDefined()
+    expect(session.interpreter).not.toBeDefined()
   })
 
-  it('start creates evaluator with initial state and parsed program', () => {
+  it('start creates evaluator with initial interpreter and parsed program', () => {
     const session = new Session(3)
     session.start('var x = 1 + 2;')
-    expect(session.state.frames.first()).toBe(0)
-    expect(session.state.isRunning).toBe(false)
+    expect(session.interpreter.frames.first()).toBe(0)
+    expect(session.interpreter.isRunning).toBe(false)
   })
 
   it('parses the program on start', () => {
@@ -36,7 +36,7 @@ describe('Session', () => {
     const session = new Session(3)
     return new Promise((resolve, reject) => {
       session.on('next', () => {
-        expect(session.state.node).toBeDefined()
+        expect(session.interpreter.node).toBeDefined()
         resolve()
       })
       session.start('var x = 1 + 2; x;')
@@ -54,7 +54,7 @@ describe('Session', () => {
         resolve()
       })
       session.start('1 + 2;')
-      session.exhaust()
+      session.untilEnd()
     })
   })
 
@@ -65,31 +65,31 @@ describe('Session', () => {
       session.on('done', () => {
         if (counter === 0) {
           counter++
-          expect(session.state.value).not.toBeDefined()
+          expect(session.interpreter.value).not.toBeDefined()
         } else {
-          expect(session.state.value).toBe(3)
+          expect(session.interpreter.value).toBe(3)
           resolve()
         }
       })
       session.start('var x = 1 + 2;')
-      session.exhaust()
+      session.untilEnd()
       session.addCode('x;')
-      session.exhaust()
+      session.untilEnd()
     })
   })
 
-  it('addCode() restore state if fatal syntax error happens', () => {
+  it('addCode() restore interpreter if fatal syntax error happens', () => {
     const session = new Session(3)
     expect.assertions(2)
     return new Promise((resolve, reject) => {
       let counter = 0
-      let state: State
+      let state: InterpreterState
       session.on('done', () => {
         if (counter === 0) {
           counter++
-          state = session.state
+          state = session.interpreter
         } else {
-          expect(session.state).toBe(state)
+          expect(session.interpreter).toBe(state)
           resolve()
         }
       })
@@ -97,9 +97,9 @@ describe('Session', () => {
         expect(errors.length).toBe(1)
       })
       session.start('var x = 1 + 2;')
-      session.exhaust()
+      session.untilEnd()
       session.addCode('y;')
-      session.exhaust()
+      session.untilEnd()
     })
   })
 
@@ -109,7 +109,7 @@ describe('Session', () => {
     expect(() => session.addCode('y;')).toThrow(/in progress/)
   })
 
-  it('exhaust() evaluates program until done', () => {
+  it('untilEnd() evaluates program until done', () => {
     const session = new Session(3)
     return new Promise((resolve, reject) => {
       const counter = jest.fn()
@@ -118,12 +118,12 @@ describe('Session', () => {
       })
       session.on('done', () => {
         expect(counter.mock.calls.length).toBe(10)
-        expect(session.state.isRunning).toBe(false)
-        expect(session.state.value).toBe(3)
+        expect(session.interpreter.isRunning).toBe(false)
+        expect(session.interpreter.value).toBe(3)
         resolve()
       })
       session.start('var x = 1 + 2; x;')
-      session.exhaust()
+      session.untilEnd()
     })
   })
 })

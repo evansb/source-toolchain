@@ -11,11 +11,6 @@ export function noop<S>(parent: es.Node | undefined, node: S): void {
   return
 }
 
-export const NOOP = {
-  before: noop,
-  after: noop,
-}
-
 export type Visitors = {
   skip?: boolean,
   Program: Visitor<es.Program>,
@@ -192,7 +187,7 @@ function* visitExpressionStatement(node: es.ExpressionStatement, visitors: Visit
 
 function* visitBlockStatement(parent: es.Node | undefined, node: es.BlockStatement, visitors: Visitors) {
   for (const stmt of node.body) {
-    yield* visitStatement(node, stmt as any, visitors)
+    yield* visitStatement(parent!, stmt as any, visitors)
   }
 }
 

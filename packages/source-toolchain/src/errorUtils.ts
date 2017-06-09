@@ -25,6 +25,7 @@ const splitNodeType = (nodeType: string) => {
 
 /**
  * Get the explanation string of an error object in English.
+ *
  * @param error the error object
  */
 export const explainError = (error: StudentError) => {

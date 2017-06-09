@@ -7,35 +7,47 @@ import Closure from './Closure'
 import { InspectableState } from './evaluatorTypes'
 import { createNode, replace } from './astUtils'
 
-let num = 0
+const nextId = (() => {
+  let num = 0
 
-const nextId = () => {
-  num++
-  return num
-}
+  return () => {
+    num++
+    return num
+  }
+})()
 
 export type VisualizerState = {
-  id: number
-  root?: es.Node
-  _suppress: boolean
-  _calls: Stack<es.Node>
+  id: number,
+  root?: es.Node,
+  _suppress: boolean,
+  _calls: Stack<es.Node>,
 }
 
+/**
+ * Create new visualizer interpreter
+ */
 export const create = (): VisualizerState => ({
-  id: num,
+  id: nextId(),
   _suppress: true,
   _calls: Stack<es.Node>(),
 })
 
-export const next = (visualizer: VisualizerState, evaluator: InspectableState): VisualizerState => {
+/**
+ * Advance visualizer interpreter from interpreter interpreter
+ *
+ * @param visualizer The visualizer interpreter
+ * @param interpreter The interpreter interpreter
+ * @returns {VisualizerState} the next visualizer interpreter
+ */
+export const next = (visualizer: VisualizerState, interpreter: InspectableState): VisualizerState => {
   const { _calls, root, _suppress } = visualizer
 
-  if (!evaluator.node) {
+  if (!interpreter.node) {
     return visualizer
   }
 
-  if (evaluator._done) {
-    switch (evaluator.node.type) {
+  if (interpreter._done) {
+    switch (interpreter.node.type) {
       /**
        * Do nothing after statement.
        */
@@ -58,26 +70,26 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
       /**
        * When an expression has been completely evaluated,
        * replace the evaluated expression with a node constructor from
-       * evaluator value.
+       * interpreter value.
        */
       case 'UnaryExpression':
       case 'BinaryExpression':
       case 'LogicalExpression':
       case 'ConditionalExpression':
       case 'Identifier':
-        if (evaluator.node.type === 'Identifier' && evaluator.value instanceof Closure) {
+        if (interpreter.node.type === 'Identifier' && interpreter.value instanceof Closure) {
           return visualizer
         }
         if (!_suppress && root) {
           const callId = visualizer._calls.peek()
             ? (visualizer._calls.peek() as any).__call
             : undefined
-          const toReplace = {...evaluator.node, __call: callId}
-          const replaceWith = {...createNode(evaluator.value), __call: callId}
+          const toReplace = {...interpreter.node, __call: callId}
+          const replaceWith = {...createNode(interpreter.value), __call: callId}
           return {
             ...visualizer,
             id: nextId(),
-            root: replace(root, toReplace, replaceWith)
+            root: replace(root, toReplace, replaceWith),
           }
         } else {
           return visualizer
@@ -89,14 +101,14 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
         return visualizer
     }
   } else {
-    switch (evaluator.node.type) {
+    switch (interpreter.node.type) {
       case 'BlockStatement':
         return {
           ...visualizer,
-          _suppress: true
+          _suppress: true,
         }
       case 'ExpressionStatement':
-        const node = evaluator.node as es.ExpressionStatement
+        const node = interpreter.node as es.ExpressionStatement
         if (_calls.isEmpty()) {
           return {
             ...visualizer,
@@ -108,7 +120,7 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
           return visualizer
         }
       case 'VariableDeclaration':
-        const decl = evaluator.node as es.VariableDeclaration
+        const decl = interpreter.node as es.VariableDeclaration
         if (_calls.isEmpty()) {
           return {
             ...visualizer,
@@ -119,24 +131,23 @@ export const next = (visualizer: VisualizerState, evaluator: InspectableState): 
           return visualizer
         }
       case 'ReturnStatement':
-        const returnStmt = evaluator.node as es.ReturnStatement
         const callId = (visualizer._calls.peek() as any).__call
-        const argNode = {...evaluator.node.argument!, __call: callId }
+        const argNode = {...interpreter.node.argument!, __call: callId }
         if (root) {
           return {
             ...visualizer,
             id: nextId(),
             root: replace(root, visualizer._calls.peek(), argNode),
-            _suppress: false
+            _suppress: false,
           }
         } else {
           return visualizer
         }
       case 'CallExpression':
-        const callNode = {...evaluator.node, __call: nextId() }
+        const callNode = {...interpreter.node, __call: nextId() }
         return {
           ...visualizer,
-          _calls: visualizer._calls.push(callNode)
+          _calls: visualizer._calls.push(callNode),
         }
       case 'FunctionDeclaration':
       case 'IfStatement':

@@ -1,9 +1,6 @@
-import {
-  parse as acornParse,
-  Options as AcornOptions,
-  SourceLocation,
-} from 'acorn'
 import * as es from 'estree'
+import { parse as acornParse, Options as AcornOptions, SourceLocation } from 'acorn'
+
 import { Visitors, noop, visitProgram } from './visitors'
 import { StudentError, ErrorType } from './errorTypes'
 

@@ -1,8 +1,6 @@
 import * as es from 'estree'
 import { List, Record, Stack, Map } from 'immutable'
 
-import { freshId } from './parser'
-
 import { Scope, EvaluatorState } from './evaluatorTypes'
 import { ErrorType, StudentError } from './errorTypes'
 import { createNode } from './astUtils'
@@ -23,7 +21,7 @@ const initialState: EvaluatorState = {
 let frameCtr = 0
 let lambdaCtr = 0
 
-export class State extends Record(initialState) implements EvaluatorState {
+export class InterpreterState extends Record(initialState) implements EvaluatorState {
   isRunning: boolean
   frames: Stack<number>
   scopes: Map<number, Scope>
@@ -35,19 +33,29 @@ export class State extends Record(initialState) implements EvaluatorState {
   _result?: any
   _isReturned?: boolean
   _done: boolean
+  
+  with(params: Partial<EvaluatorState>) {
+    return this.merge(params) as this
+  }
 }
 
-export const createState = (): State => {
+/**
+ * Create initial interpreter interpreter with global environment.
+ *
+ * @returns {InterpreterState}
+ */
+export const createState = (): InterpreterState => {
   const globalEnv: Scope = {
     name: '_global_',
     parent: undefined,
-    environment: Map<string, any>()
+    environment: Map<string, any>(),
   }
-  return new State({
+
+  return new InterpreterState({
     _done: false,
     _isReturned: false,
     _result: undefined,
-    isRunning:false,
+    isRunning: false,
     frames: Stack.of(0),
     scopes: Map.of(0, globalEnv),
     errors: List(),
@@ -56,16 +64,16 @@ export const createState = (): State => {
   })
 }
 
-const stop = (state: State): State =>
-  state.merge({ isRunning: false }) as State
+const stop = (state: InterpreterState): InterpreterState =>
+  state.with({ isRunning: false }) 
 
-const start = (state: State): State =>
-  state.merge({ isRunning: true }) as State
+const start = (state: InterpreterState): InterpreterState =>
+  state.with({ isRunning: true }) 
 
-const defineVariable = (state: State, name: string, value: any): State => {
+const defineVariable = (state: InterpreterState, name: string, value: any): InterpreterState => {
   const currentFrame = state.frames.peek()
   const scope = state.scopes.get(currentFrame)
-  return state.merge({
+  return state.with({
     scopes: state.scopes.set(
       currentFrame,
       {
@@ -73,28 +81,28 @@ const defineVariable = (state: State, name: string, value: any): State => {
         environment: scope.environment.set(name, value),
       },
     ),
-  }) as State
+  })
 }
 
-const popFrame = (state: State): State =>
-  state.merge({ frames: state.frames.pop() }) as State
+const popFrame = (state: InterpreterState): InterpreterState =>
+  state.with({ frames: state.frames.pop() }) 
 
-const pushFrame = (state: State, scope: Scope): State => {
+const pushFrame = (state: InterpreterState, scope: Scope): InterpreterState => {
   frameCtr++
-  return state.merge({
+  return state.with({
     scopes: state.scopes.set(frameCtr, scope),
     frames: state.frames.push(frameCtr),
-  }) as State
+  }) 
 }
 
-const fatalError = (state: State, error: StudentError): State => {
-  return state.merge({
+const fatalError = (state: InterpreterState, error: StudentError): InterpreterState => {
+  return state.with({
     errors: state.errors.push(error),
     isRunning: false,
-  }) as State
+  }) 
 }
 
-const getEnv = (name: string, state: State) => {
+const getEnv = (name: string, state: InterpreterState) => {
   let scope = state.scopes.get(state.frames.peek())
 
   do {
@@ -108,8 +116,8 @@ const getEnv = (name: string, state: State) => {
   return undefined
 }
 
-export function* evalExpression(node: es.Expression, state: State): any {
-  yield state.merge({ node, _done: false })
+export function* evalExpression(node: es.Expression, state: InterpreterState): any {
+  yield state.with({ node, _done: false })
 
   let value: any
   let selfEvaluating = false
@@ -148,16 +156,16 @@ export function* evalExpression(node: es.Expression, state: State): any {
   }
 
   if (selfEvaluating) {
-    const nextState = state.merge({ _done: true, node, value })
+    const nextState = state.with({ _done: true, node, value })
     yield nextState
     return nextState
   } else {
-    yield state.merge({ _done: true, node })
+    yield state.with({ _done: true, node })
     return state
   }
 }
 
-function* evalCallExpression(node: es.CallExpression, state: State) {
+function* evalCallExpression(node: es.CallExpression, state: InterpreterState) {
   // Evaluate Callee
   state = yield* evalExpression(node.callee as any, state)
   const callee = state.value
@@ -174,11 +182,11 @@ function* evalCallExpression(node: es.CallExpression, state: State) {
 
     state = pushFrame(state, callee.createScope(args))
 
-    yield state.merge({ _done: false, node: callee.node.body })
+    yield state.with({ _done: false, node: callee.node.body })
 
     state = yield* evalBlockStatement(callee.node.body, state)
 
-    yield state.merge({ _done: true, node: callee.node.body })
+    yield state.with({ _done: true, node: callee.node.body })
 
     return popFrame(state).merge({ _done: true })
   } else {
@@ -197,7 +205,7 @@ function* evalCallExpression(node: es.CallExpression, state: State) {
   }
 }
 
-function* evalUnaryExpression(node: es.UnaryExpression, state: State) {
+function* evalUnaryExpression(node: es.UnaryExpression, state: InterpreterState) {
   let value
   state = yield* evalExpression(node.argument, state)
 
@@ -210,10 +218,10 @@ function* evalUnaryExpression(node: es.UnaryExpression, state: State) {
     value =  +state.value
   }
 
-  return state.merge({ _done: true, value })
+  return state.with({ _done: true, value })
 }
 
-function* evalBinaryExpression(node: es.BinaryExpression, state: State) {
+function* evalBinaryExpression(node: es.BinaryExpression, state: InterpreterState) {
   state = yield* evalExpression(node.left, state)
   const left = state.value
   state = yield* evalExpression(node.right, state)
@@ -258,10 +266,10 @@ function* evalBinaryExpression(node: es.BinaryExpression, state: State) {
       result = undefined
   }
 
-  return state.merge({ value: result })
+  return state.with({ value: result })
 }
 
-function* evalLogicalExpression(node: es.LogicalExpression, state: State) {
+function* evalLogicalExpression(node: es.LogicalExpression, state: InterpreterState) {
   state = yield* evalExpression(node.left, state)
   const left = state.value
 
@@ -274,7 +282,7 @@ function* evalLogicalExpression(node: es.LogicalExpression, state: State) {
   return state
 }
 
-function* evalConditionalExpression(node: es.ConditionalExpression, state: State) {
+function* evalConditionalExpression(node: es.ConditionalExpression, state: InterpreterState) {
   state = yield* evalExpression(node.test, state)
 
   if (state.value) {
@@ -284,8 +292,8 @@ function* evalConditionalExpression(node: es.ConditionalExpression, state: State
   }
 }
 
-export function* evalStatement(node: es.Statement, state: State): any {
-  yield state.merge({ node, _done: false })
+export function* evalStatement(node: es.Statement, state: InterpreterState): any {
+  yield state.with({ node, _done: false })
 
   switch (node.type) {
     case 'VariableDeclaration':
@@ -307,10 +315,10 @@ export function* evalStatement(node: es.Statement, state: State): any {
       break
   }
 
-  return state.merge({ _done: true, node })
+  return state.with({ _done: true, node })
 }
 
-function* evalVariableDeclaration(node: es.VariableDeclaration, state: State) {
+function* evalVariableDeclaration(node: es.VariableDeclaration, state: InterpreterState) {
   const declarator = node.declarations[0]
   const ident = declarator.id as es.Identifier
 
@@ -318,19 +326,19 @@ function* evalVariableDeclaration(node: es.VariableDeclaration, state: State) {
 
   state = defineVariable(state, ident.name, state.value)
 
-  return state.merge({ value: undefined })
+  return state.with({ value: undefined })
 }
 
-function* evalFunctionDeclaration(node: es.FunctionDeclaration, state: State) {
+function* evalFunctionDeclaration(node: es.FunctionDeclaration, state: InterpreterState) {
   const ident = node.id as es.Identifier
   const closure = new Closure(node as any, state.frames.first())
 
   state = defineVariable(state, ident.name, closure)
 
-  return state.merge({ value: undefined })
+  return state.with({ value: undefined })
 }
 
-function* evalIfStatement(node: es.IfStatement, state: State) {
+function* evalIfStatement(node: es.IfStatement, state: InterpreterState) {
   state = yield* evalExpression(node.test, state)
 
   state = state.value
@@ -340,27 +348,27 @@ function* evalIfStatement(node: es.IfStatement, state: State) {
   return state
 }
 
-function* evalExpressionStatement(node: es.ExpressionStatement, state: State) {
+function* evalExpressionStatement(node: es.ExpressionStatement, state: InterpreterState) {
   state = yield* evalExpression(node.expression, state)
   return state
 }
 
-function* evalReturnStatement(node: es.ReturnStatement, state: State) {
+function* evalReturnStatement(node: es.ReturnStatement, state: InterpreterState) {
   state = yield* evalExpression(node.argument as es.Expression, state)
-  return state.merge({ _isReturned: true })
+  return state.with({ _isReturned: true })
 }
 
-function* evalBlockStatement(node: es.BlockStatement, state: State) {
+function* evalBlockStatement(node: es.BlockStatement, state: InterpreterState) {
   for (const stmt of node.body) {
     state = yield* evalStatement(stmt as es.Statement, state)
     if (state._isReturned) {
       break
     }
   }
-  return state.merge({ _isReturned: false })
+  return state.with({ _isReturned: false })
 }
 
-export function* evalProgram(node: es.Program, state: State) {
+export function* evalProgram(node: es.Program, state: InterpreterState) {
   state = yield* evalBlockStatement(node as any, start(state))
 
   return stop(state)
