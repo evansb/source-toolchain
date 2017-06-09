@@ -22,36 +22,85 @@
     <title>Source Toolchain</title>
   </head>
   <body>
-    <noscript>
-      You need to enable JavaScript to run this app.
-    </noscript>
     <div class="App">
       <header class="App-header">
-        <div class="container">
-          <div class="App-logo">
-            <img alt="Logo" src="logo.png" class="img-fit" />
-          </div>
-          <h2>source<span class="App-subtitle">toolchain</span></h2>
-          <h6 class="App-subheading">A Subset of ES5 Optimised for Education</h6>
-          <a href="https://github.com/evansb/source-toolchain" class="btn btn-primary btn-lg">View on GitHub</a>
+        <div class="container columns">
+            <div class="column col-2 col-sm-12">
+              <div class="App-logo">
+                <img alt="Logo" src="logo.png" class="img-fit" />
+              </div>
+            </div>
+            <div class="column col-10 col-sm-12">
+              <h2>source<span class="App-subtitle">toolchain</span></h2>
+              <h6 class="App-subheading">Toolkit for Learning Programming Using JavaScript</h6>
+              <a href="https://github.com/evansb/source-toolchain" class="btn btn-primary btn-lg">
+                View on GitHub
+              </a>
+            </div>
         </div>
       </header>
       <div class="App-main">
+
+        <!-- Single Step Interpreter -->
+        <div class="Section">
+          <div class="container">
+            <div class="columns">
+              <div class="col-10 col-sm-12">
+                <h4>Time-Travelling Interpreter</h4>
+                <h6>Evaluates Program Step-by-Step According to Substitution Model</h6>
+                <p>
+                  While most interpreters and debuggers step the code statement-by-statement,
+                  Source interpreter breaks it down to the expression level. Time travelling
+                  is possible by making Source interpreter state immutable.
+                  <br />
+                  <div class="columns">
+                      <div class="col-6 col-sm-12">
+                        <ul>
+                          <li>Single Step Interpreter with Time Travelling.</li>
+                          <li>Trace Expression Evaluation.</li>
+                          <li>Understand Recursion Using Environment Visualizer.</li>
+                        </ul>
+                      </div>
+                      <div class="col-6 col-sm-12">
+                        <ul>
+                          <li>Runs in Browser and NodeJS.</li>
+                          <li>Sandboxed Interpreter with Native JavaScript Interop.</li>
+                        </ul>
+                      </div>
+                  </div>
+                </p>
+              </div>
+            </div>
+            <noscript>
+              You need to enable JavaScript to run the demo.
+            </noscript>
+            <div id="interpreter-root"></div>
+          </div>
+        </div>
+
         <!-- Week By Week -->
         <div class="Section">
           <div class="container">
             <div class="columns">
-              <div class="Section-img-container col-2 col-sm-12">
-                <img alt='' class="img-responsive" src="syntax.png" />
-              </div>
               <div class="col-10 col-sm-12">
-                <h4>Evolving Syntax</h4>
-                <h6>Starts with Lambda, Ends With Loops</h6>
+                <h4>Only Good Parts of JavaScript</h4>
+                <h6>Say no to Hoisting and Non Strict Equality</h6>
                 <p>
-                  Students start with a small, purely functional language.
-                  More features such as list data structure are introduced gradually.
-                  Eventually, imperative programming constructs such as objects and loops are added.
-                  We added a sanitizer phase to make sure students only used allowed language features.
+                  We eliminate JavaScript features such as non-strict equality, hoisting,
+                  variadic arguments, null values, syntax and semantics that might cause confusion
+                  for beginners.
+                </p>
+                <br />
+                <h6>Growing Language</h6>
+                <p>
+                  Students start with a small, purely functional subset of JavaScript.
+                  As the learning progress, more features such
+                  as list data structure are introduced gradually.
+                  Eventually, imperative programming constructs such
+                  as objects and loops are added.
+                  <br />
+                  <br />
+                  We added a sanitizer phase after parsing to make sure students only used allowed language features.
                 </p>
               </div>
             </div>
@@ -74,46 +123,20 @@
           </div>
         </div>
 
-        <!-- Single Step Interpreter -->
+        <!-- Friendly Syntax Analyzer -->
         <div class="Section">
           <div class="container">
             <div class="columns">
-              <div class="Section-img-container col-2 col-sm-12">
-                <img alt='' class="img-responsive" src="interpreter.png" />
-              </div>
-              <div class="col-10 col-sm-12">
-                <h4>Time-Travelling Interpreter</h4>
-                <h6>Evaluates Expression Step-by-Step</h6>
-                <p>
-                  The sandboxed interpreter runs in browsers and NodeJS. Unlike most interpreters and debuggers, it reduces expressions
-                  step-by-step according to the substitution model. The environment and the stack frame is using immutable data structures,
-                  making time travelling possible. Interop with JavaScript code is also supported.
-                </p>
-              </div>
-            </div>
-            <div id="interpreter-root" />
-          </div>
-        </div>
-
-        <div class="Section">
-          <div class="container">
-            <div class="columns">
-              <div class="Section-img-container col-2 col-sm-12">
-                <img alt='' class="img-responsive" src="friendly.png" />
-              </div>
               <div class="col-10 col-sm-12">
                 <h4>Friendly Syntax Analyzer</h4>
                 <h6>Explain common mistakes with clear error messages</h6>
                 <p>
                   Error messages should be educating, not fighting back.
-                  We make sure every errors, be it at the syntax or semantic
-                  level to have a human friendly explanation and suggestion for
-                  fixing them.
+                  We tried our best to make every errors, syntax or semantic,
+                  to have a <em>human friendly explanation</em> and <em>suggestion for
+                  fixing them</em>.
                 </p>
               </div>
-            </div>
-            <div class="columns">
-              <h6>Under Construction</h6>
             </div>
           </div>
         </div>
@@ -121,12 +144,14 @@
 
       <!-- Footer -->
       <footer class="Footer">
-        <ul class="Footer-links">
-          <li><a href="https://source-academy.comp.nus.edu.sg/">Source Academy</a></li>
-          <li><a href="https://comp.nus.edu.sg">NUS School of Computing</a></li>
-        </ul>
-        <div class="Footer-copyright">&copy; 2017 - Source Academy Team</div>
-        <div class="Footer-art">Illustrations by Ng Tse Pei</div>
+        <div class="container">
+            <ul class="Footer-links">
+              <li><a href="https://source-academy.comp.nus.edu.sg/">Source Academy</a></li>
+              <li><a href="https://comp.nus.edu.sg">NUS School of Computing</a></li>
+            </ul>
+            <div class="Footer-copyright">&copy; 2017 - Source Academy Team</div>
+            <div class="Footer-art">Illustrations by Ng Tse Pei</div>
+        </div>
       </footer>
     </div>
     <!--

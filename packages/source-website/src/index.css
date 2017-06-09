@@ -90,10 +90,8 @@ span.Section-week {
 
 .App-header {
   background-color: #272134;
-  height: 350px;
-  padding: 20px;
+  padding: 50px;
   color: #fafafa;
-  text-align: center
 }
 
 .App-intro {
@@ -141,8 +139,8 @@ span.Section-week {
 }
 
 .Section {
-  margin-top: 75px;
-  margin-bottom: 75px;
+  margin-top: 50px;
+  margin-bottom: 50px;
 }
 
 .Section-control { 
@@ -174,6 +172,7 @@ span.Section-week {
 }
 
 .Footer {
+  margin: 0 auto;
   background-color: black;
   padding: 75px 50px 50px;
   color: #cccccc;
