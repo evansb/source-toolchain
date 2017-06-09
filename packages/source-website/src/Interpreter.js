@@ -14,11 +14,13 @@ class Editor extends Component {
 }
 
 const Controls = ({ isNextDisabled, isPreviousDisabled,
-    isStartOverDisabled, isUntilEndDisabled,
-    handleNext, handlePrevious, handleStartOver, handleUntilEnd }) => (
+    isStartOverDisabled, isUntilEndDisabled, isStopDisabled,
+    handleNext, handlePrevious, handleStartOver, handleStop, handleUntilEnd }) => (
   <div className="Section-control btn-group columns">
     <button onClick={handleStartOver} disabled={isStartOverDisabled}
       className="btn btn-primary">Start</button>
+    <button onClick={handleStop} disabled={isStopDisabled}
+            className="btn btn-primary">Stop</button>
     <button onClick={handleNext} disabled={isNextDisabled}
       className="btn btn-primary">Next</button>
     <button onClick={handlePrevious} disabled={isPreviousDisabled}
@@ -72,7 +74,8 @@ const EnvironmentTable = ({ scopes, frames }) => {
     const id = "accordion-" + idx
     content.push(
       <div key={idx} className="accordion-item">
-        <input type="radio" id={id} name="accordion-radio" hidden checked={idx === frames.size - 1} />
+        <input type="radio" id={id} name="accordion-radio" readOnly hidden
+               checked={idx === frames.size - 1} />
         <label className="accordion-header hand">{scope.name}</label>
         {child}
       </div>
@@ -130,45 +133,11 @@ function arithmetic(n) {
 arithmetic(3); 
 `)
     editor.clearSelection()
-
-    const session = createSession(3)
-
-    session.on('start', () => {
-      this.setState({
-        isRunning: true,
-        errors: [],
-        interpreter: session.interpreter,
-        interpreters: [session.interpreter],
-        visualizers: [session.visualizer],
-        visualizer: session.visualizer,
-      })
-    })
-
     editor.on('change', () => {
       this.removeMarkers()
     })
 
-    session.on('next', () => {
-      const { interpreter, visualizer } = session
-      const { interpreters, visualizers } = this.state
-
-      this.setState({
-        isRunning: true,
-        interpreter,
-        visualizer,
-        interpreters: interpreters.concat([interpreter]),
-        visualizers: visualizers.concat([visualizer])
-      })
-    })
-
-    session.on('errors', (errors) => {
-      this.setState({ errors })
-    })
-
-    session.on('done', () => {
-      this.removeMarkers()
-      this.setState({ isRunning: false })
-    })
+    const session = this.resetSession(editor)
 
     this.setState({ editor, session })
   }
@@ -200,6 +169,58 @@ arithmetic(3);
     if (session) {
       session.start(editor.getValue())
     }
+  }
+
+  handleStop = () => {
+    this.removeMarkers()
+    this.setState({
+      interpreter: null,
+      visualizer: null,
+      interpreters: [],
+      visualizers: [],
+      session: this.resetSession(),
+      isRunning: false,
+    })
+  }
+
+  resetSession(editor) {
+    editor = editor || this.state.editor
+    const session = createSession(3)
+
+    session.on('start', () => {
+      this.setState({
+        isRunning: true,
+        errors: [],
+        interpreter: session.interpreter,
+        interpreters: [session.interpreter],
+        visualizers: [session.visualizer],
+        visualizer: session.visualizer,
+      })
+    })
+
+    session.on('next', () => {
+      const { interpreter, visualizer } = session
+      const { interpreters, visualizers } = this.state
+
+      this.setState({
+        isRunning: true,
+        interpreter,
+        visualizer,
+        interpreters: interpreters.concat([interpreter]),
+        visualizers: visualizers.concat([visualizer])
+      })
+    })
+
+    session.on('errors', (errors) => {
+      this.setState({ errors })
+    })
+
+    session.on('done', () => {
+      this.removeMarkers()
+      this.setState({ isRunning: false })
+    })
+
+    return session
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -284,6 +305,8 @@ arithmetic(3);
             isPreviousDisabled={!session || !isRunning || !index || index <= 0}
             isStartOverDisabled={!session}
             isUntilEndDisabled={!session}
+            isStopDisabled={!session || !isRunning}
+            handleStop={this.handleStop}
             handleNext={this.handleNext}
             handlePrevious={this.handlePrevious}
             handleStartOver={this.handleStartOver}
