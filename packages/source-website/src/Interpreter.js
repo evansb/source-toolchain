@@ -1,4 +1,4 @@
-import { createSession } from 'source-toolchain'
+import { createSession, Closure } from 'source-toolchain'
 import { generate } from 'escodegen'
 import React, { Component } from 'react'
 
@@ -36,7 +36,7 @@ const Visualizer = ({ visualizer }) => (
 )
 
 const valueToString = (v) => {
-  if (v.constructor && v.constructor.name === 'Closure') {
+  if (v instanceof Closure) {
     return v.node.id ? `<function ${v.node.id.name}>` : '<lambda>'
   } else {
     return v.toString()
