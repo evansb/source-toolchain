@@ -6,9 +6,8 @@ import * as es from 'estree'
 import * as EventEmitter from 'eventemitter2'
 import * as invariant from 'invariant'
 
-import { StudentError } from './errorTypes'
 import { explainError } from './errorUtils'
-import { ParserState, parse } from './parser'
+import { ParserState, parse, createParser } from './parser'
 import { InterpreterState, evalProgram, createState } from './evaluator'
 import { VisualizerState, create as createVisualizer, next as nextVisualizer } from './visualizer'
 
@@ -113,7 +112,8 @@ export class Session extends EventEmitter.EventEmitter2 {
     delete this.genInterpreter
 
     this.isInterpreting = true
-    this.parser = parse(code, this.week, '1.js', this.parser)
+    this.parser = this.parser || createParser({ week: this.week })
+    this.parser = parse(code, this.parser)
 
     if (this.parser.errors.length > 0) {
       this.isInterpreting = false

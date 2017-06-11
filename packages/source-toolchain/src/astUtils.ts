@@ -49,7 +49,7 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
     }
 
     if (n.type === 'CallExpression') {
-      return {...n, callee: go(n.callee), arguments: n.arguments.map(go),}
+      return {...n, callee: go(n.callee), arguments: n.arguments.map(go)}
     } else if (n.type === 'ConditionalExpression') {
       return {
         ...n,

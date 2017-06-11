@@ -41,7 +41,7 @@ class Closure {
 
   /** Get name of the scope */
   get name() {
-    return this.node.id ? this.node.id.name : `<lambda-${this.id!}>`
+    return this.node.id ? this.node.id.name : `lambda-${this.id!}`
   }
 
   getScopeName(args: any[]) {

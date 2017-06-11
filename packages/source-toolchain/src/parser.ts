@@ -1,16 +1,34 @@
+/// <reference path='parser.d.ts' />
 import * as es from 'estree'
-import { parse as acornParse, Options as AcornOptions,
-  SourceLocation, Position } from 'acorn'
-
-import { Visitors, noop, visitProgram } from './visitors'
+import {
+  parse as acornParse,
+  Options as AcornOptions,
+  SourceLocation,
+  Position,
+} from 'acorn'
+import { simple } from 'acorn/dist/walk'
 import { StudentError, ErrorType } from './errorTypes'
+import syntaxTypes from './syntaxTypes'
 
-export type SymbolTable = {
-  [name: string]: {
-    name: string,
-    loc: es.SourceLocation,
-  },
+export type ParserOptions = {
+  week: number,
 }
+
+export type CFGSymbol = {
+  node: es.Identifier,
+}
+
+export type CFGVertex = {
+  node: es.Node,
+  definitions: CFGSymbol[],
+  usages: CFGSymbol[],
+}
+
+export type CFGEdge = {
+  type: 'next' | 'alternate' | 'consequent',
+}
+
+export type CFG = { [id: string]: ({[id: string]: CFGEdge}) }
 
 export type Comment = {
   type: 'Line' | 'Block',
@@ -21,107 +39,68 @@ export type Comment = {
 }
 
 export type ParserState = {
+  week: number
   stopped: boolean,
   node?: es.Program,
+  currentGraph: CFG,
   errors: StudentError[],
-  frames: SymbolTable[],
   comments: Comment[],
-  environments: {
-    [name: string]: SymbolTable,
+  nodes: { [id: string]: CFGVertex }
+  graphs: {
+    [name: string]: CFG,
   },
 }
 
-const syntaxTypes: {[nodeName: string]: number} = {
-  Program: 3,
-  // Statements
-  ExpressionStatement: 3,
-  IfStatement: 3,
-  FunctionDeclaration: 3,
-  VariableDeclaration: 3,
-  ReturnStatement: 3,
-  // Expressions
-  CallExpression: 3,
-  UnaryExpression: 3,
-  BinaryExpression: 3,
-  LogicalExpression: 3,
-  ConditionalExpression: 3,
-  FunctionExpression: 3,
-  Identifier: 3,
-  Literal: 3,
-}
-
-const compose = <S extends es.Node>
-  (v1: (parent: es.Node, node: S) => void,
-   v2: (parent: es.Node, node: S) => void) => (parent: es.Node, node: S) => {
-    v1(parent, node)
-    v2(parent, node)
+export const freshId = (() => {
+  let id = 0
+  return () => {
+    id++
+    return id
   }
+})()
 
-let counter = 0
-
-export const freshId = () => {
-  counter++
-  return `__node${counter}`
-}
-
-const defineVariable = (identifier: es.Identifier, state: ParserState) => {
-  if (state.frames[0]![identifier.name]) {
-    state.errors.push({
-      type: ErrorType.VariableRedeclaration,
-      node: identifier,
-    })
-  } else {
-    state.frames[0]![identifier.name] = {
-      name: identifier.name,
-      loc: identifier.loc!,
-    }
+function compose<T extends es.Node, S>(
+  w1: (node: T, state: S) => void,
+  w2: (node: T, state: S) => void) {
+  return (node: T, state: S) => {
+    w1(node, state)
+    w2(node, state)
   }
 }
 
-const isVariableDefined = (name: string, state: ParserState) => {
-  for (const frame of state.frames) {
-    if (frame.hasOwnProperty(name)) {
-      return true
-    }
-  }
-  return false
-}
+const createSyntaxCheckerWalker = () => {
+  const walkers: {[name: string]: (node: es.Node, state: ParserState) => void } = {}
 
-const createVisitors = (week: number, state: ParserState) => {
-  const visitors: Partial<Visitors> = {
-    onError(error: ErrorType, parent: es.Node, node: es.Node | null | undefined) {
-      state.errors.push({
-        type: error,
-        node: node!,
+  for (const type of Object.keys(syntaxTypes)) {
+    walkers[type] = (node: es.Node, state: ParserState) => {
+      Object.defineProperty(node, '__id', {
+        enumerable: true,
+        configurable: false,
+        writable: false,
+        value: freshId(),
       })
-    },
-  }
-
-  // Checking for allowed syntax types
-  const allowedTypes = getAllowedSyntaxTypes(week)
-
-  for (const type of allowedTypes) {
-    (visitors as any)[type] = {
-      before: (parent: es.Node | undefined, node: es.Node) => {
-        state.node = node as es.Program;
-        (node as any).__id = freshId()
-      },
-      after: noop,
+      if (syntaxTypes[node.type] > state.week) {
+        state.errors.push({
+          type: ErrorType.MatchFailure,
+          node,
+        })
+      }
     }
   }
 
-  // Augment If and Else visitors
-  visitors.IfStatement!.before = compose(
-    visitors.IfStatement!.before,
-    (parent: es.Node, node: es.IfStatement) => {
+  // If Statement must
+  // 1. Have Else case (week <= 3)
+  // 2. If and Els case must be Surrounded by braces
+  walkers.IfStatement = compose(
+    walkers.IfStatement,
+    (node: es.IfStatement, state: ParserState) => {
       if (node.consequent! && node.consequent.type !== 'BlockStatement') {
         state.errors.push({
           type: ErrorType.IfConsequentNotABlockStatement,
           node,
         })
       }
-
-      if (!node.alternate) {
+      if (state.week <= 3 && !node.alternate) {
         state.errors.push({
           type: ErrorType.MissingIfAlternate,
           node,
@@ -135,10 +114,11 @@ const createVisitors = (week: number, state: ParserState) => {
     },
   )
 
-  // Augment BinaryExpression visitors
-  visitors.BinaryExpression!.before = compose(
-    visitors.BinaryExpression!.before,
-    (parent: es.Node, node: es.BinaryExpression) => {
+  // Binary Expressions
+  // == and != are banned, must use !== and ===
+  walkers.BinaryExpression = compose(
+    walkers.BinaryExpression,
+    (node: es.BinaryExpression, state: ParserState) => {
       if (node.operator === '==') {
         state.errors.push({
           type: ErrorType.UseStrictEquality,
@@ -153,73 +133,29 @@ const createVisitors = (week: number, state: ParserState) => {
     },
   )
 
-  // Collect Symbols in the symbol table
-  visitors.VariableDeclaration!.after = compose(
-    (parent: es.Node, node: es.VariableDeclaration) => {
-      const identifier = node.declarations[0]!.id as es.Identifier
-      defineVariable(identifier, state)
-    },
-    visitors.VariableDeclaration!.after,
-  )
-
-  visitors.FunctionDeclaration!.before = compose(
-    visitors.FunctionDeclaration!.before,
-    (parent: es.Node, node: es.FunctionDeclaration) => {
-      defineVariable(node.id, state)
-      const frame: SymbolTable = {}
-      state.environments[node.id.name] = frame
-      node.params.forEach(p => {
-        const ident = p as es.Identifier
-        frame[ident.name] = {
-          name: ident.name,
-          loc: ident.loc!,
-        }
-      })
-      state.frames.unshift(frame)
-    },
-  )
-
-  visitors.FunctionDeclaration!.after = compose(
-    (parent: es.Node, node: es.FunctionDeclaration) => {
-      state.frames.shift()
-    },
-    visitors.FunctionDeclaration!.after,
-  )
-
-  // Identifier must exist when referenced
-  visitors.Identifier!.after = compose(
-    visitors.Identifier!.after,
-    (parent: es.Node, node: es.Identifier) => {
-      if (!isVariableDefined(node.name, state)) {
+  // Variable Declarations
+  // Can only have single declarations
+  walkers.VariableDeclaration = compose(
+    walkers.VariableDeclaration,
+    (node: es.VariableDeclaration, state: ParserState) => {
+      if (node.declarations.length > 1) {
         state.errors.push({
-          type: ErrorType.UndefinedVariable,
+          type: ErrorType.MultipleDeclarations,
           node,
         })
       }
     },
   )
 
-  visitors.Program!.after = (parent: es.Node, node: es.Program) => {
-    state.stopped = true
-  }
-
-  return (visitors as Visitors)
+  return walkers
 }
 
-const getAllowedSyntaxTypes = (week: number) => {
-  return Object.keys(syntaxTypes).reduce((acc, type) => {
-    if (syntaxTypes[type] <= week) {
-      acc.push(type)
-    }
-    return acc
-  }, ([] as string[]))
-}
-
-const createParserOptions = (filename: string, state: ParserState): AcornOptions => ({
+const createAcornParserOptions = (state: ParserState): AcornOptions => ({
   sourceType: 'script',
   ecmaVersion: 5,
   locations: true,
-  onInsertedSemicolon(_end: any, loc: any) {
+
+  onInsertedSemicolon(end: any, loc: any) {
     const node = ({
       type: 'Statement',
       loc: {
@@ -232,48 +168,48 @@ const createParserOptions = (filename: string, state: ParserState): AcornOptions
       node,
     })
   },
+
   onTrailingComma(end: any, loc: Position) {
     const node = ({
       type: 'Statement',
-      loc,
+      loc: {
+        end: {line: loc.line, column: loc.column + 1},
+        start: loc,
+      },
     }) as any
     state.errors.push({
       type: ErrorType.TrailingComma,
       node,
     })
   },
+
   onComment: state.comments,
 })
 
-export const parse = (source: string, week: number, filename = 'unknown', previousState?: ParserState) => {
-  const initialFrame: SymbolTable = {
-  }
-
-  const state: ParserState = previousState || {
-    node: undefined,
+export const createParser = ({ week }: ParserOptions): ParserState => {
+  const global: CFG = {}
+  return {
+    week,
     stopped: false,
     errors: [],
     comments: [],
-    frames: [initialFrame],
-    environments: {
-      '*': initialFrame,
-    },
+    nodes: {},
+    currentGraph: global,
+    graphs: { '*global*': global },
   }
+}
 
-  state.stopped = false
-
+export const parse = (source: string, state: ParserState | number) => {
+  if (typeof state === 'number') {
+    state = createParser({ week: state })
+  }
   try {
-    const program = acornParse(source, createParserOptions(filename, state))
-    const visitors = createVisitors(week, state)
-    const generator = visitProgram(program, visitors)
-    while (!state.stopped) {
-      generator.next()
-    }
+    const program = acornParse(source, createAcornParserOptions(state))
     state.node = program
+    simple(program, createSyntaxCheckerWalker(), undefined, state)
   } catch (error) {
     if (error instanceof SyntaxError) {
       const loc = (error as any).loc
-
       state.errors.push({
         type: ErrorType.AcornParseError,
         explanation: error.toString(),
@@ -281,7 +217,7 @@ export const parse = (source: string, week: number, filename = 'unknown', previo
           type: 'Statement',
           loc: {
             start: { line: loc.line, column: loc.column },
-            end: { line: loc.line, column: loc.column + 1 }
+            end: { line: loc.line, column: loc.column + 1 },
           },
         }) as any,
       })

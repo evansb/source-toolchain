@@ -3,12 +3,12 @@ import * as es from 'estree'
 export enum ErrorType {
   AcornParseError,
   CallingNonFunctionValues,
-  DeclaratorNotIdentifier,
   IfAlternateNotABlockStatement,
   IfConsequentNotABlockStatement,
   MatchFailure,
   MissingIfAlternate,
   MissingSemicolon,
+  MultipleDeclarations,
   TrailingComma,
   UndefinedVariable,
   UseStrictEquality,

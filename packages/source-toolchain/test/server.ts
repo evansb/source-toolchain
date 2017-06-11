@@ -47,7 +47,6 @@ describe('Session', () => {
   it('next() calls visualizer correctly', () => {
     const session = new Session(3)
     return new Promise((resolve, reject) => {
-      let done = false
       session.on('next', () => {
         expect(session.visualizer).toBeDefined()
         expect(session.visualizer.root!.type).toBe('BinaryExpression')
@@ -87,8 +86,10 @@ describe('Session', () => {
       session.on('done', () => {
         if (counter === 0) {
           counter++
+          // capture
           state = session.interpreter
         } else {
+          // check if restored
           expect(session.interpreter).toBe(state)
           resolve()
         }
@@ -98,7 +99,7 @@ describe('Session', () => {
       })
       session.start('var x = 1 + 2;')
       session.untilEnd()
-      session.addCode('y;')
+      session.addCode('x = 3;')
       session.untilEnd()
     })
   })

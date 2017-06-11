@@ -1,8 +1,7 @@
 import * as es from 'estree'
 import { Stack } from 'immutable'
 import { parse } from '../src/parser'
-import { next, create, VisualizerState } from '../src/visualizer'
-import { evalProgram, createState } from '../src/evaluator'
+import { next, create } from '../src/visualizer'
 import { testVisualizer } from '../src/harness/visualizer'
 
 it('create() correctly creates initial visualizer interpreter', () => {
@@ -18,24 +17,23 @@ describe('next(v, e)', () => {
     visualizer = {...visualizer, nodes: Stack.of(parse('1;', 3).node!)}
     const evaluator = {
       _done: false,
-      node: parse('1 + 2;', 3).node!.body[0]
+      node: parse('1 + 2;', 3).node!.body[0],
     }
     visualizer = next(visualizer, evaluator)
     expect(visualizer.root).toBeDefined()
     expect(visualizer.root!.type).toBe('BinaryExpression')
   })
 
-
   it('stop visualization inside function call until next return statement', () => {
     const program = parse('function foo() { return 3; }\nfoo();', 3).node!
-    let visualizer = {...create(), _suppress: false}
+    const visualizer = {...create(), _suppress: false}
     const evaluator = {
       _done: false,
-      node: (program.body[0] as any).body
+      node: (program.body[0] as any).body,
     }
     const evaluator2 = {
       _done: false,
-      node: (program.body[0] as any).body[0]
+      node: (program.body[0] as any).body[0],
     }
     const visualizer2 = next(visualizer, evaluator)
     expect(visualizer2._suppress).toBe(true)
@@ -57,21 +55,21 @@ describe('next(v, e)', () => {
     result = next(base, {
       _done: true,
       node: one,
-      value: 1
+      value: 1,
     })
     expect(result.root.left.left.type).toBe('Literal')
     expect(result.root.left.left.value).toBe(1)
     result = next(base, {
       _done: true,
       node: logical,
-      value: 3
+      value: 3,
     })
     expect(result.root.right.type).toBe('Literal')
     expect(result.root.right.value).toBe(3)
     result = next(base, {
       _done: true,
       node: trueAndFalse,
-      value: false
+      value: false,
     })
     expect(result.root.left.right.type).toBe('Literal')
     expect(result.root.left.right.value).toBe(false)
@@ -86,7 +84,7 @@ it('visualizes complex expression without function calls', () => {
     '1 + 3 + (true ? 1 : 2)',
     '4 + (true ? 1 : 2)',
     '4 + 1',
-    '5'
+    '5',
   ])
 })
 
@@ -112,8 +110,8 @@ it('visualizes recursive calls (binary expression)', () => {
       '3 * (2 * factorial(1))',
       '3 * (2 * 1)',
       '3 * 2',
-      '6'
-    ]
+      '6',
+    ],
   )
 })
 
@@ -142,7 +140,7 @@ it('visualizes recursive calls (logical expression)', () => {
       'false || (false || true)',
       'false || true',
       'true',
-    ]
+    ],
   )
 })
 
@@ -191,9 +189,6 @@ it('visualizes recursive calls (fibonacci)', () => {
       '2 + (1 + 0)',
       '2 + 1',
       '3',
-    ]
+    ],
   )
 })
-
- 
-

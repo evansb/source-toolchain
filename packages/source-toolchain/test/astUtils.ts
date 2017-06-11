@@ -1,6 +1,6 @@
 import * as es from 'estree'
 import { createNode } from '../src/astUtils'
-import Closure from  '../src/Closure'
+import Closure from '../src/Closure'
 
 it('createNode correctly creates Node from value', () => {
   const n1 = createNode(3) as es.Literal
@@ -17,6 +17,6 @@ it('createNode correctly creates Node from value', () => {
 
   const node: any = {}
   const fn = new Closure(node, 0)
-  const n4 = createNode(fn) 
+  const n4 = createNode(fn)
   expect(n4).toBe(node)
 })

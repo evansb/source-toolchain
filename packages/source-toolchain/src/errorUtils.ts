@@ -32,14 +32,14 @@ export const explainError = (error: StudentError) => {
   switch (error.type) {
     case ErrorType.MatchFailure:
       return `${splitNodeType(error.node.type)} is not allowed`
-    case ErrorType.DeclaratorNotIdentifier:
-      return 'Declaring a variable using a non-identifier'
+    case ErrorType.MultipleDeclarations:
+      return 'Split into multiple declarations'
     case ErrorType.MissingIfAlternate:
       return 'Missing "else" case'
     case ErrorType.IfAlternateNotABlockStatement:
       return 'Missing a pair of curly braces around "else"'
     case ErrorType.IfConsequentNotABlockStatement:
-      return 'Missing a pair ofcurly braces around "if"'
+      return 'Missing a pair of curly braces around "if"'
     case ErrorType.TrailingComma:
       return 'Trailing comma'
     case ErrorType.MissingSemicolon:

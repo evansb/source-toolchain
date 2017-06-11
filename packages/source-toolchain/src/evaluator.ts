@@ -30,10 +30,9 @@ export class InterpreterState extends Record(initialState) implements EvaluatorS
   node?: es.Node
 
   // tslint:disable:variable-name
-  _result?: any
   _isReturned?: boolean
   _done: boolean
-  
+
   with(params: Partial<EvaluatorState>) {
     return this.merge(params) as this
   }
@@ -65,10 +64,10 @@ export const createState = (): InterpreterState => {
 }
 
 const stop = (state: InterpreterState): InterpreterState =>
-  state.with({ isRunning: false }) 
+  state.with({ isRunning: false })
 
 const start = (state: InterpreterState): InterpreterState =>
-  state.with({ isRunning: true }) 
+  state.with({ isRunning: true })
 
 const defineVariable = (state: InterpreterState, name: string, value: any): InterpreterState => {
   const currentFrame = state.frames.peek()
@@ -85,21 +84,21 @@ const defineVariable = (state: InterpreterState, name: string, value: any): Inte
 }
 
 const popFrame = (state: InterpreterState): InterpreterState =>
-  state.with({ frames: state.frames.pop() }) 
+  state.with({ frames: state.frames.pop() })
 
 const pushFrame = (state: InterpreterState, scope: Scope): InterpreterState => {
   frameCtr++
   return state.with({
     scopes: state.scopes.set(frameCtr, scope),
     frames: state.frames.push(frameCtr),
-  }) 
+  })
 }
 
 const fatalError = (state: InterpreterState, error: StudentError): InterpreterState => {
   return state.with({
     errors: state.errors.push(error),
     isRunning: false,
-  }) 
+  })
 }
 
 const getEnv = (name: string, state: InterpreterState) => {
