@@ -1,16 +1,13 @@
 import * as invariant from 'invariant'
 import * as es from 'estree'
-import { ParserState, CFGVertex, CFGType } from './parser'
+import { ParserState, CFGVertex } from './parser'
 import { generate } from 'escodegen'
-import { ErrorType } from './errorTypes'
 import { stripIndent } from 'common-tags'
 
 class TypeError {
   constructor(public node: es.Node, public explanation: string) {}
 }
 
-const checkBinaryOperator = (op: string, t1: CFGType, t2: CFGType): CFGType => {
-}
 /**
  * Run the type checker
  * @param state initial successful parser state
@@ -46,6 +43,7 @@ export const typeCheck = (state: ParserState) => {
              Please use If Statement or Conditional Expression instead.`)
         }
       } else {
+        return
       }
     },
   }
