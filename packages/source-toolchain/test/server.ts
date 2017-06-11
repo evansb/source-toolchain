@@ -1,4 +1,4 @@
-import { InterpreterState } from '../src/evaluator'
+import { InterpreterState } from '../src/interpreter'
 import { createSession, Session } from '../src/server'
 
 it('createSession correctly creates a session instance', () => {

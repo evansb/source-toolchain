@@ -1,12 +1,9 @@
-import * as es from 'estree'
 import { parse } from 'acorn'
 import { runConformationTests } from '../src/harness/conformation'
-import { evalProgram, createState } from '../src/evaluator'
-import { explainError } from '../src/errorUtils'
-import Closure from '../src/Closure'
+import { evalProgram, createInterpreter } from '../src/interpreter'
 
 it('evaluates program', () => {
-  const generator = evalProgram(parse('1 + 2;'), createState())
+  const generator = evalProgram(parse('1 + 2;'), createInterpreter())
   const states = []
   let g = generator.next()
   while (g.value.isRunning) {
@@ -24,7 +21,7 @@ it('evaluates program', () => {
 })
 
 it('detects calling non function value', () => {
-  const gen = evalProgram(parse(`2(3);`), createState())
+  const gen = evalProgram(parse(`2(3);`), createInterpreter())
   gen.next()
   gen.next()
   gen.next()

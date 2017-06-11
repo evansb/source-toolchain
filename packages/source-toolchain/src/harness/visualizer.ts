@@ -1,10 +1,10 @@
 import { generate } from 'escodegen'
 import { parse } from '../parser'
-import { createState, evalProgram } from '../evaluator'
+import { createInterpreter, evalProgram } from '../interpreter'
 import { create, next } from '../visualizer'
 
 export const testVisualizer = (program: string, expectedOutput: string[]) => {
-  let state = createState()
+  let state = createInterpreter()
   let visualizer = create()
 
   const node = parse(program, 3).node!

@@ -14,7 +14,7 @@ describe('Closure class', () => {
     const node: any = (parse('var x = function (n) {};').body[0] as any).declarations[0].init
     const closure = new Closure(node, 0, 0)
     const scope = closure.createScope([4])
-    expect(scope.name).toBe('<lambda-0>(4)')
+    expect(scope.name).toBe('lambda_0(4)')
     expect(scope.environment.get('n')).toBe(4)
     expect(scope.parent).toBe(0)
   })
@@ -22,6 +22,6 @@ describe('Closure class', () => {
     const node: any = (parse('var x = function (n) {};').body[0] as any).declarations[0].init
     const closure = new Closure(node, 0, 0)
     const scope = closure.createScope([new Closure(node, 0, 1)])
-    expect(scope.name).toBe('<lambda-0>(<lambda-1>)')
+    expect(scope.name).toBe('lambda_0(lambda_1)')
   })
 })

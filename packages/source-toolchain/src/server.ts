@@ -8,7 +8,8 @@ import * as invariant from 'invariant'
 
 import { explainError } from './errorUtils'
 import { ParserState, parse, createParser } from './parser'
-import { InterpreterState, evalProgram, createState } from './evaluator'
+import { InterpreterState } from './interpreterTypes'
+import { evalProgram, createInterpreter } from './interpreter'
 import { VisualizerState, create as createVisualizer, next as nextVisualizer } from './visualizer'
 
 /**
@@ -124,7 +125,7 @@ export class Session extends EventEmitter.EventEmitter2 {
       this.emit('done')
     } else {
       this.visualizer = createVisualizer()
-      this.interpreter = this.interpreter || createState()
+      this.interpreter = this.interpreter || createInterpreter()
       this.genInterpreter = evalProgram(this.parser.node as es.Program, this.interpreter)
     }
   }

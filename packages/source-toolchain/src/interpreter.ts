@@ -1,49 +1,20 @@
 import * as es from 'estree'
-import { List, Record, Stack, Map } from 'immutable'
+import { List, Stack, Map } from 'immutable'
 
-import { Scope, EvaluatorState } from './evaluatorTypes'
+import { Scope, InterpreterState } from './interpreterTypes'
 import { ErrorType, StudentError } from './errorTypes'
 import { createNode } from './astUtils'
 import Closure from './Closure'
 
-const initialState: EvaluatorState = {
-  isRunning: false,
-  frames: Stack<number>(),
-  scopes: Map<number, Scope>(),
-  errors: List<StudentError>(),
-  node: undefined,
-  value: undefined,
-
-  _isReturned: false,
-  _done: false,
-}
-
 let frameCtr = 0
 let lambdaCtr = 0
-
-export class InterpreterState extends Record(initialState) implements EvaluatorState {
-  isRunning: boolean
-  frames: Stack<number>
-  scopes: Map<number, Scope>
-  errors: List<StudentError>
-  value?: any
-  node?: es.Node
-
-  // tslint:disable:variable-name
-  _isReturned?: boolean
-  _done: boolean
-
-  with(params: Partial<EvaluatorState>) {
-    return this.merge(params) as this
-  }
-}
 
 /**
  * Create initial interpreter interpreter with global environment.
  *
  * @returns {InterpreterState}
  */
-export const createState = (): InterpreterState => {
+export const createInterpreter = (): InterpreterState => {
   const globalEnv: Scope = {
     name: '_global_',
     parent: undefined,
@@ -318,21 +289,21 @@ export function* evalStatement(node: es.Statement, state: InterpreterState): any
 }
 
 function* evalVariableDeclaration(node: es.VariableDeclaration, state: InterpreterState) {
-  const declarator = node.declarations[0]
-  const ident = declarator.id as es.Identifier
+  const declaration = node.declarations[0]
+  const id = declaration.id as es.Identifier
 
-  state = yield* evalExpression(declarator.init as es.Expression, state)
+  state = yield* evalExpression(declaration.init as es.Expression, state)
 
-  state = defineVariable(state, ident.name, state.value)
+  state = defineVariable(state, id.name, state.value)
 
   return state.with({ value: undefined })
 }
 
 function* evalFunctionDeclaration(node: es.FunctionDeclaration, state: InterpreterState) {
-  const ident = node.id as es.Identifier
+  const id = node.id as es.Identifier
   const closure = new Closure(node as any, state.frames.first())
 
-  state = defineVariable(state, ident.name, closure)
+  state = defineVariable(state, id.name, closure)
 
   return state.with({ value: undefined })
 }

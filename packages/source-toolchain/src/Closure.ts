@@ -1,5 +1,5 @@
 import * as es from 'estree'
-import { Scope } from './evaluatorTypes'
+import { Scope } from './interpreterTypes'
 import { Map } from 'immutable'
 
 /**
@@ -41,7 +41,7 @@ class Closure {
 
   /** Get name of the scope */
   get name() {
-    return this.node.id ? this.node.id.name : `lambda-${this.id!}`
+    return this.node.id ? this.node.id.name : `lambda_${this.id!}`
   }
 
   getScopeName(args: any[]) {

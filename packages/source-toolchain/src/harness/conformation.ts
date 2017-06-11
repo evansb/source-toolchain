@@ -4,7 +4,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { parse } from 'acorn'
 
-import { evalStatement, createState } from '../../src/evaluator'
+import { evalStatement, createInterpreter } from '../interpreter'
 
 const fixturesFolderPath = path.resolve(__dirname, '..', '..', 'test', 'fixtures')
 
@@ -51,7 +51,7 @@ export const loadAndParseConformation = (fixtureFilePath: string): ConformationT
 export const runConformationTests = (fixtureFilePath: string) => {
   const tests = loadAndParseConformation(fixtureFilePath)
 
-  let state = createState()
+  let state = createInterpreter()
 
   tests.forEach(t => {
     const generator = evalStatement(t.statement, state)
