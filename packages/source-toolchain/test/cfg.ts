@@ -17,12 +17,30 @@ describe('generateCFG', () => {
     expect(state.errors[0].type).toBe(ErrorType.UndefinedVariable)
     expect(explainError(state.errors[0])).toMatch(/Undefined/)
   })
-  it('correctly creates CFG', () => {
+  it('detects variable redeclaration', () => {
+    const state = createParser({ week: 3 })
+    parse(`
+    var x = 2;
+    1 + 2;
+    var x = 2;
+    `, state)
+    generateCFG(state)
+    expect(state.errors.length).toBe(1)
+    expect(explainError(state.errors[0])).toMatch(/redeclaration/)
+  })
+  it('correctly creates scope', () => {
     const state = createParser({ week: 3 })
     parse(`
       function foo(x, y) {
+        bar(4);
+        function zoo(x) {
+          bar(5);
+        }
+        zoo(3);
       }
       function bar(x) {
+        foo(3);
+        return 3;
       }
       var x = 2;
       var y = 4;
@@ -32,5 +50,9 @@ describe('generateCFG', () => {
     `, state)
     generateCFG(state)
     expect(state.errors.length).toBe(0)
+    expect(state.cfg.scopes.length).toBe(4)
+    expect(state.cfg.scopes.map(n => n.name)).toEqual(['*global*', 'foo', 'bar', 'zoo'])
+    expect(Object.keys(state.cfg.scopes[1].env)).toEqual(['x', 'y', 'zoo'])
+    expect(state.cfg.scopeStack[0].name).toBe('*global*')
   })
 })

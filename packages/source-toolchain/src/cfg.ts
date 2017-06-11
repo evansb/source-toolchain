@@ -6,6 +6,14 @@ import { ParserState, CFGScope } from './parser'
 
 type HasID = {__id: string, __param?: boolean, __declaration?: boolean}
 
+const freshId = (() => {
+  let id = 0
+  return () => {
+    id++
+    return 'lambda_' + id
+  }
+})()
+
 /**
  * Connect previously visited node stored in parser state to currently visited
  * node
@@ -58,11 +66,18 @@ const getSymbol = (state: ParserState, name: string) => {
 }
 
 const defineVariable = (state: ParserState, identifier: es.Identifier) => {
-  const scope = currentScope(state);
-  (identifier as any).__declaration = true
-  scope.env[identifier.name] = {
-    name: identifier.name,
-    definedAt: identifier.loc!,
+  const scope = currentScope(state)
+  if (scope.env.hasOwnProperty(identifier.name)) {
+    state.errors.push({
+      type: ErrorType.VariableRedeclaration,
+      node: identifier,
+    })
+  } else {
+    (identifier as any).__declaration = true
+    scope.env[identifier.name] = {
+      name: identifier.name,
+      definedAt: identifier.loc!,
+    }
   }
 }
 
@@ -82,6 +97,11 @@ const walk = (node: es.Node, visitors: any, state: ParserState) => {
   go(node, state, undefined)
 }
 
+type QueueElement = {
+  scope: CFGScope,
+  node: es.Node,
+}
+
 /**
  * Construct Control Flow Graph from given initial parser state.
  * @param initialState initial successful parser state
@@ -89,15 +109,31 @@ const walk = (node: es.Node, visitors: any, state: ParserState) => {
 export const generateCFG = (initialState: ParserState) => {
   invariant(initialState.node!, 'Must call parse() and successfully' +
     'generate AST before calling generateCFG()')
+  const globalScope = currentScope(initialState)
+  const queue: QueueElement[] = []
+
+  let skipCount = 0
 
   const walker = {
+    FunctionExpression(node: es.FunctionExpression & HasID, state: ParserState) {
+      if (skipCount) { return }
+      return walker.FunctionDeclaration(node as any, state)
+    },
     FunctionDeclaration(node: es.FunctionDeclaration & HasID, state: ParserState) {
+      if (node.id && node !== queue[0].node) {
+        defineVariable(state, node.id)
+      }
+      if (skipCount) { return }
+      if (node !== queue[0].node) {
+        queue.push({ node, scope: currentScope(state)})
+        skipCount++
+        return
+      }
       const scope: CFGScope = {
         parent: currentScope(state),
-        name: node.id.name,
+        name: node.id ? node.id.name : freshId(),
         env: {},
       }
-      defineVariable(state, node.id)
       node.params.forEach(n => {
         (n as any).__param = true
         const identifier = n as es.Identifier
@@ -111,14 +147,19 @@ export const generateCFG = (initialState: ParserState) => {
       delete state.cfg.lastNode
     },
     FunctionDeclarationAfter(node: es.FunctionDeclaration & HasID, state: ParserState) {
-      state.cfg.scopeStack.pop()
+      skipCount = Math.max(0, skipCount - 1)
+      if (node === queue[0].node) {
+        state.cfg.scopeStack.pop()
+      }
       state.cfg.lastNode = node
     },
     ExpressionStatement(node: es.ExpressionStatement & HasID, state: ParserState) {
+      if (skipCount) { return }
       connectPrevious(state, node)
       state.cfg.lastNode = node
     },
     VariableDeclaration(node: es.VariableDeclaration & HasID, state: ParserState) {
+      if (skipCount) { return }
       connectPrevious(state, node)
       const declaration = node.declarations[0]
       const identifier = declaration.id as es.Identifier
@@ -126,10 +167,16 @@ export const generateCFG = (initialState: ParserState) => {
       state.cfg.lastNode = node
     },
     IfStatement(node: es.IfStatement & HasID, state: ParserState) {
+      if (skipCount) { return }
+      connectPrevious(state, node)
+      state.cfg.lastNode = node
+    },
+    ReturnStatement(node: es.ReturnStatement & HasID, state: ParserState) {
       connectPrevious(state, node)
       state.cfg.lastNode = node
     },
     Identifier(node: es.Identifier & HasID, state: ParserState) {
+      if (skipCount) { return }
       // Skip if node is parameter or declaration
       if (node.__param || node.__declaration) {
         return
@@ -147,5 +194,15 @@ export const generateCFG = (initialState: ParserState) => {
       }
     },
   }
-  walk(initialState.node!, walker, initialState)
+
+  queue.push({ node: initialState.node!, scope: currentScope(initialState) })
+
+  while (queue.length > 0) {
+    const { node, scope } = queue[0]
+    initialState.cfg.scopeStack.push(scope)
+    walk(node, walker, initialState)
+    queue.shift()
+  }
+
+  initialState.cfg.scopeStack = [globalScope]
 }
