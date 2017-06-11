@@ -28,6 +28,25 @@ describe('generateCFG', () => {
     expect(state.errors.length).toBe(1)
     expect(explainError(state.errors[0])).toMatch(/redeclaration/)
   })
+  it('correctly set CFG roots', () => {
+    const state = createParser({ week: 3 })
+    parse(`
+      function foo(x, y) {
+        function zoo(x) {
+          var m = 3;
+        }
+      }
+      function bar(x) {
+        var n = 2;
+      }
+      bar(2);
+    `, state)
+    generateCFG(state)
+    expect(state.errors.length).toBe(0)
+    state.cfg.scopes.forEach(s => {
+      expect(s.root).toBeDefined()
+    })
+  })
   it('correctly creates scope', () => {
     const state = createParser({ week: 3 })
     parse(`

@@ -18,11 +18,13 @@
   },
   "dependencies": {
     "@types/acorn": "^4.0.2",
+    "@types/common-tags": "^1.2.5",
     "@types/escodegen": "^0.0.6",
     "@types/estree": "^0.0.35",
     "@types/invariant": "^2.2.28",
     "acorn": "^5.0.3",
     "babel-polyfill": "^6.23.0",
+    "common-tags": "^1.4.0",
     "escodegen": "^1.8.1",
     "eventemitter2": "^4.1.0",
     "immutable": "^3.8.1",

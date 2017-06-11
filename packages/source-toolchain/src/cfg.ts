@@ -14,6 +14,10 @@ const freshId = (() => {
   }
 })()
 
+function assignScope(state: ParserState, node: es.Node & HasID) {
+  state.cfg.nodes[node.__id].scope = currentScope(state)
+}
+
 /**
  * Connect previously visited node stored in parser state to currently visited
  * node
@@ -23,6 +27,8 @@ const freshId = (() => {
 function connectPrevious(state: ParserState, nextNode: es.Node & HasID): void {
   const parent = state.cfg.lastNode as (es.Node & HasID)
   if (!parent) {
+    const scope = currentScope(state)
+    scope.root = state.cfg.nodes[nextNode.__id]
     return
   }
   const vertex = state.cfg.nodes[parent.__id]
@@ -32,20 +38,20 @@ function connectPrevious(state: ParserState, nextNode: es.Node & HasID): void {
     if (consequent.body[0] === nextNode) {
       vertex.edges.push({
         type: 'consequent',
-        node: nextNode.__id,
+        node: state.cfg.nodes[nextNode.__id],
       })
       return
     } else if (alternate.body[0] === nextNode) {
       vertex.edges.push({
         type: 'alternate',
-        node: nextNode.__id,
+        node: state.cfg.nodes[nextNode.__id],
       })
       return
     }
   }
   vertex.edges.push({
     type: 'next',
-    node: nextNode.__id,
+    node: state.cfg.nodes[nextNode.__id],
   })
 }
 
@@ -124,6 +130,7 @@ export const generateCFG = (initialState: ParserState) => {
         defineVariable(state, node.id)
       }
       if (skipCount) { return }
+      connectPrevious(state, node)
       if (node !== queue[0].node) {
         queue.push({ node, scope: currentScope(state)})
         skipCount++
@@ -195,7 +202,7 @@ export const generateCFG = (initialState: ParserState) => {
     },
   }
 
-  queue.push({ node: initialState.node!, scope: currentScope(initialState) })
+  queue.push({ node: initialState.node!, scope: globalScope })
 
   while (queue.length > 0) {
     const { node, scope } = queue[0]

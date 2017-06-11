@@ -23,23 +23,28 @@ export type CFGScope = {
   },
 }
 
+export type CFGType = {
+  name: 'number' | 'string' | 'boolean' | 'function',
+  params?: CFGType[],
+}
+
 export type CFGSymbol = {
   name: string,
   definedAt?: es.SourceLocation,
+  type?: CFGType,
 }
 
 export type CFGVertex = {
   node: es.Node,
+  scope?: CFGScope,
   edges: CFGEdge[]
   usages: CFGSymbol[],
 }
 
 export type CFGEdge = {
   type: 'next' | 'alternate' | 'consequent',
-  node: string,
+  node: CFGVertex,
 }
-
-export type CFG = { [id: string]: ({[id: string]: CFGEdge}) }
 
 export type Comment = {
   type: 'Line' | 'Block',
