@@ -120,3 +120,9 @@ it('detects trailing comma', () => {
   expect(result.errors[0].type).toBe(ErrorType.TrailingComma)
   expect(explainError(result.errors[0])).toMatch(/Trailing.*comma/)
 })
+
+it('initialises CFG indexed nodes', () => {
+  const parser = createParser({ week: 3 })
+  const result = parse(`1 + 2;`, parser)
+  expect(Object.keys(result.cfg.nodes).length).toBe(5)
+})

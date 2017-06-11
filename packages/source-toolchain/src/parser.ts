@@ -14,18 +14,29 @@ export type ParserOptions = {
   week: number,
 }
 
+export type CFGScope = {
+  name: string,
+  parent?: CFGScope,
+  root?: CFGVertex,
+  env: {
+    [name: string]: CFGSymbol,
+  },
+}
+
 export type CFGSymbol = {
-  node: es.Identifier,
+  name: string,
+  definedAt?: es.SourceLocation,
 }
 
 export type CFGVertex = {
   node: es.Node,
-  definitions: CFGSymbol[],
+  edges: CFGEdge[]
   usages: CFGSymbol[],
 }
 
 export type CFGEdge = {
   type: 'next' | 'alternate' | 'consequent',
+  node: string,
 }
 
 export type CFG = { [id: string]: ({[id: string]: CFGEdge}) }
@@ -40,14 +51,14 @@ export type Comment = {
 
 export type ParserState = {
   week: number
-  stopped: boolean,
   node?: es.Program,
-  currentGraph: CFG,
   errors: StudentError[],
   comments: Comment[],
-  nodes: { [id: string]: CFGVertex }
-  graphs: {
-    [name: string]: CFG,
+  cfg: {
+    nodes: { [id: string]: CFGVertex }
+    scopes: CFGScope[],
+    scopeStack: CFGScope[],
+    lastNode?: es.Node,
   },
 }
 
@@ -55,7 +66,7 @@ export const freshId = (() => {
   let id = 0
   return () => {
     id++
-    return id
+    return 'node_' + id
   }
 })()
 
@@ -73,12 +84,18 @@ const createSyntaxCheckerWalker = () => {
 
   for (const type of Object.keys(syntaxTypes)) {
     walkers[type] = (node: es.Node, state: ParserState) => {
+      const id = freshId()
       Object.defineProperty(node, '__id', {
         enumerable: true,
         configurable: false,
         writable: false,
-        value: freshId(),
+        value: id,
       })
+      state.cfg.nodes[id] = {
+        node,
+        edges: [],
+        usages: [],
+      }
       if (syntaxTypes[node.type] > state.week) {
         state.errors.push({
           type: ErrorType.MatchFailure,
@@ -187,15 +204,19 @@ const createAcornParserOptions = (state: ParserState): AcornOptions => ({
 })
 
 export const createParser = ({ week }: ParserOptions): ParserState => {
-  const global: CFG = {}
+  const globalScope = {
+    name: '*global*',
+    env: {},
+  }
   return {
     week,
-    stopped: false,
     errors: [],
     comments: [],
-    nodes: {},
-    currentGraph: global,
-    graphs: { '*global*': global },
+    cfg: {
+      nodes: {},
+      scopes: [globalScope],
+      scopeStack: [globalScope],
+    },
   }
 }
 

@@ -7,7 +7,7 @@ declare module 'acorn/dist/walk' {
   type NodeTest = (nodeType: string, node: es.Node) => boolean
 
   interface AcornWalk {
-    base: SimpleVisitors<any>
+    base: any
     simple<S>(node: es.Node, visitors: SimpleVisitors<S>, base?: SimpleVisitors<S>, state?: S): void
     findNodeAt<S>(node: es.Node, start: null | number, end: null | number, test: string | NodeTest,
                   base?: SimpleVisitors<S>, state?: S): void
