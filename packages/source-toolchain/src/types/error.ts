@@ -8,6 +8,7 @@ export enum ErrorType {
   MissingIfAlternate,
   MissingSemicolon,
   MultipleDeclarations,
+  NoDeclarations,
   TrailingComma,
   UndefinedVariable,
   UseStrictEquality,

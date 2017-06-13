@@ -115,6 +115,12 @@ const checkVariableDeclaration = (node: es.VariableDeclaration, state: StaticSta
       type: ErrorType.MultipleDeclarations,
       node,
     })
+  } else if (node.declarations.length == 1 && !node.declarations[0].init) {
+    state.parser.errors.push({
+      kind: 'syntax',
+      type: ErrorType.NoDeclarations,
+      node,
+    })
   }
 }
 walkers.VariableDeclaration = compose(walkers.VariableDeclaration, checkVariableDeclaration)

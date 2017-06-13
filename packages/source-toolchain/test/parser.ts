@@ -103,6 +103,13 @@ it('detects not using strict inequality', () => {
   expect(explainError(result[0])).toMatch(/!==/)
 })
 
+it('detects missing declaration value', () => {
+  const result = parse3e(`var x;`)
+  expect(result.length).toBe(1)
+  expect(result[0].type).toBe(ErrorType.NoDeclarations)
+  expect(explainError(result[0])).toMatch(/Missing/)
+})
+
 it('detects trailing comma', () => {
   const result = parse3e(`[1,2,];`)
   expect(result.length).toBe(2)

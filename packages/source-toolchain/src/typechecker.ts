@@ -14,7 +14,7 @@ const stringT: CFG.Type = {name: 'string'}
 
 // Helper functions
 const isSameFunctionType = (t1: CFG.Type, t2: CFG.Type) => {
-  if (t1.params && t1.params.length != (t2.params && t2.params.length)) {
+  if (t1.params && t1.params.length !== (t2.params && t2.params.length)) {
     return false
   }
   for (let i = 0; i < t1.params!.length; i++) {
