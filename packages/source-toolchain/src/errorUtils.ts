@@ -2,7 +2,8 @@
  * Error reporting utilities.
  */
 import { generate } from 'escodegen'
-import { StudentError, ErrorType } from './errorTypes'
+import { ErrorType } from './types/error'
+import { SyntaxError, TypeError } from './types/static'
 
 // Split ESTree node type into two words
 // e.g FunctionDeclaration -> Function Declaration
@@ -28,7 +29,7 @@ const splitNodeType = (nodeType: string) => {
  *
  * @param error the error object
  */
-export const explainError = (error: StudentError) => {
+export const explainError = (error: SyntaxError | TypeError) => {
   switch (error.type) {
     case ErrorType.MatchFailure:
       return `${splitNodeType(error.node.type)} is not allowed`

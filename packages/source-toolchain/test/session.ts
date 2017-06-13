@@ -1,5 +1,5 @@
-import { InterpreterState } from '../src/interpreterTypes'
-import { createSession, Session } from '../src/server'
+import { InterpreterState } from '../src/types/dynamic'
+import { createSession, Session } from '../src/session'
 
 it('createSession correctly creates a session instance', () => {
   const session = createSession(3)
@@ -17,7 +17,7 @@ describe('Session', () => {
     const session = new Session(3)
     session.start('var x = 1 + 2;')
     expect(session.interpreter.frames.first()).toBe(0)
-    expect(session.interpreter.isRunning).toBe(false)
+    expect(session.interpreter.isRunning).toBe(true)
   })
 
   it('parses the program on start', () => {

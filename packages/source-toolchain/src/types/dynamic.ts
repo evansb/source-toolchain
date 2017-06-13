@@ -1,6 +1,7 @@
 import * as es from 'estree'
 import { Stack, List, Map, Record } from 'immutable'
-import { StudentError } from './errorTypes'
+// tslint:disable-next-line
+import { SyntaxError } from './static'
 
 export interface Scope {
   parent?: number,
@@ -14,11 +15,11 @@ export interface InspectableState {
   _done: boolean
 }
 
-const initialState = {
+const params = {
   isRunning: false,
   frames: Stack<number>(),
   scopes: Map<number, Scope>(),
-  errors: List<StudentError>(),
+  errors: List<SyntaxError>(),
   node: undefined,
   value: undefined,
 
@@ -26,13 +27,13 @@ const initialState = {
   _done: false,
 }
 
-export class InterpreterState extends Record(initialState)
+export class InterpreterState extends Record(params)
   implements InspectableState {
 
   isRunning: boolean
   frames: Stack<number>
   scopes: Map<number, Scope>
-  errors: List<StudentError>
+  errors: List<SyntaxError>
   value?: any
   node?: es.Node
 
@@ -40,7 +41,7 @@ export class InterpreterState extends Record(initialState)
   _isReturned?: boolean
   _done: boolean
 
-  with(params: Partial<InterpreterState>) {
-    return this.merge(params) as this
+  with(newParams: Partial<InterpreterState>) {
+    return this.merge(newParams) as this
   }
 }

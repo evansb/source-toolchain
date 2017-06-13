@@ -4,6 +4,8 @@ import { parse } from '../src/parser'
 import { next, create } from '../src/visualizer'
 import { testVisualizer } from '../src/harness/visualizer'
 
+const parse3 = (x: string) => parse(x, 3).parser.program!
+
 it('create() correctly creates initial visualizer interpreter', () => {
   const state = create()
   expect(state._calls).toBeInstanceOf(Stack)
@@ -14,10 +16,10 @@ it('create() correctly creates initial visualizer interpreter', () => {
 describe('next(v, e)', () => {
   it('on top level ExpressionStatement assign current expression to its expression and clears node stack', () => {
     let visualizer = create()
-    visualizer = {...visualizer, nodes: Stack.of(parse('1;', 3).node!)}
+    visualizer = {...visualizer, nodes: Stack.of(parse3('1;'))}
     const evaluator = {
       _done: false,
-      node: parse('1 + 2;', 3).node!.body[0],
+      node: parse3('1 + 2;').body[0],
     }
     visualizer = next(visualizer, evaluator)
     expect(visualizer.root).toBeDefined()
@@ -25,7 +27,7 @@ describe('next(v, e)', () => {
   })
 
   it('stop visualization inside function call until next return statement', () => {
-    const program = parse('function foo() { return 3; }\nfoo();', 3).node!
+    const program = parse3('function foo() { return 3; }\nfoo();')
     const visualizer = {...create(), _suppress: false}
     const evaluator = {
       _done: false,
@@ -42,7 +44,7 @@ describe('next(v, e)', () => {
   })
 
   it('replaces completely evaluated expression with its value', () => {
-    const stmt = parse('1 + (true && false) + (true ? 1 : 2);', 3).node!.body[0] as es.ExpressionStatement
+    const stmt = parse3('1 + (true && false) + (true ? 1 : 2);').body[0] as es.ExpressionStatement
 
     const exp = stmt.expression as es.BinaryExpression
     const left = exp.left as es.BinaryExpression

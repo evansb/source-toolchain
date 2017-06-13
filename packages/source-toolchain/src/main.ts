@@ -1,11 +1,6 @@
 import 'babel-polyfill'
-
-import {
-  createSession,
-} from './server'
-
+import { createSession, } from './session'
+import { createContext } from './context'
 import Closure from './Closure'
 
-export { createSession }
-
-export { Closure }
+export { createSession, createContext, Closure }

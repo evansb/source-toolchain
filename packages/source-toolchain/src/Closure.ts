@@ -1,5 +1,5 @@
 import * as es from 'estree'
-import { Scope } from './interpreterTypes'
+import { Scope } from './types/dynamic'
 import { Map } from 'immutable'
 
 /**

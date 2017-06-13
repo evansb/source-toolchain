@@ -1,6 +1,6 @@
 import * as invariant from 'invariant'
 import * as es from 'estree'
-import { ParserState, CFGVertex } from './parser'
+import { CFG } from './types/static'
 import { generate } from 'escodegen'
 import { stripIndent } from 'common-tags'
 
@@ -8,56 +8,26 @@ class TypeError {
   constructor(public node: es.Node, public explanation: string) {}
 }
 
-/**
- * Run the type checker
- * @param state initial successful parser state
- */
-export const typeCheck = (state: ParserState) => {
-  invariant(state.node!, 'Must call parse -> generateCFG and successfully' +
-    'generate CFG before calling typeCheck()')
+// Predefine simple type as constants
+const numberT: CFG.Type = {name: 'number'}
+const stringT: CFG.Type = {name: 'string'}
 
-  const checker: any = {
-    BinaryExpression(node: es.BinaryExpression) {
-      const left = checker[node.left.type](node.left)
-      const right = checker[node.left.type](node.right)
-      const op = node.operator
-      let result
-      if (op === '+' && (left.name === 'string' || right.name === 'string')) {
-        result = {name: 'string'}
-      } else if (op === '+' || op === '-' || op === '*' || op === '/' || op === '%') {
-        if (left.name !== 'number' || right.name !== 'number') {
-          throw new TypeError(node,
-            stripIndent`Invalid arithmetic operation ${op}
-             ${generate(node.left)} type is ${left.name}, and
-             ${generate(node.right)} type is ${right.name}.
-             This will result in NaN (Not A Number) value,
-             which is probably what you don't want.`)
-        }
-      } else if (op === '<=' || op === '>=' || op === '<' || op === '>') {
-        if (left.name !== 'boolean' || right.name !== 'boolean') {
-          throw new TypeError(node,
-            stripIndent`Invalid logical operation ${op}
-             ${generate(node.left)} type is ${left.name}, and
-             ${generate(node.right)} type is ${right.name}.
-             We do not recommend using && or || for non boolean values for beginners
-             Please use If Statement or Conditional Expression instead.`)
-        }
-      } else {
-        return
-      }
-    },
+// Helper functions
+const isSameFunctionType = (t1: CFG.Type, t2: CFG.Type) => {
+  if (t1.params && t1.params.length != (t2.params && t2.params.length)) {
+    return false
   }
-
-  const check = ({node, edges}: CFGVertex) => {
-    if (checker[node.type]) {
-      checker[node.type](node)
+  for (let i = 0; i < t1.params!.length; i++) {
+    if (!isSameType(t1.params![i], t1.params![i])) {
+      return false
     }
-    edges.forEach((v) => check(v.node))
   }
-
-  state.cfg.scopes.forEach(scope => {
-    if (!scope.root) { return }
-    check(scope.root)
-  })
-
+  return true
 }
+const isFunction = (t: CFG.Type): boolean => t.hasOwnProperty('params')
+
+export const isSameType = (t1: CFG.Type, t2: CFG.Type): boolean => (
+  t1 === t2 || isSameFunctionType(t1, t2)
+)
+
+type Checker<T extends es.Node> = (node: T) => ({ type: CFG.Type, proof: es.Node })

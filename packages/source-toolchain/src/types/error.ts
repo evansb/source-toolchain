@@ -1,6 +1,5 @@
-import * as es from 'estree'
-
 export enum ErrorType {
+  /* Syntax Errors */
   AcornParseError,
   CallingNonFunctionValues,
   IfAlternateNotABlockStatement,
@@ -14,10 +13,4 @@ export enum ErrorType {
   UseStrictEquality,
   UseStrictInequality,
   VariableRedeclaration,
-}
-
-export type StudentError = {
-  type: ErrorType,
-  node: es.Node,
-  explanation?: string,
 }

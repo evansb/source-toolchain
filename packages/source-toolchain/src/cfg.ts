@@ -1,8 +1,8 @@
 import * as invariant from 'invariant'
 import * as es from 'estree'
 import { base } from 'acorn/dist/walk'
-import { ErrorType } from './errorTypes'
-import { ParserState, CFGScope } from './parser'
+import { ErrorType } from './types/error'
+import { StaticState, CFG } from './types/static'
 
 type HasID = {__id: string, __param?: boolean, __declaration?: boolean}
 
@@ -14,7 +14,7 @@ const freshId = (() => {
   }
 })()
 
-function assignScope(state: ParserState, node: es.Node & HasID) {
+function assignScope(state: StaticState, node: es.Node & HasID) {
   state.cfg.nodes[node.__id].scope = currentScope(state)
 }
 
@@ -24,8 +24,8 @@ function assignScope(state: ParserState, node: es.Node & HasID) {
  * @param state the parser state
  * @param nextNode currently visited node
  */
-function connectPrevious(state: ParserState, nextNode: es.Node & HasID): void {
-  const parent = state.cfg.lastNode as (es.Node & HasID)
+function connectPrevious(state: StaticState, nextNode: es.Node & HasID): void {
+  const parent = state.cfg._last as (es.Node & HasID)
   if (!parent) {
     const scope = currentScope(state)
     scope.root = state.cfg.nodes[nextNode.__id]
@@ -38,43 +38,44 @@ function connectPrevious(state: ParserState, nextNode: es.Node & HasID): void {
     if (consequent.body[0] === nextNode) {
       vertex.edges.push({
         type: 'consequent',
-        node: state.cfg.nodes[nextNode.__id],
+        to: state.cfg.nodes[nextNode.__id],
       })
       return
     } else if (alternate.body[0] === nextNode) {
       vertex.edges.push({
         type: 'alternate',
-        node: state.cfg.nodes[nextNode.__id],
+        to: state.cfg.nodes[nextNode.__id],
       })
       return
     }
   }
   vertex.edges.push({
     type: 'next',
-    node: state.cfg.nodes[nextNode.__id],
+    to: state.cfg.nodes[nextNode.__id],
   })
 }
 
-const currentScope = (state: ParserState) => (
+const currentScope = (state: StaticState) => (
   state.cfg.scopeStack[state.cfg.scopeStack.length - 1]
 )
 
-const getSymbol = (state: ParserState, name: string) => {
-  let scope: CFGScope | undefined = currentScope(state)
+const getSymbol = (state: StaticState, name: string) => {
+  let scope = currentScope(state)
   while (scope) {
     if (scope.env.hasOwnProperty(name)) {
       return scope.env[name]
     } else {
-      scope = scope.parent
+      scope = scope.parent!
     }
   }
   return undefined
 }
 
-const defineVariable = (state: ParserState, identifier: es.Identifier) => {
+const defineVariable = (state: StaticState, identifier: es.Identifier) => {
   const scope = currentScope(state)
   if (scope.env.hasOwnProperty(identifier.name)) {
-    state.errors.push({
+    state.cfg.errors.push({
+      kind: 'syntax',
       type: ErrorType.VariableRedeclaration,
       node: identifier,
     })
@@ -87,15 +88,15 @@ const defineVariable = (state: ParserState, identifier: es.Identifier) => {
   }
 }
 
-const walk = (node: es.Node, visitors: any, state: ParserState) => {
-  const go = (n: es.Node, st: ParserState, override?: string ) => {
+const walk = (node: es.Node, visitors: any, state: StaticState) => {
+  const go = (n: es.Node, st: StaticState, override?: string) => {
     const type = override || n.type
     const found = visitors[type]
     if (found) {
       found(n, st)
     }
     base[type](n, st, go)
-    const found2 = visitors[type + 'After']
+    const found2 = visitors['$' + type]
     if (found2) {
       found2(n, st)
     }
@@ -104,112 +105,106 @@ const walk = (node: es.Node, visitors: any, state: ParserState) => {
 }
 
 type QueueElement = {
-  scope: CFGScope,
+  scope: CFG.Scope,
   node: es.Node,
+}
+
+type Walker<T extends es.Node> = (node: T & HasID, state: StaticState) => void
+
+const walkers: {[name: string]: Walker<any>} = {}
+
+const ignore = (node: es.Node & HasID, state: StaticState) => {
+  if (state.cfg._skip) { return }
+  connectPrevious(state, node)
+  state.cfg._last = node
+}
+
+walkers.ReturnStatement = walkers.ExpressionStatement = walkers.IfStatement = ignore
+
+walkers.FunctionExpression = walkers.FunctionDeclaration = (node: es.FunctionDeclaration & HasID, state: StaticState) => {
+  const { _queue, _skip } = state.cfg
+  if (node.id && node !== _queue![0].node) {
+    defineVariable(state, node.id)
+  }
+  if (_skip) { return }
+  connectPrevious(state, node)
+  if (node !== _queue![0].node) {
+    _queue!.push({ node, scope: currentScope(state)})
+    state.cfg._skip = state.cfg._skip! + 1
+    return
+  }
+  const scope: CFG.Scope = {
+    parent: currentScope(state),
+    name: node.id ? node.id.name : freshId(),
+    env: {},
+  }
+  node.params.forEach(n => {
+    (n as any).__param = true
+    const identifier = n as es.Identifier
+    scope.env[identifier.name] = {
+      name: identifier.name,
+      definedAt: identifier.loc!,
+    }
+  })
+  state.cfg.scopeStack.push(scope)
+  state.cfg.scopes.push(scope)
+  delete state.cfg._last
+}
+
+walkers.$FunctionExpression = walkers.$FunctionDeclaration = (node: es.FunctionDeclaration & HasID, state: StaticState) => {
+  state.cfg._skip = Math.max(0, state.cfg._skip! - 1)
+  if (node === state.cfg._queue![0].node) {
+    state.cfg.scopeStack.pop()
+  }
+  state.cfg._last = node
+}
+
+walkers.VariableDeclaration = (node: es.VariableDeclaration & HasID, state: StaticState) => {
+  if (state.cfg._skip) { return }
+  connectPrevious(state, node)
+  const declaration = node.declarations[0]
+  const identifier = declaration.id as es.Identifier
+  defineVariable(state, identifier)
+  state.cfg._last = node
+}
+
+walkers.Identifier = (node: es.Identifier & HasID, state: StaticState) => {
+  if (state.cfg._skip) { return }
+  // Skip if node is parameter or declaration
+  if (node.__param || node.__declaration) {
+    return
+  }
+  // Else, add usage, add to error if undefined in symbol table
+  const vertex = state.cfg.nodes[(state.cfg._last as any).__id]
+  const symbol = getSymbol(state, node.name)
+  if (symbol) {
+    vertex.usages.push(symbol)
+  } else {
+    state.cfg.errors.push({
+      kind: 'syntax',
+      type: ErrorType.UndefinedVariable,
+      node,
+    })
+  }
 }
 
 /**
  * Construct Control Flow Graph from given initial parser state.
  * @param initialState initial successful parser state
  */
-export const generateCFG = (initialState: ParserState) => {
-  invariant(initialState.node!, 'Must call parse() and successfully' +
+export const generateCFG = (context: StaticState) => {
+  const { parser } = context
+  invariant(parser && parser.program!, 'Must call parse() and successfully' +
     'generate AST before calling generateCFG()')
-  const globalScope = currentScope(initialState)
-  const queue: QueueElement[] = []
-
-  let skipCount = 0
-
-  const walker = {
-    FunctionExpression(node: es.FunctionExpression & HasID, state: ParserState) {
-      if (skipCount) { return }
-      return walker.FunctionDeclaration(node as any, state)
-    },
-    FunctionDeclaration(node: es.FunctionDeclaration & HasID, state: ParserState) {
-      if (node.id && node !== queue[0].node) {
-        defineVariable(state, node.id)
-      }
-      if (skipCount) { return }
-      connectPrevious(state, node)
-      if (node !== queue[0].node) {
-        queue.push({ node, scope: currentScope(state)})
-        skipCount++
-        return
-      }
-      const scope: CFGScope = {
-        parent: currentScope(state),
-        name: node.id ? node.id.name : freshId(),
-        env: {},
-      }
-      node.params.forEach(n => {
-        (n as any).__param = true
-        const identifier = n as es.Identifier
-        scope.env[identifier.name] = {
-          name: identifier.name,
-          definedAt: identifier.loc!,
-        }
-      })
-      state.cfg.scopeStack.push(scope)
-      state.cfg.scopes.push(scope)
-      delete state.cfg.lastNode
-    },
-    FunctionDeclarationAfter(node: es.FunctionDeclaration & HasID, state: ParserState) {
-      skipCount = Math.max(0, skipCount - 1)
-      if (node === queue[0].node) {
-        state.cfg.scopeStack.pop()
-      }
-      state.cfg.lastNode = node
-    },
-    ExpressionStatement(node: es.ExpressionStatement & HasID, state: ParserState) {
-      if (skipCount) { return }
-      connectPrevious(state, node)
-      state.cfg.lastNode = node
-    },
-    VariableDeclaration(node: es.VariableDeclaration & HasID, state: ParserState) {
-      if (skipCount) { return }
-      connectPrevious(state, node)
-      const declaration = node.declarations[0]
-      const identifier = declaration.id as es.Identifier
-      defineVariable(state, identifier)
-      state.cfg.lastNode = node
-    },
-    IfStatement(node: es.IfStatement & HasID, state: ParserState) {
-      if (skipCount) { return }
-      connectPrevious(state, node)
-      state.cfg.lastNode = node
-    },
-    ReturnStatement(node: es.ReturnStatement & HasID, state: ParserState) {
-      connectPrevious(state, node)
-      state.cfg.lastNode = node
-    },
-    Identifier(node: es.Identifier & HasID, state: ParserState) {
-      if (skipCount) { return }
-      // Skip if node is parameter or declaration
-      if (node.__param || node.__declaration) {
-        return
-      }
-      // Else, add usage, add to error if undefined in symbol table
-      const vertex = state.cfg.nodes[(state.cfg.lastNode as any).__id]
-      const symbol = getSymbol(state, node.name)
-      if (symbol) {
-        vertex.usages.push(symbol)
-      } else {
-        state.errors.push({
-          type: ErrorType.UndefinedVariable,
-          node,
-        })
-      }
-    },
+  const globalScope = currentScope(context)
+  context.cfg._queue = []
+  context.cfg._skip = 0
+  context.cfg._queue.push({ node: parser.program!, scope: globalScope })
+  while (context.cfg._queue.length > 0) {
+    const { node, scope } = context.cfg._queue[0]
+    context.cfg.scopeStack.push(scope)
+    walk(node, walkers, context)
+    context.cfg._queue.shift()
   }
-
-  queue.push({ node: initialState.node!, scope: globalScope })
-
-  while (queue.length > 0) {
-    const { node, scope } = queue[0]
-    initialState.cfg.scopeStack.push(scope)
-    walk(node, walker, initialState)
-    queue.shift()
-  }
-
-  initialState.cfg.scopeStack = [globalScope]
+  context.cfg.scopeStack = [globalScope]
 }

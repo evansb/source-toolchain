@@ -10,6 +10,7 @@
     "max-classes-per-file": [false],
     "member-access": false,
     "member-ordering": [true, {"order": "statics-first"}],
+    "no-namespace": false,
     "newline-before-return": false,
     "no-any": false,
     "no-inferrable-types": [true],

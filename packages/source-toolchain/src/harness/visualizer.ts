@@ -7,7 +7,7 @@ export const testVisualizer = (program: string, expectedOutput: string[]) => {
   let state = createInterpreter()
   let visualizer = create()
 
-  const node = parse(program, 3).node!
+  const node = parse(program, 3).parser.program!
   const evaluator = evalProgram(node, state)
   const prints = []
 

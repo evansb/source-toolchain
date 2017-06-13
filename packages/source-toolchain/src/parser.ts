@@ -7,64 +7,13 @@ import {
   Position,
 } from 'acorn'
 import { simple } from 'acorn/dist/walk'
-import { StudentError, ErrorType } from './errorTypes'
+import { ErrorType } from './types/error'
+import { StaticState } from './types/static'
 import syntaxTypes from './syntaxTypes'
+import { createContext } from './context'
 
 export type ParserOptions = {
   week: number,
-}
-
-export type CFGScope = {
-  name: string,
-  parent?: CFGScope,
-  root?: CFGVertex,
-  env: {
-    [name: string]: CFGSymbol,
-  },
-}
-
-export type CFGType = {
-  name: 'number' | 'string' | 'boolean' | 'function',
-  params?: CFGType[],
-}
-
-export type CFGSymbol = {
-  name: string,
-  definedAt?: es.SourceLocation,
-  type?: CFGType,
-}
-
-export type CFGVertex = {
-  node: es.Node,
-  scope?: CFGScope,
-  edges: CFGEdge[]
-  usages: CFGSymbol[],
-}
-
-export type CFGEdge = {
-  type: 'next' | 'alternate' | 'consequent',
-  node: CFGVertex,
-}
-
-export type Comment = {
-  type: 'Line' | 'Block',
-  value: string,
-  start: number,
-  end: number,
-  loc: SourceLocation | undefined,
-}
-
-export type ParserState = {
-  week: number
-  node?: es.Program,
-  errors: StudentError[],
-  comments: Comment[],
-  cfg: {
-    nodes: { [id: string]: CFGVertex }
-    scopes: CFGScope[],
-    scopeStack: CFGScope[],
-    lastNode?: es.Node,
-  },
 }
 
 export const freshId = (() => {
@@ -84,99 +33,96 @@ function compose<T extends es.Node, S>(
   }
 }
 
-const createSyntaxCheckerWalker = () => {
-  const walkers: {[name: string]: (node: es.Node, state: ParserState) => void } = {}
+const walkers: {[name: string]: (node: es.Node, state: StaticState) => void } = {}
 
-  for (const type of Object.keys(syntaxTypes)) {
-    walkers[type] = (node: es.Node, state: ParserState) => {
-      const id = freshId()
-      Object.defineProperty(node, '__id', {
-        enumerable: true,
-        configurable: false,
-        writable: false,
-        value: id,
-      })
-      state.cfg.nodes[id] = {
+for (const type of Object.keys(syntaxTypes)) {
+  walkers[type] = (node: es.Node, state: StaticState) => {
+    const id = freshId()
+    Object.defineProperty(node, '__id', {
+      enumerable: true,
+      configurable: false,
+      writable: false,
+      value: id,
+    })
+    state.cfg.nodes[id] = {
+      node,
+      scope: undefined,
+      edges: [],
+      usages: [],
+    }
+    if (syntaxTypes[node.type] > state.week) {
+      state.parser.errors.push({
+        kind: 'syntax',
+        type: ErrorType.MatchFailure,
         node,
-        edges: [],
-        usages: [],
-      }
-      if (syntaxTypes[node.type] > state.week) {
-        state.errors.push({
-          type: ErrorType.MatchFailure,
-          node,
-        })
-      }
+      })
     }
   }
-
-  // If Statement must
-  // 1. Have Else case (week <= 3)
-  // 2. If and Els case must be Surrounded by braces
-  walkers.IfStatement = compose(
-    walkers.IfStatement,
-    (node: es.IfStatement, state: ParserState) => {
-      if (node.consequent! && node.consequent.type !== 'BlockStatement') {
-        state.errors.push({
-          type: ErrorType.IfConsequentNotABlockStatement,
-          node,
-        })
-      }
-      if (state.week <= 3 && !node.alternate) {
-        state.errors.push({
-          type: ErrorType.MissingIfAlternate,
-          node,
-        })
-      } else if (node.alternate && node.alternate.type !== 'BlockStatement') {
-        state.errors.push({
-          type: ErrorType.IfAlternateNotABlockStatement,
-          node,
-        })
-      }
-    },
-  )
-
-  // Binary Expressions
-  // == and != are banned, must use !== and ===
-  walkers.BinaryExpression = compose(
-    walkers.BinaryExpression,
-    (node: es.BinaryExpression, state: ParserState) => {
-      if (node.operator === '==') {
-        state.errors.push({
-          type: ErrorType.UseStrictEquality,
-          node,
-        })
-      } else if (node.operator === '!=') {
-        state.errors.push({
-          type: ErrorType.UseStrictInequality,
-          node,
-        })
-      }
-    },
-  )
-
-  // Variable Declarations
-  // Can only have single declarations
-  walkers.VariableDeclaration = compose(
-    walkers.VariableDeclaration,
-    (node: es.VariableDeclaration, state: ParserState) => {
-      if (node.declarations.length > 1) {
-        state.errors.push({
-          type: ErrorType.MultipleDeclarations,
-          node,
-        })
-      }
-    },
-  )
-
-  return walkers
 }
 
-const createAcornParserOptions = (state: ParserState): AcornOptions => ({
+// If Statement must
+// 1. Have Else case (week <= 3)
+// 2. If and Els case must be Surrounded by braces
+const checkIfStatement = (node: es.IfStatement, state: StaticState) => {
+  if (node.consequent! && node.consequent.type !== 'BlockStatement') {
+    state.parser.errors.push({
+      kind: 'syntax',
+      type: ErrorType.IfConsequentNotABlockStatement,
+      node,
+    })
+  }
+  if (state.week <= 3 && !node.alternate) {
+    state.parser.errors.push({
+      kind: 'syntax',
+      type: ErrorType.MissingIfAlternate,
+      node,
+    })
+  } else if (node.alternate && node.alternate.type !== 'BlockStatement') {
+    state.parser.errors.push({
+      kind: 'syntax',
+      type: ErrorType.IfAlternateNotABlockStatement,
+      node,
+    })
+  }
+}
+walkers.IfStatement = compose(walkers.IfStatement, checkIfStatement)
+
+// Binary Expressions
+// == and != are banned, must use !== and ===
+const checkBinaryExpression = (node: es.BinaryExpression, state: StaticState) => {
+  if (node.operator === '==') {
+    state.parser.errors.push({
+      kind: 'syntax',
+      type: ErrorType.UseStrictEquality,
+      node,
+    })
+  } else if (node.operator === '!=') {
+    state.parser.errors.push({
+      kind: 'syntax',
+      type: ErrorType.UseStrictInequality,
+      node,
+    })
+  }
+}
+walkers.BinaryExpression = compose(walkers.BinaryExpression, checkBinaryExpression)
+
+// Variable Declarations
+// Can only have single declarations
+const checkVariableDeclaration = (node: es.VariableDeclaration, state: StaticState) => {
+  if (node.declarations.length > 1) {
+    state.parser.errors.push({
+      kind: 'syntax',
+      type: ErrorType.MultipleDeclarations,
+      node,
+    })
+  }
+}
+walkers.VariableDeclaration = compose(walkers.VariableDeclaration, checkVariableDeclaration)
+
+const createAcornParserOptions = (state: StaticState): AcornOptions => ({
   sourceType: 'script',
   ecmaVersion: 5,
   locations: true,
-
   onInsertedSemicolon(end: any, loc: any) {
     const node = ({
       type: 'Statement',
@@ -185,58 +131,42 @@ const createAcornParserOptions = (state: ParserState): AcornOptions => ({
         start: loc,
       },
     }) as any
-    state.errors.push({
+    state.parser.errors.push({
+      kind: 'syntax',
       type: ErrorType.MissingSemicolon,
       node,
     })
   },
-
   onTrailingComma(end: any, loc: Position) {
     const node = ({
       type: 'Statement',
       loc: {
-        end: {line: loc.line, column: loc.column + 1},
+        end: { line: loc.line, column: loc.column + 1 },
         start: loc,
       },
     }) as any
-    state.errors.push({
+    state.parser.errors.push({
+      kind: 'syntax',
       type: ErrorType.TrailingComma,
       node,
     })
   },
-
-  onComment: state.comments,
+  onComment: state.parser.comments,
 })
 
-export const createParser = ({ week }: ParserOptions): ParserState => {
-  const globalScope = {
-    name: '*global*',
-    env: {},
-  }
-  return {
-    week,
-    errors: [],
-    comments: [],
-    cfg: {
-      nodes: {},
-      scopes: [globalScope],
-      scopeStack: [globalScope],
-    },
-  }
-}
-
-export const parse = (source: string, state: ParserState | number) => {
+export const parse = (source: string, state: StaticState | number) => {
   if (typeof state === 'number') {
-    state = createParser({ week: state })
+    state = createContext({ week: state })
   }
   try {
     const program = acornParse(source, createAcornParserOptions(state))
-    state.node = program
-    simple(program, createSyntaxCheckerWalker(), undefined, state)
+    state.parser.program = program
+    simple(program, walkers, undefined, state)
   } catch (error) {
     if (error instanceof SyntaxError) {
       const loc = (error as any).loc
-      state.errors.push({
+      state.parser.errors.push({
+        kind: 'syntax',
         type: ErrorType.AcornParseError,
         explanation: error.toString(),
         node: ({
