@@ -73,6 +73,5 @@ describe('generateCFG', () => {
     expect(state.cfg.scopes.length).toBe(4)
     expect(state.cfg.scopes.map(n => n.name)).toEqual(['*global*', 'foo', 'bar', 'zoo'])
     expect(Object.keys(state.cfg.scopes[1].env)).toEqual(['x', 'y', 'zoo'])
-    expect(state.cfg.scopeStack[0].name).toBe('*global*')
   })
 })

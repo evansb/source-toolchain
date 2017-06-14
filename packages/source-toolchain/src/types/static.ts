@@ -7,6 +7,9 @@ export namespace CFG {
     name: string,
     parent?: Scope,
     root?: Vertex,
+    node?: es.Node,
+    proof?: es.Node,
+    type: Type,
     env: {
       [name: string]: Sym,
     },
@@ -22,12 +25,14 @@ export namespace CFG {
   export type Sym = {
     name: string,
     definedAt?: es.SourceLocation,
-    type?: Type,
+    type: Type,
+    proof: es.Node,
   }
 
   export type Type = {
-    name: 'number' | 'string' | 'boolean' | 'function' | 'never',
+    name: 'number' | 'string' | 'boolean' | 'function' | 'undefined' | 'any',
     params?: Type[],
+    returnType?: Type,
   }
 
   export type Edge = {
@@ -50,6 +55,7 @@ export type TypeError = {
   expected: CFG.Type[],
   got: CFG.Type,
   node: es.Node,
+  proof?: es.Node,
   explanation?: string,
 }
 
@@ -70,10 +76,17 @@ export type StaticState = {
   cfg: {
     nodes: { [id: string]: CFG.Vertex }
     scopes: CFG.Scope[],
-    scopeStack: CFG.Scope[],
     errors: Array<SyntaxError|TypeError>,
-    _last?: es.Node,
     _skip?: number,
     _queue?: Array<{node: es.Node, scope: CFG.Scope}>,
+    _last?: es.Node,
+    _scopes: CFG.Scope[],
   },
 }
+
+// Predefine simple type as constants
+export const numberT: CFG.Type = {name: 'number'}
+export const stringT: CFG.Type = {name: 'string'}
+export const undefinedT: CFG.Type = {name: 'undefined'}
+export const booleanT: CFG.Type = {name: 'boolean'}
+export const anyT: CFG.Type = {name: 'any'}

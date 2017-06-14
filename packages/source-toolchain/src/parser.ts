@@ -167,6 +167,7 @@ export const parse = (source: string, state: StaticState | number) => {
   try {
     const program = acornParse(source, createAcornParserOptions(state))
     state.parser.program = program
+    state.cfg.scopes[0].node = program
     simple(program, walkers, undefined, state)
   } catch (error) {
     if (error instanceof SyntaxError) {
