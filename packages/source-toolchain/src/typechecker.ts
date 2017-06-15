@@ -22,15 +22,18 @@ let currentScope: CFG.Scope
 
 // Helper functions
 const isSameFunctionType = (t1: CFG.Type, t2: CFG.Type) => {
+  if (t1.name !== 'function' || t2.name !== 'function') {
+    return false
+  }
   if (t1.params && t1.params.length !== (t2.params && t2.params.length)) {
     return false
   }
   for (let i = 0; i < t1.params!.length; i++) {
-    if (!isSameType(t1.params![i], t1.params![i])) {
+    if (!isSameType(t1.params![i], t2.params![i])) {
       return false
     }
   }
-  return true
+  return isSameType(t1.returnType!, t2.returnType!)
 }
 const isFunction = (t: CFG.Type): boolean => t.hasOwnProperty('params')
 
