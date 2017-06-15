@@ -3,6 +3,12 @@ declare module 'acorn/dist/walk' {
 
   type SimpleVisitor<S> = (node: es.Node, state?: S) => void
   type SimpleVisitors<S> = { [name: string]: SimpleVisitor<S> }
+  type RecursiveVisitor<S> = (
+    node: es.Node,
+    state: S,
+    callback: SimpleVisitor<S>
+  ) => void
+  type RecursiveVisitors<S> = { [name: string]: RecursiveVisitor<S> }
   type NodeTest = (nodeType: string, node: es.Node) => boolean
 
   interface AcornWalk {
