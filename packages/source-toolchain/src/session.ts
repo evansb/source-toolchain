@@ -25,13 +25,13 @@ import {
  * const
  */
 export class Session extends EventEmitter.EventEmitter2 {
-  /** Current interpreter of the interpreter */
+  /** Current state of the interpreter */
   public interpreter: InterpreterState
 
-  /** Current interpreter of the expression visualizer */
+  /** Current state of the expression visualizer */
   public visualizer: VisualizerState
 
-  /** Current interpreter of the parser visualizer */
+  /** Current static analyzer state */
   public context: StaticState
 
   private genInterpreter: Iterator<InterpreterState>
