@@ -1,5 +1,3 @@
-import { explainError } from '../src/errorUtils'
-import { ErrorType } from '../src/types/error'
 import { createContext } from '../src/context'
 import { parse } from '../src/parser'
 import { generateCFG } from '../src/cfg'
