@@ -1,8 +1,10 @@
 import * as invariant from 'invariant'
 import * as es from 'estree'
 import { recursive, Walkers, Walker, base } from 'acorn/dist/walk'
+
 import { ErrorType } from './types/error'
 import { StaticState, CFG, anyT, HasID } from './types/static'
+import { compose } from './astUtils'
 
 const freshLambda = (() => {
   let id = 0
@@ -17,16 +19,6 @@ const walkers: Walkers<any> = {}
 let nodeStack: Array<es.Node & HasID> = []
 let scopeQueue: CFG.Scope[] = []
 let edgeLabel: CFG.EdgeLabel = 'next'
-
-const compose = <S, T extends es.Node & HasID>(
-  w1: Walker<T, S>,
-  w2: Walker<T, S>
-) => {
-  return (node: T, state: S, recurse: any) => {
-    w1(node, state, recurse)
-    w2(node, state, recurse)
-  }
-}
 
 const currentScope = () => scopeQueue[0]!
 

@@ -3,6 +3,8 @@
  */
 import * as es from 'estree'
 import Closure from './Closure'
+import { Walker } from 'acorn/dist/walk'
+import { HasID } from './types/static'
 
 /**
  * Check whether two nodes are equal.
@@ -110,4 +112,14 @@ export const createNode = (value: any): es.Node => {
     return value.node
   }
   return mkLiteralNode(value)
+}
+
+export const compose = <S, T extends es.Node & HasID>(
+  w1: Walker<T, S>,
+  w2: Walker<T, S>
+) => {
+  return (node: T, state: S, recurse: any) => {
+    w1(node, state, recurse)
+    w2(node, state, recurse)
+  }
 }

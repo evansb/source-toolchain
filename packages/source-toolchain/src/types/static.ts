@@ -25,7 +25,7 @@ export namespace CFG {
 
   export type Sym = {
     name: string
-    definedAt?: es.SourceLocation
+    definedAt: es.SourceLocation
     type: Type
     proof: es.Node
   }
