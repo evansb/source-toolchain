@@ -6,18 +6,26 @@ import { parse } from 'acorn'
 
 import { evalStatement, createInterpreter } from '../interpreter'
 
-const fixturesFolderPath = path.resolve(__dirname, '..', '..', 'test', 'fixtures')
+const fixturesFolderPath = path.resolve(
+  __dirname,
+  '..',
+  '..',
+  'test',
+  'fixtures'
+)
 
 export type ConformationTest = {
-  statement: es.Statement,
-  expectedValue: any,
+  statement: es.Statement
+  expectedValue: any
 }
 
 /**
  * Parse and extract a list of conformation tests from a file.
  * @param fixtureFilePath The fixture files
  */
-export const loadAndParseConformation = (fixtureFilePath: string): ConformationTest[] => {
+export const loadAndParseConformation = (
+  fixtureFilePath: string
+): ConformationTest[] => {
   const pathname = path.join(fixturesFolderPath, fixtureFilePath)
   const content = fs.readFileSync(pathname, 'utf8')
   const expectedValues: any[] = []
@@ -31,13 +39,13 @@ export const loadAndParseConformation = (fixtureFilePath: string): ConformationT
         // tslint:disable-next-line
         expectedValues.push(eval(text.trim()))
       }
-    },
+    }
   })
 
   for (const [idx, statement] of ast.body.entries()) {
     tests.push({
       statement: statement as es.Statement,
-      expectedValue: expectedValues[idx],
+      expectedValue: expectedValues[idx]
     })
   }
 

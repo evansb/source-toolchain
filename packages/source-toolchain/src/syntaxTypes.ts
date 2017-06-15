@@ -1,4 +1,4 @@
-const syntaxTypes: {[nodeName: string]: number} = {
+const syntaxTypes: { [nodeName: string]: number } = {
   // Week 3
   Program: 3,
   ExpressionStatement: 3,
@@ -46,7 +46,7 @@ const syntaxTypes: {[nodeName: string]: number} = {
   CatchClause: Infinity,
   DoWhileStatement: Infinity,
   ForInStatement: Infinity,
-  SequenceExpression: Infinity,
+  SequenceExpression: Infinity
 }
 
 export default syntaxTypes

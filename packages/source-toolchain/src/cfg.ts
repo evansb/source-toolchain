@@ -4,7 +4,7 @@ import { base } from 'acorn/dist/walk'
 import { ErrorType } from './types/error'
 import { StaticState, CFG, anyT } from './types/static'
 
-type HasID = {__id: string, __param?: boolean, __declaration?: boolean}
+type HasID = { __id: string; __param?: boolean; __declaration?: boolean }
 
 const freshId = (() => {
   let id = 0
@@ -38,26 +38,25 @@ function connectPrevious(state: StaticState, nextNode: es.Node & HasID): void {
     if (consequent.body[0] === nextNode) {
       vertex.edges.push({
         type: 'consequent',
-        to: state.cfg.nodes[nextNode.__id],
+        to: state.cfg.nodes[nextNode.__id]
       })
       return
     } else if (alternate.body[0] === nextNode) {
       vertex.edges.push({
         type: 'alternate',
-        to: state.cfg.nodes[nextNode.__id],
+        to: state.cfg.nodes[nextNode.__id]
       })
       return
     }
   }
   vertex.edges.push({
     type: 'next',
-    to: state.cfg.nodes[nextNode.__id],
+    to: state.cfg.nodes[nextNode.__id]
   })
 }
 
-export const currentScope = (state: StaticState) => (
+export const currentScope = (state: StaticState) =>
   state.cfg._scopes[state.cfg._scopes.length - 1]
-)
 
 const getSymbol = (state: StaticState, name: string) => {
   let scope = currentScope(state)
@@ -77,15 +76,15 @@ const defineVariable = (state: StaticState, identifier: es.Identifier) => {
     state.cfg.errors.push({
       kind: 'syntax',
       type: ErrorType.VariableRedeclaration,
-      node: identifier,
+      node: identifier
     })
   } else {
-    (identifier as any).__declaration = true
+    ;(identifier as any).__declaration = true
     scope.env[identifier.name] = {
       name: identifier.name,
       type: anyT,
       proof: identifier,
-      definedAt: identifier.loc!,
+      definedAt: identifier.loc!
     }
   }
 }
@@ -107,16 +106,18 @@ const walk = (node: es.Node, visitors: any, state: StaticState) => {
 }
 
 type QueueElement = {
-  scope: CFG.Scope,
-  node: es.Node,
+  scope: CFG.Scope
+  node: es.Node
 }
 
 type Walker<T extends es.Node> = (node: T & HasID, state: StaticState) => void
 
-const walkers: {[name: string]: Walker<any>} = {}
+const walkers: { [name: string]: Walker<any> } = {}
 
 const ignore = (node: es.Node & HasID, state: StaticState) => {
-  if (state.cfg._skip) { return }
+  if (state.cfg._skip) {
+    return
+  }
   connectPrevious(state, node)
   state.cfg._last = node
 }
@@ -128,15 +129,20 @@ walkers.IfStatement = (node: es.IfStatement & HasID, state: StaticState) => {
   state.cfg._last = node.test
 }
 
-walkers.FunctionExpression = walkers.FunctionDeclaration = (node: es.FunctionDeclaration & HasID, state: StaticState) => {
+walkers.FunctionExpression = walkers.FunctionDeclaration = (
+  node: es.FunctionDeclaration & HasID,
+  state: StaticState
+) => {
   const { _queue, _skip } = state.cfg
   if (node.id && node !== _queue![0].node) {
     defineVariable(state, node.id)
   }
-  if (_skip) { return }
+  if (_skip) {
+    return
+  }
   connectPrevious(state, node)
   if (node !== _queue![0].node) {
-    _queue!.push({ node, scope: currentScope(state)})
+    _queue!.push({ node, scope: currentScope(state) })
     state.cfg._skip = state.cfg._skip! + 1
     return
   }
@@ -146,16 +152,16 @@ walkers.FunctionExpression = walkers.FunctionDeclaration = (node: es.FunctionDec
     type: anyT,
     proof: node,
     name: node.id ? node.id.name : freshId(),
-    env: {},
+    env: {}
   }
   node.params.forEach(n => {
-    (n as any).__param = true
+    ;(n as any).__param = true
     const identifier = n as es.Identifier
     scope.env[identifier.name] = {
       name: identifier.name,
       type: anyT,
       proof: identifier,
-      definedAt: identifier.loc!,
+      definedAt: identifier.loc!
     }
   })
   state.cfg._scopes.push(scope)
@@ -163,7 +169,10 @@ walkers.FunctionExpression = walkers.FunctionDeclaration = (node: es.FunctionDec
   delete state.cfg._last
 }
 
-walkers.$FunctionExpression = walkers.$FunctionDeclaration = (node: es.FunctionDeclaration & HasID, state: StaticState) => {
+walkers.$FunctionExpression = walkers.$FunctionDeclaration = (
+  node: es.FunctionDeclaration & HasID,
+  state: StaticState
+) => {
   state.cfg._skip = Math.max(0, state.cfg._skip! - 1)
   if (node === state.cfg._queue![0].node) {
     state.cfg._scopes.pop()
@@ -171,8 +180,13 @@ walkers.$FunctionExpression = walkers.$FunctionDeclaration = (node: es.FunctionD
   state.cfg._last = node
 }
 
-walkers.VariableDeclaration = (node: es.VariableDeclaration & HasID, state: StaticState) => {
-  if (state.cfg._skip) { return }
+walkers.VariableDeclaration = (
+  node: es.VariableDeclaration & HasID,
+  state: StaticState
+) => {
+  if (state.cfg._skip) {
+    return
+  }
   connectPrevious(state, node)
   const declaration = node.declarations[0]
   const identifier = declaration.id as es.Identifier
@@ -181,7 +195,9 @@ walkers.VariableDeclaration = (node: es.VariableDeclaration & HasID, state: Stat
 }
 
 walkers.Identifier = (node: es.Identifier & HasID, state: StaticState) => {
-  if (state.cfg._skip) { return }
+  if (state.cfg._skip) {
+    return
+  }
   // Skip if node is parameter or declaration
   if (node.__param || node.__declaration) {
     return
@@ -195,7 +211,7 @@ walkers.Identifier = (node: es.Identifier & HasID, state: StaticState) => {
     state.cfg.errors.push({
       kind: 'syntax',
       type: ErrorType.UndefinedVariable,
-      node,
+      node
     })
   }
 }
@@ -206,8 +222,11 @@ walkers.Identifier = (node: es.Identifier & HasID, state: StaticState) => {
  */
 export const generateCFG = (context: StaticState) => {
   const { parser } = context
-  invariant(parser && parser.program!, 'Must call parse() and successfully' +
-    'generate AST before calling generateCFG()')
+  invariant(
+    parser && parser.program!,
+    'Must call parse() and successfully' +
+      'generate AST before calling generateCFG()'
+  )
   const globalScope = currentScope(context)
   context.cfg._queue = []
   context.cfg._skip = 0

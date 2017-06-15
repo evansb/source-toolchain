@@ -19,7 +19,7 @@ export const createInterpreter = (): InterpreterState => {
   const globalEnv: Scope = {
     name: '_global_',
     parent: undefined,
-    environment: Map<string, any>(),
+    environment: Map<string, any>()
   }
 
   return new InterpreterState({
@@ -31,7 +31,7 @@ export const createInterpreter = (): InterpreterState => {
     scopes: Map.of(0, globalEnv),
     errors: List(),
     value: undefined,
-    node: undefined,
+    node: undefined
   })
 }
 
@@ -41,17 +41,18 @@ const stop = (state: InterpreterState): InterpreterState =>
 const start = (state: InterpreterState): InterpreterState =>
   state.with({ isRunning: true })
 
-const defineVariable = (state: InterpreterState, name: string, value: any): InterpreterState => {
+const defineVariable = (
+  state: InterpreterState,
+  name: string,
+  value: any
+): InterpreterState => {
   const currentFrame = state.frames.peek()
   const scope = state.scopes.get(currentFrame)
   return state.with({
-    scopes: state.scopes.set(
-      currentFrame,
-      {
-        ...scope,
-        environment: scope.environment.set(name, value),
-      },
-    ),
+    scopes: state.scopes.set(currentFrame, {
+      ...scope,
+      environment: scope.environment.set(name, value)
+    })
   })
 }
 
@@ -62,14 +63,17 @@ const pushFrame = (state: InterpreterState, scope: Scope): InterpreterState => {
   frameCtr++
   return state.with({
     scopes: state.scopes.set(frameCtr, scope),
-    frames: state.frames.push(frameCtr),
+    frames: state.frames.push(frameCtr)
   })
 }
 
-const fatalError = (state: InterpreterState, error: SyntaxError): InterpreterState => {
+const fatalError = (
+  state: InterpreterState,
+  error: SyntaxError
+): InterpreterState => {
   return state.with({
     errors: state.errors.push(error),
-    isRunning: false,
+    isRunning: false
   })
 }
 
@@ -87,7 +91,10 @@ const getEnv = (name: string, state: InterpreterState) => {
   return undefined
 }
 
-export function* evalExpression(node: es.Expression, state: InterpreterState): any {
+export function* evalExpression(
+  node: es.Expression,
+  state: InterpreterState
+): any {
   yield state.with({ node, _done: false })
 
   let value: any
@@ -169,15 +176,18 @@ function* evalCallExpression(node: es.CallExpression, state: InterpreterState) {
         operator: '=',
         loc: node.callee.loc!,
         left: node.callee as any,
-        right: createNode(callee) as es.FunctionExpression,
-      },
+        right: createNode(callee) as es.FunctionExpression
+      }
     }
 
     return fatalError(state, error)
   }
 }
 
-function* evalUnaryExpression(node: es.UnaryExpression, state: InterpreterState) {
+function* evalUnaryExpression(
+  node: es.UnaryExpression,
+  state: InterpreterState
+) {
   let value
   state = yield* evalExpression(node.argument, state)
 
@@ -187,13 +197,16 @@ function* evalUnaryExpression(node: es.UnaryExpression, state: InterpreterState)
   } else if (node.operator === '-') {
     value = -state.value
   } else {
-    value =  +state.value
+    value = +state.value
   }
 
   return state.with({ _done: true, value })
 }
 
-function* evalBinaryExpression(node: es.BinaryExpression, state: InterpreterState) {
+function* evalBinaryExpression(
+  node: es.BinaryExpression,
+  state: InterpreterState
+) {
   state = yield* evalExpression(node.left, state)
   const left = state.value
   state = yield* evalExpression(node.right, state)
@@ -241,12 +254,15 @@ function* evalBinaryExpression(node: es.BinaryExpression, state: InterpreterStat
   return state.with({ value: result })
 }
 
-function* evalLogicalExpression(node: es.LogicalExpression, state: InterpreterState) {
+function* evalLogicalExpression(
+  node: es.LogicalExpression,
+  state: InterpreterState
+) {
   state = yield* evalExpression(node.left, state)
   const left = state.value
 
   if (node.operator === '&&' && left) {
-    state =  yield* evalExpression(node.right, state)
+    state = yield* evalExpression(node.right, state)
   } else if (node.operator === '||' && !left) {
     state = yield* evalExpression(node.right, state)
   }
@@ -254,7 +270,10 @@ function* evalLogicalExpression(node: es.LogicalExpression, state: InterpreterSt
   return state
 }
 
-function* evalConditionalExpression(node: es.ConditionalExpression, state: InterpreterState) {
+function* evalConditionalExpression(
+  node: es.ConditionalExpression,
+  state: InterpreterState
+) {
   state = yield* evalExpression(node.test, state)
 
   if (state.value) {
@@ -264,7 +283,10 @@ function* evalConditionalExpression(node: es.ConditionalExpression, state: Inter
   }
 }
 
-export function* evalStatement(node: es.Statement, state: InterpreterState): any {
+export function* evalStatement(
+  node: es.Statement,
+  state: InterpreterState
+): any {
   yield state.with({ node, _done: false })
 
   switch (node.type) {
@@ -290,7 +312,10 @@ export function* evalStatement(node: es.Statement, state: InterpreterState): any
   return state.with({ _done: true, node })
 }
 
-function* evalVariableDeclaration(node: es.VariableDeclaration, state: InterpreterState) {
+function* evalVariableDeclaration(
+  node: es.VariableDeclaration,
+  state: InterpreterState
+) {
   const declaration = node.declarations[0]
   const id = declaration.id as es.Identifier
 
@@ -301,7 +326,10 @@ function* evalVariableDeclaration(node: es.VariableDeclaration, state: Interpret
   return state.with({ value: undefined })
 }
 
-function* evalFunctionDeclaration(node: es.FunctionDeclaration, state: InterpreterState) {
+function* evalFunctionDeclaration(
+  node: es.FunctionDeclaration,
+  state: InterpreterState
+) {
   const id = node.id as es.Identifier
   const closure = new Closure(node as any, state.frames.first())
 
@@ -320,12 +348,18 @@ function* evalIfStatement(node: es.IfStatement, state: InterpreterState) {
   return state
 }
 
-function* evalExpressionStatement(node: es.ExpressionStatement, state: InterpreterState) {
+function* evalExpressionStatement(
+  node: es.ExpressionStatement,
+  state: InterpreterState
+) {
   state = yield* evalExpression(node.expression, state)
   return state
 }
 
-function* evalReturnStatement(node: es.ReturnStatement, state: InterpreterState) {
+function* evalReturnStatement(
+  node: es.ReturnStatement,
+  state: InterpreterState
+) {
   state = yield* evalExpression(node.argument as es.Expression, state)
   return state.with({ _isReturned: true })
 }

@@ -20,6 +20,7 @@
     "no-require-imports": false,
     "no-reference": false,
     "no-switch-case-fall-through": true,
+    "trailing-comma": [true, false],
     "no-trailing-whitespace": true,
     "no-unused-variable": [true, "react"],
     "object-literal-sort-keys": false,

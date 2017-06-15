@@ -20,18 +20,22 @@ describe('generateCFG', () => {
   })
   it('detects variable redeclaration', () => {
     const state = createContext({ week: 3 })
-    parse(`
+    parse(
+      `
     var x = 2;
     1 + 2;
     var x = 2;
-    `, state)
+    `,
+      state
+    )
     generateCFG(state)
     expect(state.cfg.errors.length).toBe(1)
     expect(explainError(state.cfg.errors[0])).toMatch(/redeclaration/)
   })
   it('correctly set CFG roots', () => {
     const state = createContext({ week: 3 })
-    parse(`
+    parse(
+      `
       function foo(x, y) {
         function zoo(x) {
           var m = 3;
@@ -41,7 +45,9 @@ describe('generateCFG', () => {
         var n = 2;
       }
       bar(2);
-    `, state)
+    `,
+      state
+    )
     generateCFG(state)
     expect(state.cfg.errors.length).toBe(0)
     state.cfg.scopes.forEach(s => {
@@ -50,7 +56,8 @@ describe('generateCFG', () => {
   })
   it('correctly creates scope', () => {
     const state = createContext({ week: 3 })
-    parse(`
+    parse(
+      `
       function foo(x, y) {
         bar(4);
         function zoo(x) {
@@ -67,11 +74,18 @@ describe('generateCFG', () => {
       foo(x, 3) + bar(y);
       bar(y);
       bar(x);
-    `, state)
+    `,
+      state
+    )
     generateCFG(state)
     expect(state.cfg.errors.length).toBe(0)
     expect(state.cfg.scopes.length).toBe(4)
-    expect(state.cfg.scopes.map(n => n.name)).toEqual(['*global*', 'foo', 'bar', 'zoo'])
+    expect(state.cfg.scopes.map(n => n.name)).toEqual([
+      '*global*',
+      'foo',
+      'bar',
+      'zoo'
+    ])
     expect(Object.keys(state.cfg.scopes[1].env)).toEqual(['x', 'y', 'zoo'])
   })
 })

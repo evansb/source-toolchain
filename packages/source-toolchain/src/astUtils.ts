@@ -50,18 +50,21 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
     }
 
     if (n.type === 'CallExpression') {
-      return {...n, callee: go(n.callee), arguments: n.arguments.map(go)}
+      return { ...n, callee: go(n.callee), arguments: n.arguments.map(go) }
     } else if (n.type === 'ConditionalExpression') {
       return {
         ...n,
         test: go(n.test),
         consequent: go(n.consequent),
-        alternate: go(n.alternate),
+        alternate: go(n.alternate)
       }
     } else if (n.type === 'UnaryExpression') {
-      return {...n, argument: go(n.argument)}
-    } else if (n.type === 'BinaryExpression' || n.type === 'LogicalExpression') {
-      return {...n, left: go(n.left), right: go(n.right)}
+      return { ...n, argument: go(n.argument) }
+    } else if (
+      n.type === 'BinaryExpression' ||
+      n.type === 'LogicalExpression'
+    ) {
+      return { ...n, left: go(n.left), right: go(n.right) }
     } else {
       return n
     }
@@ -72,18 +75,18 @@ export const replace = (node: es.Node, before: es.Node, after: es.Node) => {
 
 const mkLiteralNode = (value: any): es.Node => {
   if (typeof value === 'undefined') {
-    return ({
+    return {
       type: 'Identifier',
       name: 'undefined',
-      __id: freshId(),
-    }) as any
+      __id: freshId()
+    } as any
   } else {
-    return ({
+    return {
       type: 'Literal',
       value,
       raw: value,
-      __id: freshId(),
-    }) as any
+      __id: freshId()
+    } as any
   }
 }
 

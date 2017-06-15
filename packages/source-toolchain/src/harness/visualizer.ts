@@ -14,10 +14,12 @@ export const testVisualizer = (program: string, expectedOutput: string[]) => {
   let gen = evaluator.next()
   while (gen) {
     state = gen.value
-    if (!state) { break }
+    if (!state) {
+      break
+    }
     const prev = visualizer
     visualizer = next(visualizer, state)
-    if (visualizer.root && (visualizer.id !== prev.id)) {
+    if (visualizer.root && visualizer.id !== prev.id) {
       prints.push(generate(visualizer.root))
     }
     gen = evaluator.next()

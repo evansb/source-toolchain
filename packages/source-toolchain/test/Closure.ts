@@ -11,7 +11,8 @@ describe('Closure class', () => {
     expect(scope.parent).toBe(0)
   })
   it('creates correct scope from anonymous function', () => {
-    const node: any = (parse('var x = function (n) {};').body[0] as any).declarations[0].init
+    const node: any = (parse('var x = function (n) {};').body[0] as any)
+      .declarations[0].init
     const closure = new Closure(node, 0, 0)
     const scope = closure.createScope([4])
     expect(scope.name).toBe('lambda_0(4)')
@@ -19,7 +20,8 @@ describe('Closure class', () => {
     expect(scope.parent).toBe(0)
   })
   it('returns correct scope name if closure is passed as arguments', () => {
-    const node: any = (parse('var x = function (n) {};').body[0] as any).declarations[0].init
+    const node: any = (parse('var x = function (n) {};').body[0] as any)
+      .declarations[0].init
     const closure = new Closure(node, 0, 0)
     const scope = closure.createScope([new Closure(node, 0, 1)])
     expect(scope.name).toBe('lambda_0(lambda_1)')

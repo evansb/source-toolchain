@@ -21,5 +21,5 @@ export enum ErrorType {
   UnaryExpressionArgumentNotNumber,
   UseStrictEquality,
   UseStrictInequality,
-  VariableRedeclaration,
+  VariableRedeclaration
 }

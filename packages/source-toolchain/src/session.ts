@@ -12,7 +12,11 @@ import { StaticState } from './types/static'
 import { createContext } from './context'
 import { InterpreterState } from './types/dynamic'
 import { evalProgram, createInterpreter } from './interpreter'
-import { VisualizerState, create as createVisualizer, next as nextVisualizer } from './visualizer'
+import {
+  VisualizerState,
+  create as createVisualizer,
+  next as nextVisualizer
+} from './visualizer'
 
 /**
  * The instance of this class models an interactive toolchain session.
@@ -67,7 +71,7 @@ export class Session extends EventEmitter.EventEmitter2 {
       if (!nextInterpreter.errors.isEmpty) {
         const errors = nextInterpreter.errors.map(error => ({
           ...error,
-          explanation: explainError(error!),
+          explanation: explainError(error!)
         }))
         this.emit('errors', errors.toJS())
       }
@@ -101,8 +105,10 @@ export class Session extends EventEmitter.EventEmitter2 {
    */
   addCode(code: string) {
     invariant(this.interpreter, 'Must call start() before addCode()')
-    invariant(!this.interpreter.isRunning,
-      'Cannot add more code when previous evaluation is in progress')
+    invariant(
+      !this.interpreter.isRunning,
+      'Cannot add more code when previous evaluation is in progress'
+    )
 
     this.evalCode(code)
     this.emit('start')
@@ -124,7 +130,10 @@ export class Session extends EventEmitter.EventEmitter2 {
       this.interpreter = (this.interpreter || createInterpreter()).merge({
         isRunning: true
       }) as InterpreterState
-      this.genInterpreter = evalProgram(this.context.parser.program!, this.interpreter)
+      this.genInterpreter = evalProgram(
+        this.context.parser.program!,
+        this.interpreter
+      )
     }
   }
 }

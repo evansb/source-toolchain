@@ -4,11 +4,18 @@ import { generate } from 'escodegen'
 import { stripIndent } from 'common-tags'
 
 import { ErrorType } from './types/error'
-import { StaticState, TypeError, CFG,
-  undefinedT, numberT, anyT, booleanT, stringT } from './types/static'
+import {
+  StaticState,
+  TypeError,
+  CFG,
+  undefinedT,
+  numberT,
+  anyT,
+  booleanT,
+  stringT
+} from './types/static'
 
-class Stop {
-}
+class Stop {}
 
 // Helper functions
 const isSameFunctionType = (t1: CFG.Type, t2: CFG.Type) => {
@@ -24,14 +31,15 @@ const isSameFunctionType = (t1: CFG.Type, t2: CFG.Type) => {
 }
 const isFunction = (t: CFG.Type): boolean => t.hasOwnProperty('params')
 
-const isSameType = (t1: CFG.Type, t2: CFG.Type): boolean => (
-  t1 === anyT || t2 === anyT ||
-    t1 === t2 || isSameFunctionType(t1, t2)
-)
+const isSameType = (t1: CFG.Type, t2: CFG.Type): boolean =>
+  t1 === anyT || t2 === anyT || t1 === t2 || isSameFunctionType(t1, t2)
 
-type Checker<T extends es.Node> = (node: T, state: StaticState) => ({ type: CFG.Type, proof: es.Node })
+type Checker<T extends es.Node> = (
+  node: T,
+  state: StaticState
+) => ({ type: CFG.Type; proof: es.Node })
 
-const checkers: {[name: string]: Checker<any>} = {}
+const checkers: { [name: string]: Checker<any> } = {}
 
 const fvbe = (node: es.Node, got: CFG.Type, proof: es.Node): TypeError => ({
   kind: 'type',
@@ -39,7 +47,7 @@ const fvbe = (node: es.Node, got: CFG.Type, proof: es.Node): TypeError => ({
   node,
   expected: [stringT, numberT],
   proof,
-  got,
+  got
 })
 
 const lenb = (node: es.Node, got: CFG.Type, proof: es.Node): TypeError => ({
@@ -53,7 +61,7 @@ const lenb = (node: es.Node, got: CFG.Type, proof: es.Node): TypeError => ({
 
 checkers.Literal = (node: es.Literal, state) => {
   const type = { name: typeof node.value } as CFG.Type
-  return { type, proof: node}
+  return { type, proof: node }
 }
 
 checkers.CallExpression = (node: es.CallExpression, state) => {
@@ -65,7 +73,10 @@ checkers.CallExpression = (node: es.CallExpression, state) => {
     paramTypes.push(argType)
     paramProofs.push(argProof)
   })
-  const { type: calleeType, proof: calleeProof} = checkers[node.callee.type](node.callee, state)
+  const { type: calleeType, proof: calleeProof } = checkers[node.callee.type](
+    node.callee,
+    state
+  )
 
   if (!isFunction(calleeType)) {
     state.cfg.errors.push({
@@ -74,7 +85,7 @@ checkers.CallExpression = (node: es.CallExpression, state) => {
       node: node.callee,
       expected: [],
       got: calleeType,
-      proof: calleeProof,
+      proof: calleeProof
     })
     throw new Stop()
   } else {
@@ -87,7 +98,7 @@ checkers.CallExpression = (node: es.CallExpression, state) => {
           node: node.arguments[idx],
           expected: [t],
           got: got,
-          proof: paramProofs[idx],
+          proof: paramProofs[idx]
         })
         throw new Stop()
       }
@@ -97,7 +108,10 @@ checkers.CallExpression = (node: es.CallExpression, state) => {
 }
 
 checkers.ConditionalExpression = (node: es.ConditionalExpression, state) => {
-  const { type: testType, proof: testProof } = checkers[node.test.type](node.test, state)
+  const { type: testType, proof: testProof } = checkers[node.test.type](
+    node.test,
+    state
+  )
   if (testType !== booleanT) {
     state.cfg.errors.push({
       kind: 'type',
@@ -105,12 +119,18 @@ checkers.ConditionalExpression = (node: es.ConditionalExpression, state) => {
       node: node.test,
       expected: [booleanT],
       got: testType,
-      proof: testProof,
+      proof: testProof
     })
     throw new Stop()
   }
-  const { type: consType, proof: constProof } = checkers[node.consequent.type](node.consequent, state) 
-  const { type: altType, proof: altProof } = checkers[node.alternate.type](node.alternate, state)
+  const { type: consType, proof: constProof } = checkers[node.consequent.type](
+    node.consequent,
+    state
+  )
+  const { type: altType, proof: altProof } = checkers[node.alternate.type](
+    node.alternate,
+    state
+  )
   if (isSameType(consType, altType)) {
     return { type: consType, proof: node }
   } else {
@@ -120,14 +140,17 @@ checkers.ConditionalExpression = (node: es.ConditionalExpression, state) => {
       node: node.alternate,
       expected: [consType],
       got: altType,
-      proof: altProof,
+      proof: altProof
     })
     throw new Stop()
   }
 }
 
 checkers.UnaryExpression = (node: es.UnaryExpression, state) => {
-  const {type: argType, proof: argProof} = checkers[node.argument.type](node, state)
+  const { type: argType, proof: argProof } = checkers[node.argument.type](
+    node,
+    state
+  )
   if (argType !== numberT) {
     state.cfg.errors.push({
       kind: 'type',
@@ -143,8 +166,11 @@ checkers.UnaryExpression = (node: es.UnaryExpression, state) => {
 }
 
 checkers.BinaryExpression = (node: es.BinaryExpression, state) => {
-  const {type: left, proof: leftProof} = checkers[node.left.type](node, state)
-  const {type: right, proof: rightProof} = checkers[node.right.type](node, state)
+  const { type: left, proof: leftProof } = checkers[node.left.type](node, state)
+  const { type: right, proof: rightProof } = checkers[node.right.type](
+    node,
+    state
+  )
 
   if (isFunction(left)) {
     state.cfg.errors.push(fvbe(node.left, left, leftProof))
@@ -153,7 +179,7 @@ checkers.BinaryExpression = (node: es.BinaryExpression, state) => {
     state.cfg.errors.push(fvbe(node.right, right, rightProof))
     throw new Stop()
   } else {
-    return {type: left, proof: node}
+    return { type: left, proof: node }
   }
 }
 
@@ -171,7 +197,7 @@ checkers.VariableDeclaration = (node: es.VariableDeclaration, state) => {
 
 checkers.FunctionExpression = (node: es.FunctionExpression, state) => {
   const scope = state.cfg.scopes.find(s => s.node === node)!
-  return { type: scope.type!, proof: node } 
+  return { type: scope.type!, proof: node }
 }
 
 checkers.FunctionDeclaration = (node: es.FunctionDeclaration, state) => {
@@ -182,7 +208,10 @@ checkers.FunctionDeclaration = (node: es.FunctionDeclaration, state) => {
 
 checkers.ReturnStatement = (node: es.ReturnStatement, state) => {
   const scope = state.cfg._scopes[0]
-  const { type: argType, proof: argProof } = checkers[node.argument!.type](node.argument!, state)
+  const { type: argType, proof: argProof } = checkers[node.argument!.type](
+    node.argument!,
+    state
+  )
   if (isSameType(scope.type, argType)) {
     scope.type = argType
     scope.proof = argProof
@@ -190,9 +219,15 @@ checkers.ReturnStatement = (node: es.ReturnStatement, state) => {
   return { type: undefinedT, proof: node }
 }
 
-checkers.LogicalExpression = (node: es.LogicalExpression, state)  => {
-  const { type: leftType, proof: leftProof } = checkers[node.left.type](node.left, state)
-  const { type: rightType, proof: rightProof } = checkers[node.left.type](node.right, state)
+checkers.LogicalExpression = (node: es.LogicalExpression, state) => {
+  const { type: leftType, proof: leftProof } = checkers[node.left.type](
+    node.left,
+    state
+  )
+  const { type: rightType, proof: rightProof } = checkers[node.left.type](
+    node.right,
+    state
+  )
 
   if (leftType !== booleanT) {
     state.cfg.errors.push(lenb(node, leftType, leftProof))
@@ -215,7 +250,10 @@ checkers.LogicalExpression = (node: es.LogicalExpression, state)  => {
 }
 
 checkers.IfStatement = (node: es.IfStatement, state) => {
-  const { type: testType, proof: testProof} = checkers[node.test.type](node, state)
+  const { type: testType, proof: testProof } = checkers[node.test.type](
+    node,
+    state
+  )
   if (testType !== booleanT) {
     state.cfg.errors.push({
       kind: 'type',
@@ -223,7 +261,7 @@ checkers.IfStatement = (node: es.IfStatement, state) => {
       node: node.test,
       proof: testProof,
       expected: [booleanT],
-      got: testType,
+      got: testType
     })
   }
   return { type: undefinedT, proof: node }

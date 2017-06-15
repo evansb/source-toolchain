@@ -24,7 +24,7 @@ describe('Session', () => {
     const session = new Session(3)
     expect.assertions(1)
     return new Promise((resolve, reject) => {
-      session.on('errors', (errors) => {
+      session.on('errors', errors => {
         expect(errors.length).toBe(1)
         resolve()
       })
@@ -94,7 +94,7 @@ describe('Session', () => {
           resolve()
         }
       })
-      session.on('errors', (errors) => {
+      session.on('errors', errors => {
         expect(errors.length).toBe(1)
       })
       session.start('var x = 1 + 2;')

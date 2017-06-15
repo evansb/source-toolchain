@@ -4,7 +4,7 @@ import {
   parse as acornParse,
   Options as AcornOptions,
   SourceLocation,
-  Position,
+  Position
 } from 'acorn'
 import { simple } from 'acorn/dist/walk'
 import { ErrorType } from './types/error'
@@ -13,7 +13,7 @@ import syntaxTypes from './syntaxTypes'
 import { createContext } from './context'
 
 export type ParserOptions = {
-  week: number,
+  week: number
 }
 
 export const freshId = (() => {
@@ -26,14 +26,17 @@ export const freshId = (() => {
 
 function compose<T extends es.Node, S>(
   w1: (node: T, state: S) => void,
-  w2: (node: T, state: S) => void) {
+  w2: (node: T, state: S) => void
+) {
   return (node: T, state: S) => {
     w1(node, state)
     w2(node, state)
   }
 }
 
-const walkers: {[name: string]: (node: es.Node, state: StaticState) => void } = {}
+const walkers: {
+  [name: string]: (node: es.Node, state: StaticState) => void
+} = {}
 
 for (const type of Object.keys(syntaxTypes)) {
   walkers[type] = (node: es.Node, state: StaticState) => {
@@ -42,19 +45,19 @@ for (const type of Object.keys(syntaxTypes)) {
       enumerable: true,
       configurable: false,
       writable: false,
-      value: id,
+      value: id
     })
     state.cfg.nodes[id] = {
       node,
       scope: undefined,
       edges: [],
-      usages: [],
+      usages: []
     }
     if (syntaxTypes[node.type] > state.week) {
       state.parser.errors.push({
         kind: 'syntax',
         type: ErrorType.MatchFailure,
-        node,
+        node
       })
     }
   }
@@ -68,20 +71,20 @@ const checkIfStatement = (node: es.IfStatement, state: StaticState) => {
     state.parser.errors.push({
       kind: 'syntax',
       type: ErrorType.IfConsequentNotABlockStatement,
-      node,
+      node
     })
   }
   if (state.week <= 3 && !node.alternate) {
     state.parser.errors.push({
       kind: 'syntax',
       type: ErrorType.MissingIfAlternate,
-      node,
+      node
     })
   } else if (node.alternate && node.alternate.type !== 'BlockStatement') {
     state.parser.errors.push({
       kind: 'syntax',
       type: ErrorType.IfAlternateNotABlockStatement,
-      node,
+      node
     })
   }
 }
@@ -89,75 +92,87 @@ walkers.IfStatement = compose(walkers.IfStatement, checkIfStatement)
 
 // Binary Expressions
 // == and != are banned, must use !== and ===
-const checkBinaryExpression = (node: es.BinaryExpression, state: StaticState) => {
+const checkBinaryExpression = (
+  node: es.BinaryExpression,
+  state: StaticState
+) => {
   if (node.operator === '==') {
     state.parser.errors.push({
       kind: 'syntax',
       type: ErrorType.UseStrictEquality,
-      node,
+      node
     })
   } else if (node.operator === '!=') {
     state.parser.errors.push({
       kind: 'syntax',
       type: ErrorType.UseStrictInequality,
-      node,
+      node
     })
   }
 }
-walkers.BinaryExpression = compose(walkers.BinaryExpression, checkBinaryExpression)
+walkers.BinaryExpression = compose(
+  walkers.BinaryExpression,
+  checkBinaryExpression
+)
 
 // Variable Declarations
 // Can only have single declarations
-const checkVariableDeclaration = (node: es.VariableDeclaration, state: StaticState) => {
+const checkVariableDeclaration = (
+  node: es.VariableDeclaration,
+  state: StaticState
+) => {
   if (node.declarations.length > 1) {
     state.parser.errors.push({
       kind: 'syntax',
       type: ErrorType.MultipleDeclarations,
-      node,
+      node
     })
   } else if (node.declarations.length == 1 && !node.declarations[0].init) {
     state.parser.errors.push({
       kind: 'syntax',
       type: ErrorType.NoDeclarations,
-      node,
+      node
     })
   }
 }
-walkers.VariableDeclaration = compose(walkers.VariableDeclaration, checkVariableDeclaration)
+walkers.VariableDeclaration = compose(
+  walkers.VariableDeclaration,
+  checkVariableDeclaration
+)
 
 const createAcornParserOptions = (state: StaticState): AcornOptions => ({
   sourceType: 'script',
   ecmaVersion: 5,
   locations: true,
   onInsertedSemicolon(end: any, loc: any) {
-    const node = ({
-      type: 'Statement',
-      loc: {
-        end: {line: loc.line, column: loc.column + 1},
-        start: loc,
-      },
-    }) as any
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.MissingSemicolon,
-      node,
-    })
-  },
-  onTrailingComma(end: any, loc: Position) {
-    const node = ({
+    const node = {
       type: 'Statement',
       loc: {
         end: { line: loc.line, column: loc.column + 1 },
-        start: loc,
-      },
-    }) as any
+        start: loc
+      }
+    } as any
+    state.parser.errors.push({
+      kind: 'syntax',
+      type: ErrorType.MissingSemicolon,
+      node
+    })
+  },
+  onTrailingComma(end: any, loc: Position) {
+    const node = {
+      type: 'Statement',
+      loc: {
+        end: { line: loc.line, column: loc.column + 1 },
+        start: loc
+      }
+    } as any
     state.parser.errors.push({
       kind: 'syntax',
       type: ErrorType.TrailingComma,
-      node,
+      node
     })
   },
-  onComment: state.parser.comments,
+  onComment: state.parser.comments
 })
 
 export const parse = (source: string, state: StaticState | number) => {
@@ -176,13 +191,13 @@ export const parse = (source: string, state: StaticState | number) => {
         kind: 'syntax',
         type: ErrorType.AcornParseError,
         explanation: error.toString(),
-        node: ({
+        node: {
           type: 'Statement',
           loc: {
             start: { line: loc.line, column: loc.column },
-            end: { line: loc.line, column: loc.column + 1 },
-          },
-        }) as any,
+            end: { line: loc.line, column: loc.column + 1 }
+          }
+        } as any
       })
     } else {
       throw error

@@ -16,10 +16,10 @@ it('create() correctly creates initial visualizer interpreter', () => {
 describe('next(v, e)', () => {
   it('on top level ExpressionStatement assign current expression to its expression and clears node stack', () => {
     let visualizer = create()
-    visualizer = {...visualizer, nodes: Stack.of(parse3('1;'))}
+    visualizer = { ...visualizer, nodes: Stack.of(parse3('1;')) }
     const evaluator = {
       _done: false,
-      node: parse3('1 + 2;').body[0],
+      node: parse3('1 + 2;').body[0]
     }
     visualizer = next(visualizer, evaluator)
     expect(visualizer.root).toBeDefined()
@@ -28,14 +28,14 @@ describe('next(v, e)', () => {
 
   it('stop visualization inside function call until next return statement', () => {
     const program = parse3('function foo() { return 3; }\nfoo();')
-    const visualizer = {...create(), _suppress: false}
+    const visualizer = { ...create(), _suppress: false }
     const evaluator = {
       _done: false,
-      node: (program.body[0] as any).body,
+      node: (program.body[0] as any).body
     }
     const evaluator2 = {
       _done: false,
-      node: (program.body[0] as any).body[0],
+      node: (program.body[0] as any).body[0]
     }
     const visualizer2 = next(visualizer, evaluator)
     expect(visualizer2._suppress).toBe(true)
@@ -44,7 +44,8 @@ describe('next(v, e)', () => {
   })
 
   it('replaces completely evaluated expression with its value', () => {
-    const stmt = parse3('1 + (true && false) + (true ? 1 : 2);').body[0] as es.ExpressionStatement
+    const stmt = parse3('1 + (true && false) + (true ? 1 : 2);')
+      .body[0] as es.ExpressionStatement
 
     const exp = stmt.expression as es.BinaryExpression
     const left = exp.left as es.BinaryExpression
@@ -52,26 +53,26 @@ describe('next(v, e)', () => {
     const one = left.left as es.Literal
     const trueAndFalse = left.right as es.LogicalExpression
 
-    const base = {...create(), root: exp, _suppress: false }
+    const base = { ...create(), root: exp, _suppress: false }
     let result: any
     result = next(base, {
       _done: true,
       node: one,
-      value: 1,
+      value: 1
     })
     expect(result.root.left.left.type).toBe('Literal')
     expect(result.root.left.left.value).toBe(1)
     result = next(base, {
       _done: true,
       node: logical,
-      value: 3,
+      value: 3
     })
     expect(result.root.right.type).toBe('Literal')
     expect(result.root.right.value).toBe(3)
     result = next(base, {
       _done: true,
       node: trueAndFalse,
-      value: false,
+      value: false
     })
     expect(result.root.left.right.type).toBe('Literal')
     expect(result.root.left.right.value).toBe(false)
@@ -79,14 +80,12 @@ describe('next(v, e)', () => {
 })
 
 it('visualizes complex expression without function calls', () => {
-  testVisualizer(
-   '1 + (1 && 3) + (true ? 1 : 2);'
-  , [
+  testVisualizer('1 + (1 && 3) + (true ? 1 : 2);', [
     '1 + (1 && 3) + (true ? 1 : 2)',
     '1 + 3 + (true ? 1 : 2)',
     '4 + (true ? 1 : 2)',
     '4 + 1',
-    '5',
+    '5'
   ])
 })
 
@@ -100,7 +99,8 @@ it('visualizes recursive calls (binary expression)', () => {
       }
     }
     factorial(3);
-    `, [
+    `,
+    [
       'factorial(3)',
       'n * factorial(n - 1)',
       '3 * factorial(n - 1)',
@@ -112,8 +112,8 @@ it('visualizes recursive calls (binary expression)', () => {
       '3 * (2 * factorial(1))',
       '3 * (2 * 1)',
       '3 * 2',
-      '6',
-    ],
+      '6'
+    ]
   )
 })
 
@@ -127,7 +127,8 @@ it('visualizes recursive calls (logical expression)', () => {
       }
     }
     doo(1);
-    `, [
+    `,
+    [
       'doo(1)',
       'false || doo(n + 1)',
       'false || doo(1 + 1)',
@@ -141,13 +142,13 @@ it('visualizes recursive calls (logical expression)', () => {
       'false || (false || (false || true))',
       'false || (false || true)',
       'false || true',
-      'true',
-    ],
+      'true'
+    ]
   )
 })
 
 it('visualizes recursive calls (fibonacci)', () => {
-   testVisualizer(
+  testVisualizer(
     `function fib(n) {
       if (n === 0) {
         return 0;
@@ -160,7 +161,8 @@ it('visualizes recursive calls (fibonacci)', () => {
       }
     }
     fib(4);
-    `, [
+    `,
+    [
       'fib(4)',
       'fib(n - 1) + fib(n - 2)',
       'fib(4 - 1) + fib(n - 2)',
@@ -190,7 +192,7 @@ it('visualizes recursive calls (fibonacci)', () => {
       '2 + (1 + fib(0))',
       '2 + (1 + 0)',
       '2 + 1',
-      '3',
-    ],
+      '3'
+    ]
   )
 })

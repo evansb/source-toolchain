@@ -4,9 +4,9 @@ import { Stack, List, Map, Record } from 'immutable'
 import { SyntaxError } from './static'
 
 export interface Scope {
-  parent?: number,
-  name: string,
-  environment: Map<string, any>,
+  parent?: number
+  name: string
+  environment: Map<string, any>
 }
 
 export interface InspectableState {
@@ -24,12 +24,11 @@ const params = {
   value: undefined,
 
   _isReturned: false,
-  _done: false,
+  _done: false
 }
 
 export class InterpreterState extends Record(params)
   implements InspectableState {
-
   isRunning: boolean
   frames: Stack<number>
   scopes: Map<number, Scope>

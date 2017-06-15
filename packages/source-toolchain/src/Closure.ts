@@ -6,7 +6,6 @@ import { Map } from 'immutable'
  * Models function value in the interpreter environment.
  */
 class Closure {
-
   /** The Function Expression */
   public node: es.FunctionExpression
 
@@ -16,7 +15,11 @@ class Closure {
   /** Unique ID defined for anonymous closure */
   public id?: number
 
-  constructor(node: es.FunctionExpression, enclosingScope: number, id?: number) {
+  constructor(
+    node: es.FunctionExpression,
+    enclosingScope: number,
+    id?: number
+  ) {
     this.node = node
     this.enclosingScope = enclosingScope
     this.id = id
@@ -29,13 +32,14 @@ class Closure {
    * @returns {Scope}
    */
   createScope(args: any[]): Scope {
-    const environment = this.node.params.reduce((s, p, idx) =>
-      s.set((p as es.Identifier).name, args[idx])
-    , Map<string, any>())
+    const environment = this.node.params.reduce(
+      (s, p, idx) => s.set((p as es.Identifier).name, args[idx]),
+      Map<string, any>()
+    )
     return {
       name: this.getScopeName(args),
       parent: this.enclosingScope,
-      environment,
+      environment
     }
   }
 
