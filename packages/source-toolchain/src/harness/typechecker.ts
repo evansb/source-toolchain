@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { createContext } from '../../src/context'
-import { CFG, numberT } from '../../src/types/static'
+import { CFG } from '../../src/types/static'
 import { parse } from '../../src/parser'
 import { generateCFG } from '../../src/cfg'
 import { typecheck, isSameType, parseString } from '../../src/typechecker'
@@ -31,11 +31,9 @@ export const runTypecheckerTest = (filename: string) => {
     // First test
     if (line.match(/\/\/@/) && current.length > 0) {
       // Start of a new test
-      const source = current
-      const state = createContext({ week: 3 })
       suites.push({
         name: testName,
-        source,
+        source: current,
         assertions: currentAssertions
       })
       current = ''
@@ -71,7 +69,7 @@ export const runTypecheckerTest = (filename: string) => {
       s.assertions.forEach(a => {
         const { name, type: expectedType } = a
         expect(
-          isSameType(state.cfg.scopes[0].env[a.name].type, expectedType)
+          isSameType(state.cfg.scopes[0].env[name].type, expectedType)
         ).toBe(true)
       })
     })
