@@ -8,6 +8,8 @@
   "author": "Evan Sebastian <evanlhoini@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "precommit": "lint-staged",
+    "prepush": "npm run lint",
     "prettier": "prettier --parser typescript --no-semi --single-quote --write '{src,test}/**/*.ts'",
     "prepublish": "npm run clean && npm run compile",
     "clean": "rimraf definitions es6 es5",
@@ -67,9 +69,11 @@
   },
   "lint-staged": {
     "gitDir": "../",
-    "*.ts": [
-      "--parser typescript --no-semi --single-quote --write",
-      "git add"
-    ]
+    "linters": {
+      "*.ts": [
+        "prettier --parser typescript --no-semi --single-quote --write",
+        "git add"
+      ]
+    }
   }
 }
