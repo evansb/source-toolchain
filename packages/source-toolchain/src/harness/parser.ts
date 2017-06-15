@@ -16,10 +16,11 @@ const defaultOptions: Options = {
 }
 
 export const singleError = (source: string, options: Partial<Options>) => {
-  const { errorType, week, match } = <Options>{
+  const completeOptions: Options = {
     ...defaultOptions,
     ...options
   }
+  const { errorType, week, match } = completeOptions
   const context = createContext({ week })
   parse(source, context)
   expect(context.parser.errors.length).toBe(1)
