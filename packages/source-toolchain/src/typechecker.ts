@@ -187,7 +187,7 @@ checkers.VariableDeclaration = (node: es.VariableDeclaration, state) => {
   const ident = node.declarations[0].id as es.Identifier
   const init = node.declarations[0].init!
   const { type: initType, proof: initProof } = checkers[init.type](init, state)
-  const vertex = state.cfg._scopes[0].env[ident.name]
+  const vertex = state.cfg.scopes[0].env[ident.name]
   if (vertex) {
     vertex.type = initType
     vertex.proof = initProof
@@ -202,12 +202,12 @@ checkers.FunctionExpression = (node: es.FunctionExpression, state) => {
 
 checkers.FunctionDeclaration = (node: es.FunctionDeclaration, state) => {
   const scope = state.cfg.scopes.find(s => s.node === node)!
-  state.cfg._scopes[0].env[node.id.name].type = scope.type
+  state.cfg.scopes[0].env[node.id.name].type = scope.type
   return { type: undefinedT, proof: node }
 }
 
 checkers.ReturnStatement = (node: es.ReturnStatement, state) => {
-  const scope = state.cfg._scopes[0]
+  const scope = state.cfg.scopes[0]
   const { type: argType, proof: argProof } = checkers[node.argument!.type](
     node.argument!,
     state
