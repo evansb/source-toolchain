@@ -68,7 +68,7 @@
     ]
   },
   "lint-staged": {
-    "gitDir": "../",
+    "gitDir": "../../",
     "linters": {
       "*.ts": [
         "prettier --parser typescript --no-semi --single-quote --write",
