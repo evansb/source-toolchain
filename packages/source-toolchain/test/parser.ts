@@ -1,3 +1,4 @@
+import { singleError } from '../src/harness/parser'
 import { createContext } from '../src/context'
 import { parse } from '../src/parser'
 import { ErrorType } from '../src/types/error'
@@ -34,87 +35,97 @@ it('produces a SyntaxError for non ES5 features', () => {
 })
 
 it('detects Missing Semicolon errors', () => {
-  const result = parse3e('1 + 2')
-  expect(result.length).toBe(1)
-  expect(result[0].type).toBe(ErrorType.MissingSemicolon)
-  expect(explainError(result[0])).toMatch(/Missing.*semicolon.*/)
+  singleError('1 + 2', {
+    errorType: ErrorType.MissingSemicolon,
+    match: /Missing.*semicolon/
+  })
 })
 
 it('detects missing Else case', () => {
-  const result = parse3e(`
+  singleError(
+    `
     if (2 === 2) {
       var x = 2;
     }
-  `)
-  expect(result.length).toBe(1)
-  expect(result[0].type).toBe(ErrorType.MissingIfAlternate)
-  expect(result[0].node.type).toBe('IfStatement')
-  expect(explainError(result[0])).toMatch(/Missing.*else.*/)
+  `,
+    {
+      errorType: ErrorType.MissingIfAlternate,
+      match: /Missing.*else.*/
+    }
+  )
 })
 
 it('detects If not using curly braces', () => {
-  const result = parse3e(`
+  singleError(
+    `
     if (2 === 2)
       1 + 2;
     else {
       1 + 2;
     }
-  `)
-  expect(result.length).toBe(1)
-  expect(result[0].type).toBe(ErrorType.IfConsequentNotABlockStatement)
-  expect(result[0].node.type).toBe('IfStatement')
-  expect(explainError(result[0])).toMatch(/curly braces.*if/)
-})
-
-it('detects disallowed feature', () => {
-  const result = parse3e(`
-    var x = 2;
-    x = 3;
-  `)
-  expect(result.length).toBe(1)
-  expect(result[0].type).toBe(ErrorType.MatchFailure)
-  expect(explainError(result[0])).toMatch(/Assignment.*not allowed/)
+  `,
+    {
+      errorType: ErrorType.IfConsequentNotABlockStatement,
+      match: /curly braces.*if/
+    }
+  )
 })
 
 it('detects Else not using curly braces', () => {
-  const result = parse3e(`
+  singleError(
+    `
     if (2 === 2) {
       1 + 2;
     } else
       1 + 2;
-  `)
-  expect(result.length).toBe(1)
-  expect(result[0].type).toBe(ErrorType.IfAlternateNotABlockStatement)
-  expect(result[0].node.type).toBe('IfStatement')
-  expect(explainError(result[0])).toMatch(/curly braces.*else/)
+  `,
+    {
+      errorType: ErrorType.IfAlternateNotABlockStatement,
+      match: /curly braces.*else/
+    }
+  )
+})
+
+it('detects disallowed feature', () => {
+  singleError(
+    `
+    var x = 2;
+    x = 3;
+  `,
+    {
+      errorType: ErrorType.MatchFailure,
+      match: /Assignment.*not allowed/
+    }
+  )
 })
 
 it('detects not using strict equality', () => {
-  const result = parse3e(`2 == 2;`)
-  expect(result.length).toBe(1)
-  expect(result[0].type).toBe(ErrorType.UseStrictEquality)
-  expect(explainError(result[0])).toMatch(/===/)
+  singleError(`2 == 2;`, {
+    errorType: ErrorType.UseStrictEquality,
+    match: /===/
+  })
 })
 
 it('detects not using strict inequality', () => {
-  const result = parse3e(`2 != 2;`)
-  expect(result.length).toBe(1)
-  expect(result[0].type).toBe(ErrorType.UseStrictInequality)
-  expect(explainError(result[0])).toMatch(/!==/)
+  singleError(`2 != 2;`, {
+    errorType: ErrorType.UseStrictInequality,
+    match: /!==/
+  })
 })
 
 it('detects missing declaration value', () => {
-  const result = parse3e(`var x;`)
-  expect(result.length).toBe(1)
-  expect(result[0].type).toBe(ErrorType.NoDeclarations)
-  expect(explainError(result[0])).toMatch(/Missing/)
+  singleError(`var x;`, {
+    errorType: ErrorType.MissingDeclarationExpression,
+    match: /Missing/
+  })
 })
 
 it('detects trailing comma', () => {
-  const result = parse3e(`[1,2,];`)
-  expect(result.length).toBe(2)
-  expect(result[0].type).toBe(ErrorType.TrailingComma)
-  expect(explainError(result[0])).toMatch(/Trailing.*comma/)
+  singleError(`[1,2,];`, {
+    week: 13,
+    errorType: ErrorType.TrailingComma,
+    match: /Trailing.*comma/
+  })
 })
 
 it('initialises CFG indexed nodes', () => {

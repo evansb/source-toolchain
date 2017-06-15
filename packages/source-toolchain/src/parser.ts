@@ -131,7 +131,7 @@ const checkVariableDeclaration = (
   } else if (node.declarations.length == 1 && !node.declarations[0].init) {
     state.parser.errors.push({
       kind: 'syntax',
-      type: ErrorType.NoDeclarations,
+      type: ErrorType.MissingDeclarationExpression,
       node
     })
   }

@@ -228,7 +228,6 @@ checkers.LogicalExpression = (node: es.LogicalExpression, state) => {
     node.right,
     state
   )
-
   if (leftType !== booleanT) {
     state.cfg.errors.push(lenb(node, leftType, leftProof))
   }

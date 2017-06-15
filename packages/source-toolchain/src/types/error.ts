@@ -15,7 +15,7 @@ export enum ErrorType {
   MissingIfAlternate,
   MissingSemicolon,
   MultipleDeclarations,
-  NoDeclarations,
+  MissingDeclarationExpression,
   TrailingComma,
   UndefinedVariable,
   UnaryExpressionArgumentNotNumber,

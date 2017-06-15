@@ -57,8 +57,8 @@ export const explainError = (error: SyntaxError | TypeError) => {
       return `Undefined variable\n${(error.node as any).name}`
     case ErrorType.CallingNonFunctionValues:
       return `Trying to call non-function value: ${generate(error.node)}`
-    case ErrorType.NoDeclarations:
-      return `Missing value in variable declaration`
+    case ErrorType.MissingDeclarationExpression:
+      return `Missing expression in variable declaration`
     default:
       return 'Cannot find any explanation, please report this issue'
   }
