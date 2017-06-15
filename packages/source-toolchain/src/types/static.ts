@@ -6,7 +6,8 @@ export namespace CFG {
   export type Scope = {
     name: string
     parent?: Scope
-    root?: Vertex
+    entry?: Vertex
+    exits: Vertex[]
     node?: es.Node
     proof?: es.Node
     type: Type
@@ -16,9 +17,9 @@ export namespace CFG {
   }
 
   export type Vertex = {
+    id: string
     node: es.Node
     scope?: Scope
-    edges: Edge[]
     usages: Sym[]
   }
 
@@ -35,8 +36,10 @@ export namespace CFG {
     returnType?: Type
   }
 
+  export type EdgeLabel = 'next' | 'alternate' | 'consequent'
+
   export type Edge = {
-    type: 'next' | 'alternate' | 'consequent'
+    type: EdgeLabel
     to: Vertex
   }
 }
@@ -66,6 +69,10 @@ export type SyntaxError = {
   explanation?: string
 }
 
+export type HasID = {
+  __id: string
+}
+
 export type StaticState = {
   week: number
   parser: {
@@ -75,12 +82,9 @@ export type StaticState = {
   }
   cfg: {
     nodes: { [id: string]: CFG.Vertex }
+    edges: { [from: string]: CFG.Edge[] }
     scopes: CFG.Scope[]
     errors: Array<SyntaxError | TypeError>
-    _skip?: number
-    _queue?: Array<{ node: es.Node; scope: CFG.Scope }>
-    _last?: es.Node
-    _scopes: CFG.Scope[]
   }
 }
 

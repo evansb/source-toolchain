@@ -48,11 +48,12 @@ for (const type of Object.keys(syntaxTypes)) {
       value: id
     })
     state.cfg.nodes[id] = {
+      id,
       node,
       scope: undefined,
-      edges: [],
       usages: []
     }
+    state.cfg.edges[id] = []
     if (syntaxTypes[node.type] > state.week) {
       state.parser.errors.push({
         kind: 'syntax',

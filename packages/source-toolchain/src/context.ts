@@ -9,7 +9,8 @@ export const createContext = ({ week }: Options): StaticState => {
     name: '*global*',
     env: {},
     type: { name: 'undefined' } as CFG.Type,
-    node: undefined
+    node: undefined,
+    exits: []
   }
   return {
     week,
@@ -19,9 +20,9 @@ export const createContext = ({ week }: Options): StaticState => {
     },
     cfg: {
       nodes: {},
+      edges: {},
       scopes: [globalScope],
-      errors: [],
-      _scopes: [globalScope]
+      errors: []
     }
   }
 }

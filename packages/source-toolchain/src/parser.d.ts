@@ -1,48 +1,53 @@
 declare module 'acorn/dist/walk' {
   import * as es from 'estree'
 
-  type SimpleVisitor<S> = (node: es.Node, state?: S) => void
-  type SimpleVisitors<S> = { [name: string]: SimpleVisitor<S> }
-  type RecursiveVisitor<S> = (
-    node: es.Node,
-    state: S,
-    callback: SimpleVisitor<S>
-  ) => void
-  type RecursiveVisitors<S> = { [name: string]: RecursiveVisitor<S> }
-  type NodeTest = (nodeType: string, node: es.Node) => boolean
+  namespace AcornWalk {
+    export type SimpleWalker<S> = (node: es.Node, state?: S) => void
+    export type SimpleWalkers<S> = { [name: string]: SimpleWalker<S> }
+    export type Walker<T extends es.Node, S> = (
+      node: T & { __id: string },
+      state: S,
+      callback: SimpleWalker<S>
+    ) => void
+    export type Walkers<S> = { [name: string]: Walker<any, S> }
+    type NodeTest = (nodeType: string, node: es.Node) => boolean
 
-  interface AcornWalk {
-    base: any
-    simple<S>(
+    export const base: Walkers<any>
+
+    export function simple<S>(
       node: es.Node,
-      visitors: SimpleVisitors<S>,
-      base?: SimpleVisitors<S>,
+      visitors: SimpleWalkers<S>,
+      base?: SimpleWalkers<S>,
       state?: S
     ): void
-    findNodeAt<S>(
+    export function recursive<S>(
+      node: es.Node,
+      state: S,
+      functions: Walkers<S>
+    ): void
+    export function findNodeAt<S>(
       node: es.Node,
       start: null | number,
       end: null | number,
       test: string | NodeTest,
-      base?: SimpleVisitors<S>,
+      base?: SimpleWalkers<S>,
       state?: S
     ): void
-    findNodeAround<S>(
+    export function findNodeAround<S>(
       node: es.Node,
       pos: es.Position,
       test: string | NodeTest,
-      base?: SimpleVisitors<S>,
+      base?: SimpleWalkers<S>,
       state?: S
     ): void
-    findNodeAfter<S>(
+    export function findNodeAfter<S>(
       node: es.Node,
       pos: es.Position,
       test: string | NodeTest,
-      base?: SimpleVisitors<S>,
+      base?: SimpleWalkers<S>,
       state?: S
     ): void
   }
 
-  const AcornWalkStatic: AcornWalk
-  export = AcornWalkStatic
+  export = AcornWalk
 }
