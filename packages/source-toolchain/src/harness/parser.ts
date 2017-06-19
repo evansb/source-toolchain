@@ -3,7 +3,7 @@ import { parse, FatalSyntaxError } from '../parser'
 
 type Options = {
   week: number
-  errorClass: Function
+  errorClass: any
   explanation: RegExp
 }
 

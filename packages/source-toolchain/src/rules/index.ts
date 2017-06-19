@@ -5,7 +5,7 @@ import missingElse from './missingElse'
 import singleVariableDeclaration from './singleVariableDeclaration'
 import strictEquality from './strictEquality'
 
-const rules: Rule<any>[] = [
+const rules: Array<Rule<any>> = [
   bracesAroundIfElse,
   singleVariableDeclaration,
   strictEquality,

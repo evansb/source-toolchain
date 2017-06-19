@@ -2,7 +2,6 @@ import * as invariant from 'invariant'
 import * as es from 'estree'
 import { recursive, Walkers, Walker, base } from 'acorn/dist/walk'
 
-import { ErrorType } from './types/error'
 import { StaticState, CFG, anyT, HasID } from './types/static'
 import { compose } from './astUtils'
 

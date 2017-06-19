@@ -25,7 +25,7 @@ export class BracesAroundIfElseError implements IError {
   }
 }
 
-const bracesAroundIfElse = {
+const bracesAroundIfElse: Rule<es.IfStatement> = {
   name: 'braces-around-if-else',
 
   checkNodes: {

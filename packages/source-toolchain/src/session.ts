@@ -68,11 +68,7 @@ export class Session extends EventEmitter.EventEmitter2 {
 
       // Stop interpreter on error
       if (!nextInterpreter.errors.isEmpty) {
-        const errors = nextInterpreter.errors.map(error => ({
-          ...error,
-          explanation: explainError(error!)
-        }))
-        this.emit('errors', errors.toJS())
+        this.emit('errors', nextInterpreter.errors.toJS())
       }
 
       // Update states

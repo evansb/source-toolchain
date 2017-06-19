@@ -1,5 +1,6 @@
 import * as es from 'estree'
 import { Stack, List, Map, Record } from 'immutable'
+// tslint:disable-next-line
 import { IError } from './error'
 
 export interface Scope {
