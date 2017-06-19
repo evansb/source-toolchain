@@ -6,7 +6,6 @@ import * as es from 'estree'
 import * as EventEmitter from 'eventemitter2'
 import * as invariant from 'invariant'
 
-import { explainError } from './errorUtils'
 import { parse } from './parser'
 import { StaticState } from './types/static'
 import { createContext } from './context'
@@ -120,9 +119,6 @@ export class Session extends EventEmitter.EventEmitter2 {
     this.context = parse(code, this.context)
     const parserErrors = this.context.parser.errors
     if (parserErrors.length > 0) {
-      parserErrors.forEach(error => {
-        error.explanation = explainError(error)
-      })
       this.emit('errors', parserErrors)
       this.emit('done')
     } else {

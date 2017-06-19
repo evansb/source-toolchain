@@ -1,26 +1,7 @@
-export enum ErrorType {
-  /* Syntax Errors */
-  AcornParseError,
-  CallingNonFunctionValues,
-  ConditionalExpressionTestNotBoolean,
-  InconsistentTypeInConditionalExpression,
-  IfAlternateNotABlockStatement,
-  IfConsequentNotABlockStatement,
-  IfTestNotBoolean,
-  InvalidCallArguments,
-  LogicalExpressionNotBoolean,
-  LogicalExpressionNotSameType,
-  MatchFailure,
-  MissingIfAlternate,
-  MissingSemicolon,
-  MultipleDeclarations,
-  MissingDeclarationExpression,
-  InvalidNumberOfArguments,
-  NonNumbersInArithmeticBinaryExpression,
-  NonNumbersInArithmeticUnaryExpression,
-  TrailingComma,
-  UndefinedVariable,
-  UseStrictEquality,
-  UseStrictInequality,
-  VariableRedeclaration
+import * as es from 'estree'
+
+export interface IError {
+  location: es.SourceLocation
+  explain(): string
+  elaborate(): string
 }

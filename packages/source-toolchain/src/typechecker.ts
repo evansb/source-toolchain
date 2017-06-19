@@ -4,10 +4,10 @@ import { recursive, base, Walker, Walkers } from 'acorn/dist/walk'
 import { generate } from 'escodegen'
 import { stripIndent } from 'common-tags'
 
-import { ErrorType } from './types/error'
+import { IError } from './types/error'
 import {
   StaticState,
-  TypeError,
+  ITypeError,
   CFG,
   undefinedT,
   numberT,
@@ -15,8 +15,6 @@ import {
   booleanT,
   stringT
 } from './types/static'
-
-class Stop {}
 
 let currentScope: CFG.Scope
 
@@ -73,31 +71,231 @@ const initFunctionType = (node: es.Function, state: StaticState): CFG.Type => {
   return scope.type
 }
 
-const nonNumbersInArithmeticBinaryExpression = (
-  node: es.Node,
-  got: CFG.Type,
-  proof: es.Node
-): TypeError => ({
-  kind: 'type',
-  type: ErrorType.NonNumbersInArithmeticBinaryExpression,
-  node,
-  expected: [stringT, numberT],
-  proof,
-  got
-})
+export class TypeError<T extends es.Node> implements ITypeError {
+  constructor(
+    public node: T,
+    public expected: CFG.Type[],
+    public got: CFG.Type,
+    public proof?: es.Node
+  ) {}
 
-const logicalExpressionNotBoolean = (
-  node: es.Node,
-  got: CFG.Type,
-  proof: es.Node
-): TypeError => ({
-  kind: 'type',
-  type: ErrorType.LogicalExpressionNotBoolean,
-  node,
-  got,
-  proof,
-  expected: [booleanT]
-})
+  get location() {
+    return this.node.loc!
+  }
+
+  explain() {
+    return `Unexpected type: ${this.got}`
+  }
+
+  elaborate() {
+    return ''
+  }
+}
+
+export class UndeclaredVariable implements IError {
+  constructor(public node: es.Identifier) {}
+
+  get location() {
+    return this.node.loc!
+  }
+
+  explain() {
+    return `Undeclared variable ${this.node.name}`
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class VariableRedeclaration implements IError {
+  constructor(public node: es.VariableDeclaration, proof: es.Node) {}
+
+  get location() {
+    return this.node.loc!
+  }
+
+  get name() {
+    return (this.node.declarations[0].id as any).name
+  }
+
+  explain() {
+    return `Redeclaring variable ${this.name}`
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class NonNumberInBinaryArithmeticExpression extends TypeError<
+  es.BinaryExpression
+> {
+  constructor(
+    node: es.BinaryExpression,
+    got: CFG.Type,
+    public leftOrRight: 'left' | 'right',
+    proof?: es.Node
+  ) {
+    super(node, [numberT], got, proof)
+  }
+
+  explain() {
+    return `Non-number in ${this.leftOrRight} hand side of ${this.node
+      .operator} operation.`
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class NonNumberInUnaryArithmeticExpression extends TypeError<
+  es.UnaryExpression
+> {
+  constructor(node: es.UnaryExpression, got: CFG.Type, proof?: es.Node) {
+    super(node, [numberT], got, proof)
+  }
+
+  explain() {
+    return `Non-number in unary ${this.node.operator} operation.`
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class NonBooleanInLogicalExpression extends TypeError<
+  es.LogicalExpression
+> {
+  constructor(
+    node: es.LogicalExpression,
+    got: CFG.Type,
+    public leftOrRight: 'left' | 'right',
+    public proof?: es.Node
+  ) {
+    super(node, [booleanT], got, proof)
+  }
+
+  explain() {
+    return `Non-boolean in ${this.leftOrRight} hand side of ${super.node
+      .operator} operation.`
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class CallingNonFunctionValue extends TypeError<es.CallExpression> {
+  constructor(
+    node: es.CallExpression,
+    expected: CFG.Type,
+    got: CFG.Type,
+    proof?: es.Node
+  ) {
+    super(node, [expected], got, proof)
+  }
+
+  explain() {
+    return 'Calling non-function value'
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class InvalidNumberOfArguments extends TypeError<es.CallExpression> {
+  constructor(
+    node: es.CallExpression,
+    expected: CFG.Type,
+    got: CFG.Type,
+    proof?: es.Node
+  ) {
+    super(node, [expected], got, proof)
+  }
+
+  explain() {
+    return 'Invalid number of arguments supplied'
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class NonBooleanInConditionalExpressionTest extends TypeError<
+  es.ConditionalExpression
+> {
+  constructor(node: es.ConditionalExpression, got: CFG.Type, proof?: es.Node) {
+    super(node, [booleanT], got, proof)
+  }
+
+  explain() {
+    return 'Non-boolean in conditional expression test'
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class NonBooleanInIfTest extends TypeError<es.Expression> {
+  constructor(node: es.Expression, got: CFG.Type, proof?: es.Node) {
+    super(node, [booleanT], got, proof)
+  }
+
+  explain() {
+    return 'Non-boolean in "if" test'
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class InconsistentTypeInConditionalExpression extends TypeError<
+  es.Expression
+> {
+  constructor(
+    node: es.Expression,
+    expected: CFG.Type,
+    got: CFG.Type,
+    proof?: es.Node
+  ) {
+    super(node, [expected], got, proof)
+  }
+
+  explain() {
+    return 'Inconsistent type in "else" case of conditional expression.'
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class InvalidCallArguments extends TypeError<es.CallExpression> {
+  constructor(
+    node: es.CallExpression,
+    public position: number,
+    expected: CFG.Type,
+    got: CFG.Type,
+    proof?: es.Node
+  ) {
+    super(node, [expected], got, proof)
+  }
+
+  explain() {
+    return 'Invalid Call Arguments'
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
 
 checkers.Literal = (node: es.Literal, state) => {
   switch (typeof node.value) {
@@ -122,26 +320,18 @@ checkers.CallExpression = (node: es.CallExpression, state, expected) => {
   )
 
   if (!isFunction(calleeType)) {
-    state.cfg.errors.push({
-      kind: 'type',
-      type: ErrorType.CallingNonFunctionValues,
-      node: node.callee,
-      expected: [],
-      got: calleeType,
-      proof: calleeProof
-    })
-    throw new Stop()
+    // TODO fix this
+    throw new CallingNonFunctionValue(node, calleeType, calleeType, calleeProof)
   }
 
   if (node.arguments.length < calleeType.params!.length) {
-    state.cfg.errors.push({
-      kind: 'type',
-      type: ErrorType.InvalidNumberOfArguments,
+    // TODO fix this
+    throw new InvalidNumberOfArguments(
       node,
-      expected: [],
-      got: anyT,
-      proof: calleeProof
-    })
+      calleeType,
+      calleeType,
+      calleeProof
+    )
   }
 
   const expectations = calleeType.params!
@@ -158,15 +348,7 @@ checkers.CallExpression = (node: es.CallExpression, state, expected) => {
       param = calleeType.params![idx] = argType
     }
     if (!isSameType(argType, param)) {
-      state.cfg.errors.push({
-        kind: 'type',
-        type: ErrorType.InvalidCallArguments,
-        node: argument,
-        expected: [param],
-        got: argType,
-        proof: argProof
-      })
-      throw new Stop()
+      throw new InvalidCallArguments(node, idx, param, argType, argProof)
     }
   })
 
@@ -185,15 +367,7 @@ checkers.ConditionalExpression = (node: es.ConditionalExpression, state) => {
     booleanT
   )
   if (testType !== booleanT) {
-    state.cfg.errors.push({
-      kind: 'type',
-      type: ErrorType.ConditionalExpressionTestNotBoolean,
-      node: node.test,
-      expected: [booleanT],
-      got: testType,
-      proof: testProof
-    })
-    throw new Stop()
+    throw new NonBooleanInConditionalExpressionTest(node, testType, testProof)
   }
   const { type: consType, proof: constProof } = checkers[node.consequent.type](
     node.consequent,
@@ -207,15 +381,12 @@ checkers.ConditionalExpression = (node: es.ConditionalExpression, state) => {
   if (isSameType(consType, altType)) {
     return { type: consType, proof: node }
   } else {
-    state.cfg.errors.push({
-      kind: 'type',
-      type: ErrorType.InconsistentTypeInConditionalExpression,
-      node: node.alternate,
-      expected: [consType],
-      got: altType,
-      proof: altProof
-    })
-    throw new Stop()
+    throw new InconsistentTypeInConditionalExpression(
+      node.alternate,
+      consType,
+      altType,
+      altProof
+    )
   }
 }
 
@@ -226,15 +397,7 @@ checkers.UnaryExpression = (node: es.UnaryExpression, state) => {
     numberT
   )
   if (argType !== numberT) {
-    state.cfg.errors.push({
-      kind: 'type',
-      type: ErrorType.NonNumbersInArithmeticUnaryExpression,
-      node: node.argument,
-      expected: [numberT],
-      got: argType,
-      proof: argProof
-    })
-    throw new Stop()
+    throw new NonNumberInUnaryArithmeticExpression(node, argType, argProof)
   }
   return { type: argType, proof: node }
 }
@@ -253,27 +416,27 @@ checkers.BinaryExpression = (node: es.BinaryExpression, state) => {
   if (left === numberT && right === numberT) {
     return { type: numberT, proof: node }
   } else if (left === numberT) {
-    state.cfg.errors.push(
-      nonNumbersInArithmeticBinaryExpression(node.right, right, rightProof)
+    throw new NonNumberInBinaryArithmeticExpression(
+      node,
+      right,
+      'right',
+      rightProof
     )
-    throw new Stop()
   } else {
-    state.cfg.errors.push(
-      nonNumbersInArithmeticBinaryExpression(node.left, left, leftProof)
+    throw new NonNumberInBinaryArithmeticExpression(
+      node,
+      left,
+      'left',
+      leftProof
     )
-    throw new Stop()
   }
 }
 
 checkers.VariableDeclaration = (node: es.VariableDeclaration, state) => {
   const ident = node.declarations[0].id as es.Identifier
-  if (currentScope.env[ident.name]) {
-    state.cfg.errors.push({
-      kind: 'syntax',
-      type: ErrorType.VariableRedeclaration,
-      node
-    })
-    throw new Stop()
+  const existing = currentScope.env[ident.name]
+  if (existing) {
+    throw new VariableRedeclaration(node, existing.proof)
   }
   const init = node.declarations[0].init!
   const { type: initType, proof: initProof } = checkers[init.type](init, state)
@@ -301,12 +464,7 @@ const getSymbol = (name: string) => {
 checkers.Identifier = (node: es.Identifier, state, expected) => {
   const symbol = getSymbol(node.name)
   if (!symbol) {
-    state.cfg.errors.push({
-      kind: 'syntax',
-      type: ErrorType.UndefinedVariable,
-      node
-    })
-    throw new Stop()
+    throw new UndeclaredVariable(node)
   }
   if (symbol.type === anyT && expected && expected !== anyT) {
     symbol.type = expected
@@ -360,16 +518,15 @@ checkers.LogicalExpression = (node: es.LogicalExpression, state) => {
     booleanT
   )
   if (leftType !== booleanT) {
-    state.cfg.errors.push(
-      logicalExpressionNotBoolean(node, leftType, leftProof)
-    )
-    throw new Stop()
+    throw new NonBooleanInLogicalExpression(node, leftType, 'left', leftProof)
   }
   if (rightType !== booleanT) {
-    state.cfg.errors.push(
-      logicalExpressionNotBoolean(node, rightType, rightProof)
+    throw new NonBooleanInLogicalExpression(
+      node,
+      rightType,
+      'right',
+      rightProof
     )
-    throw new Stop()
   }
   return { type: booleanT, proof: node }
 }
@@ -381,14 +538,7 @@ checkers.IfStatement = (node: es.IfStatement, state) => {
     booleanT
   )
   if (testType !== booleanT) {
-    state.cfg.errors.push({
-      kind: 'type',
-      type: ErrorType.IfTestNotBoolean,
-      node: node.test,
-      proof: testProof,
-      expected: [booleanT],
-      got: testType
-    })
+    throw new NonBooleanInIfTest(node.test, testType, testProof)
   }
   return { type: undefinedT, proof: node }
 }
@@ -421,7 +571,7 @@ export const typecheck = (state: StaticState) => {
       try {
         checkers[current.node.type](current.node, state)
       } catch (e) {
-        if (e instanceof Stop) {
+        if (e instanceof TypeError || (e as IError).location) {
           return
         } else {
           throw e

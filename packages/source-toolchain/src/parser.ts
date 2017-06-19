@@ -7,13 +7,82 @@ import {
   Position
 } from 'acorn'
 import { simple } from 'acorn/dist/walk'
-import { ErrorType } from './types/error'
+import { IError } from './types/error'
 import { StaticState } from './types/static'
 import syntaxTypes from './syntaxTypes'
 import { createContext } from './context'
+import rules from './rules'
 
 export type ParserOptions = {
   week: number
+}
+
+export class DisallowedConstructError implements IError {
+  constructor(public node: es.Node) {}
+
+  get location() {
+    return this.node.loc!
+  }
+
+  explain() {
+    return `${this.splitNodeType()} is not allowed`
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+
+  private splitNodeType() {
+    const nodeType = this.node.type
+    const tokens: string[] = []
+    let soFar = ''
+    for (let i = 0; i < nodeType.length; i++) {
+      const isUppercase = nodeType[i] === nodeType[i].toUpperCase()
+      if (isUppercase && i > 0) {
+        tokens.push(soFar)
+        soFar = ''
+      } else {
+        soFar += nodeType[i]
+      }
+    }
+    return tokens
+  }
+}
+
+export class FatalSyntaxError implements IError {
+  constructor(public location: es.SourceLocation, public message: string) {}
+
+  explain() {
+    return `Syntax Error: ${this.message}`
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class MissingSemicolonError implements IError {
+  constructor(public location: es.SourceLocation) {}
+
+  explain() {
+    return 'Missing semicolon at the end of statement'
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
+}
+
+export class TrailingCommaError implements IError {
+  constructor(public location: es.SourceLocation) {}
+
+  explain() {
+    return 'Trailing comma'
+  }
+
+  elaborate() {
+    return 'TODO'
+  }
 }
 
 export const freshId = (() => {
@@ -55,125 +124,45 @@ for (const type of Object.keys(syntaxTypes)) {
     }
     state.cfg.edges[id] = []
     if (syntaxTypes[node.type] > state.week) {
-      state.parser.errors.push({
-        kind: 'syntax',
-        type: ErrorType.MatchFailure,
-        node
-      })
+      state.parser.errors.push(new DisallowedConstructError(node))
     }
   }
 }
-
-// If Statement must
-// 1. Have Else case (week <= 3)
-// 2. If and Els case must be Surrounded by braces
-const checkIfStatement = (node: es.IfStatement, state: StaticState) => {
-  if (node.consequent! && node.consequent.type !== 'BlockStatement') {
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.IfConsequentNotABlockStatement,
-      node
-    })
-  }
-  if (state.week <= 3 && !node.alternate) {
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.MissingIfAlternate,
-      node
-    })
-  } else if (node.alternate && node.alternate.type !== 'BlockStatement') {
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.IfAlternateNotABlockStatement,
-      node
-    })
-  }
-}
-walkers.IfStatement = compose(walkers.IfStatement, checkIfStatement)
-
-// Binary Expressions
-// == and != are banned, must use !== and ===
-const checkBinaryExpression = (
-  node: es.BinaryExpression,
-  state: StaticState
-) => {
-  if (node.operator === '==') {
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.UseStrictEquality,
-      node
-    })
-  } else if (node.operator === '!=') {
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.UseStrictInequality,
-      node
-    })
-  }
-}
-walkers.BinaryExpression = compose(
-  walkers.BinaryExpression,
-  checkBinaryExpression
-)
-
-// Variable Declarations
-// Can only have single declarations
-const checkVariableDeclaration = (
-  node: es.VariableDeclaration,
-  state: StaticState
-) => {
-  if (node.declarations.length > 1) {
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.MultipleDeclarations,
-      node
-    })
-  } else if (node.declarations.length == 1 && !node.declarations[0].init) {
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.MissingDeclarationExpression,
-      node
-    })
-  }
-}
-walkers.VariableDeclaration = compose(
-  walkers.VariableDeclaration,
-  checkVariableDeclaration
-)
 
 const createAcornParserOptions = (state: StaticState): AcornOptions => ({
   sourceType: 'script',
   ecmaVersion: 5,
   locations: true,
   onInsertedSemicolon(end: any, loc: any) {
-    const node = {
-      type: 'Statement',
-      loc: {
+    state.parser.errors.push(
+      new MissingSemicolonError({
         end: { line: loc.line, column: loc.column + 1 },
         start: loc
-      }
-    } as any
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.MissingSemicolon,
-      node
-    })
+      })
+    )
   },
   onTrailingComma(end: any, loc: Position) {
-    const node = {
-      type: 'Statement',
-      loc: {
+    state.parser.errors.push(
+      new TrailingCommaError({
         end: { line: loc.line, column: loc.column + 1 },
         start: loc
-      }
-    } as any
-    state.parser.errors.push({
-      kind: 'syntax',
-      type: ErrorType.TrailingComma,
-      node
-    })
+      })
+    )
   },
   onComment: state.parser.comments
+})
+
+rules.forEach(rule => {
+  const keys = Object.keys(rule.checkNodes)
+  keys.forEach(key => {
+    walkers[key] = compose(walkers[key], (node, state) => {
+      const checker = rule.checkNodes[key]
+      const errors = checker(node)
+      if (errors.length > 0) {
+        state.parser.errors = state.parser.errors.concat(errors)
+      }
+    })
+  })
 })
 
 export const parse = (source: string, state: StaticState | number) => {
@@ -188,18 +177,12 @@ export const parse = (source: string, state: StaticState | number) => {
   } catch (error) {
     if (error instanceof SyntaxError) {
       const loc = (error as any).loc
-      state.parser.errors.push({
-        kind: 'syntax',
-        type: ErrorType.AcornParseError,
-        explanation: error.toString(),
-        node: {
-          type: 'Statement',
-          loc: {
-            start: { line: loc.line, column: loc.column },
-            end: { line: loc.line, column: loc.column + 1 }
-          }
-        } as any
-      })
+      const location = {
+        start: { line: loc.line, column: loc.column },
+        end: { line: loc.line, column: loc.column + 1 }
+      }
+      const message = error.toString()
+      state.parser.errors.push(new FatalSyntaxError(location, error.toString()))
     } else {
       throw error
     }

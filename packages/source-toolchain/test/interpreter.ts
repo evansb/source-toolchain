@@ -2,7 +2,7 @@ import { parse } from 'acorn'
 import { runConformationTests } from '../src/harness/conformation'
 import { evalProgram, createInterpreter } from '../src/interpreter'
 
-it('evaluates program', () => {
+it('interprets simple program', () => {
   const generator = evalProgram(parse('1 + 2;'), createInterpreter())
   const states = []
   let g = generator.next()
@@ -18,16 +18,6 @@ it('evaluates program', () => {
   expect(states[5].node.type).toBe('Literal')
   expect(states[6].node.type).toBe('BinaryExpression')
   expect(states.length).toBe(7)
-})
-
-it('detects calling non function value', () => {
-  const gen = evalProgram(parse(`2(3);`), createInterpreter())
-  gen.next()
-  gen.next()
-  gen.next()
-  gen.next()
-  const g = gen.next().value
-  expect(g.errors.size).toBe(1)
 })
 
 it('passes Week 3 Conformation Test', () => {

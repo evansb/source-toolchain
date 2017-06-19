@@ -1,7 +1,6 @@
 import * as es from 'estree'
 import { Stack, List, Map, Record } from 'immutable'
-// tslint:disable-next-line
-import { SyntaxError } from './static'
+import { IError } from './error'
 
 export interface Scope {
   parent?: number
@@ -19,7 +18,7 @@ const params = {
   isRunning: false,
   frames: Stack<number>(),
   scopes: Map<number, Scope>(),
-  errors: List<SyntaxError>(),
+  errors: List<IError>(),
   node: undefined,
   value: undefined,
 
@@ -32,7 +31,7 @@ export class InterpreterState extends Record(params)
   isRunning: boolean
   frames: Stack<number>
   scopes: Map<number, Scope>
-  errors: List<SyntaxError>
+  errors: List<IError>
   value?: any
   node?: es.Node
 

@@ -2,8 +2,6 @@ import * as es from 'estree'
 import { List, Stack, Map } from 'immutable'
 
 import { Scope, InterpreterState } from './types/dynamic'
-import { ErrorType } from './types/error'
-import { SyntaxError } from './types/static'
 import { createNode } from './astUtils'
 import Closure from './Closure'
 
@@ -64,16 +62,6 @@ const pushFrame = (state: InterpreterState, scope: Scope): InterpreterState => {
   return state.with({
     scopes: state.scopes.set(frameCtr, scope),
     frames: state.frames.push(frameCtr)
-  })
-}
-
-const fatalError = (
-  state: InterpreterState,
-  error: SyntaxError
-): InterpreterState => {
-  return state.with({
-    errors: state.errors.push(error),
-    isRunning: false
   })
 }
 
@@ -168,19 +156,8 @@ function* evalCallExpression(node: es.CallExpression, state: InterpreterState) {
 
     return popFrame(state).merge({ _done: true })
   } else {
-    const error: SyntaxError = {
-      kind: 'syntax',
-      type: ErrorType.CallingNonFunctionValues,
-      node: {
-        type: 'AssignmentExpression',
-        operator: '=',
-        loc: node.callee.loc!,
-        left: node.callee as any,
-        right: createNode(callee) as es.FunctionExpression
-      }
-    }
-
-    return fatalError(state, error)
+    // TODO: Native Closure
+    return state
   }
 }
 
