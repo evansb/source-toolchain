@@ -5,14 +5,15 @@ it('detects If not using curly braces', () => {
   singleError(
     `
     if (2 === 2)
-      1 + 2;
+      var zomg = 2;
     else {
       1 + 2;
     }
   `,
     {
       errorClass: BracesAroundIfElseError,
-      explanation: /curly braces.*if/
+      explanation: /curly braces.*if/,
+      elaboration: /if \(2 === 2\)/
     }
   )
 })
@@ -23,11 +24,12 @@ it('detects Else not using curly braces', () => {
     if (2 === 2) {
       1 + 2;
     } else
-      1 + 2;
+      var zomg = 2;
   `,
     {
       errorClass: BracesAroundIfElseError,
-      explanation: /curly braces.*else/
+      explanation: /curly braces.*else/,
+      elaboration: /zomg/
     }
   )
 })

@@ -1,4 +1,6 @@
 import * as es from 'estree'
+import { generate } from 'escodegen'
+import { stripIndent } from 'common-tags'
 import { IError } from '../types/error'
 import { Rule } from '../types/static'
 
@@ -14,14 +16,55 @@ export class BracesAroundIfElseError implements IError {
 
   explain() {
     if (this.type === 'consequent') {
-      return 'Missing curly braces around "if"'
+      return 'Missing curly braces around "if" block'
     } else {
-      return 'Missing curly braces around "else"'
+      return 'Missing curly braces around "else" block'
     }
   }
 
   elaborate() {
-    return 'TODO'
+    let ifOrElse
+    let header
+    let body
+    if (this.type === 'consequent') {
+      ifOrElse = 'if'
+      header = `if (${generate(this.node.test)})`
+      body = this.node.consequent
+    } else {
+      ifOrElse = header = 'else'
+      body = this.node.alternate
+    }
+
+    return stripIndent`
+      ${ifOrElse} block need to be enclosed with a pair of curly braces.
+
+      ${header} {
+        ${generate(body)}
+      }
+
+      An exception is when you have an "if" followed by "else if", in this case
+      "else if" block does not need to be surrounded by curly braces.
+
+      if (someCondition) {
+        // ...
+      } else /* notice missing { here */ if (someCondition) {
+        // ...
+      } else {
+        // ...
+      }
+
+      Rationale:
+      Readability in dense packed code.
+      In the snippet below, for instance, with poor indentation it is easy to
+      mistaken hello() and world() to belong to the same branch of logic.
+
+      if (someCondition) {
+        2;
+      } else
+        hello();
+      world();
+
+    `
   }
 }
 
