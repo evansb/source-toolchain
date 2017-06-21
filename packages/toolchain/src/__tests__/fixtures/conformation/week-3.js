@@ -33,6 +33,14 @@ if (b) {
   3;
 } // 3
 
+if (b) {
+  1;
+} else if (b) {
+  2;
+} else {
+  3;
+} // 3
+
 function foo() {
 } // undefined
 
