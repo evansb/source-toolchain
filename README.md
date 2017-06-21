@@ -15,33 +15,41 @@
 
 <hr />
 
-[Website + Demo](https://evansb.github.io/source-toolchain)
+[Test Playground](https://evansb.github.io/source-toolchain)
 
-Source is a subset of JavaScript (EcmaScript 5) optimised for education.
-This repository is a toolchain (parser, analyzer, interpreter) for Source
-and has three main features.
+Source is a subset of JavaScript (EcmaScript 5) used to teach freshman introduction to programming course
+[CS1101S](http://www.comp.nus.edu.sg/~cs1101s/). 
 
-  - **Multiple Parser Versions**
+This repository contains a toolchain (parser, analyzer, interpreter) for Source language and a playground website for the toolchain.
 
-    The language grammar changes week by week, new language feature are being added as
-    the course progress.
+The toolchain has three main components.
+
+  - **Parser**
+
+    The language grammar evolves as the course progress.
+    New language constructs are added to reflect the material taught in the course.
+
     To implement this, we first parse the source using existing ES5 parser (acorn)
     and traverse the AST to filter out any features that students aren't supposed
     to be using yet.
 
-  - **Learner-friendly Syntax Analysis**
+  - **Static Analysis**
 
-    Provide syntax analysis for common mistakes: invalid types, missing return
-    statement, etc
+    Provide syntax analysis to catch common mistakes: invalid types, missing return
+    statement, etc.
+    The static analyis comprises of generating Control Flow Graph and applying type
+    analysis and data flow analysis.
 
-  - **Time Travelling Single Step Interpreter**
+  - **Interpreter**
 
-    An interpreter of the language that evaluates the program step-by-step
-    as defined in the substitution model.
+    An small-step interpreter for the language that evaluates the program step-by-step.
+    There is also an expression visualizer that tracks evaluation progress of an expression
+    according to substitution model. Interop with native javascript is also supported
+    via FFI (foreign function interface).
 
 ## Installation
 
-The only package published to NPM is `source-toolchain`, the rests are private.
+The only package publishable to NPM is `source-toolchain`, the rests are private.
 You will need Node >=6 and NPM >=3. Yarn is recommended.
 
 ```
@@ -52,16 +60,13 @@ yarn add source-toolchain --save
 
 ## Developing
 
-This project uses Lerna to manage dependencies between 4 internal packages.
+This project uses Lerna to manage dependencies between 3 internal packages.
 
 ```
-packages/source-toolchain   Parser & Analyzer & Interpreter
-packages/source-stdlib      Standard Library that Student Uses
-packages/source-server      A microservice for running Sourcelang code
-packages/source-website     Source code of the website
+packages/toolchain      The toolchain as explained above.
+packages/stdlib         JavaScript Standard Library (list, object).
+packages/playground     A playground website to demonstrate the toolchain. 
 ```
-
-The main source code (the toolchain) is `packages/source-toolchain`.
 
 Install dependencies.
 ```
