@@ -1,6 +1,6 @@
 {
-  "typescript.tsdk": "packages/source-toolchain/node_modules/typescript/lib",
+  "typescript.tsdk": "packages/toolchain/node_modules/typescript/lib",
   "javascript.validate.enable": false,
-  "flow.pathToFlow": "./packages/source-website/node_modules/.bin/flow"
+  "flow.pathToFlow": "./packages/playground/node_modules/.bin/flow"
 }
 
