@@ -3,6 +3,7 @@
  */
 import * as es from 'estree'
 import { Stack } from 'immutable'
+
 import Closure from './Closure'
 import { InspectableState } from './types/dynamic'
 import { createNode, replace } from './astUtils'

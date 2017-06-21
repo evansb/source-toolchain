@@ -2,9 +2,10 @@
  * Utility functions to work with the AST (Abstract Syntax Tree)
  */
 import * as es from 'estree'
-import Closure from './Closure'
 import { Walker } from 'acorn/dist/walk'
+
 import { HasID } from './types/static'
+import Closure from './Closure'
 
 /**
  * Check whether two nodes are equal.

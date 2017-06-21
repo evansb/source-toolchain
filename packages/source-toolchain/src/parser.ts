@@ -7,6 +7,7 @@ import {
   Position
 } from 'acorn'
 import { simple } from 'acorn/dist/walk'
+
 import { IError } from './types/error'
 import { StaticState } from './types/static'
 import syntaxTypes from './syntaxTypes'

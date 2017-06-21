@@ -1,5 +1,6 @@
 import * as es from 'estree'
 import { SourceLocation } from 'acorn'
+
 import { IError } from './error'
 
 export interface Rule<T extends es.Node> {

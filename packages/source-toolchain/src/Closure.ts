@@ -1,6 +1,7 @@
 import * as es from 'estree'
-import { Scope } from './types/dynamic'
 import { Map } from 'immutable'
+
+import { Scope } from './types/dynamic'
 
 /**
  * Models function value in the interpreter environment.
