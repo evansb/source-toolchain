@@ -1,6 +1,6 @@
-import { createContext } from '../src/context'
-import { parse } from '../src/parser'
-import { generateCFG } from '../src/cfg'
+import { createContext } from '../context'
+import { parse } from '../parser'
+import { generateCFG } from '../cfg'
 
 describe('generateCFG', () => {
   it('throws when used on non successful parser state', () => {

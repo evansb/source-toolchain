@@ -1,6 +1,6 @@
 import { parse } from 'acorn'
-import { runConformationTests } from '../src/harness/conformation'
-import { evalProgram, createInterpreter } from '../src/interpreter'
+import { runConformationTests } from '../harness/conformation'
+import { evalProgram, createInterpreter } from '../interpreter'
 
 it('interprets simple program', () => {
   const generator = evalProgram(parse('1 + 2;'), createInterpreter())
@@ -21,5 +21,5 @@ it('interprets simple program', () => {
 })
 
 it('passes Week 3 Conformation Test', () => {
-  runConformationTests('conformation/week-3.js')
+  runConformationTests('week-3.js')
 })

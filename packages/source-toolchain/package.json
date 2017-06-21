@@ -61,9 +61,9 @@
     "transform": {
       "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
-    "testRegex": "/test/.*\\.(ts|tsx|js)$",
+    "testRegex": "/__tests__/.*\\.(ts|tsx|js)$",
     "testPathIgnorePatterns": [
-      "/test/fixtures/.*\\.(ts|tsx|js)$"
+      "/__tests__/fixtures/.*\\.(ts|tsx|js)$"
     ]
   },
   "lint-staged": {

@@ -1,4 +1,8 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["test", "node_modules", "src/harness"]
+  "exclude": [
+    "src/**/__tests__/*.ts",
+    "src/harness/**/*.ts",
+    "node_modules"
+  ]
 }

@@ -1,6 +1,6 @@
 import * as es from 'estree'
-import { createNode } from '../src/astUtils'
-import Closure from '../src/Closure'
+import { createNode } from '../astUtils'
+import Closure from '../Closure'
 
 it('createNode correctly creates Node from value', () => {
   const n1 = createNode(3) as es.Literal

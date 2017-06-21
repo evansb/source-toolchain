@@ -1,5 +1,5 @@
-import { singleError } from '../../src/harness/parser'
-import { BracesAroundIfElseError } from '../../src/rules/bracesAroundIfElse'
+import { singleError } from '../../harness/parser'
+import { BracesAroundIfElseError } from '../bracesAroundIfElse'
 
 it('detects If not using curly braces', () => {
   singleError(

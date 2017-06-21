@@ -1,5 +1,5 @@
-import { singleError } from '../../src/harness/parser'
-import { MissingElseError } from '../../src/rules/missingElse'
+import { singleError } from '../../harness/parser'
+import { MissingElseError } from '../missingElse'
 
 it('detects missing Else case', () => {
   singleError(

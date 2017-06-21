@@ -1,12 +1,12 @@
-import { singleError } from '../src/harness/parser'
-import { createContext } from '../src/context'
+import { singleError } from '../harness/parser'
+import { createContext } from '../context'
 import {
   parse,
   TrailingCommaError,
   DisallowedConstructError,
   MissingSemicolonError,
   FatalSyntaxError
-} from '../src/parser'
+} from '../parser'
 
 const parse3 = (src: string) => parse(src, 3).parser.program!
 const parse3e = (src: string) => parse(src, 3).parser.errors

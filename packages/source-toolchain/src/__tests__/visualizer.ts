@@ -1,8 +1,8 @@
 import * as es from 'estree'
 import { Stack } from 'immutable'
-import { parse } from '../src/parser'
-import { next, create } from '../src/visualizer'
-import { testVisualizer } from '../src/harness/visualizer'
+import { parse } from '../parser'
+import { next, create } from '../visualizer'
+import { testVisualizer } from '../harness/visualizer'
 
 const parse3 = (x: string) => parse(x, 3).parser.program!
 

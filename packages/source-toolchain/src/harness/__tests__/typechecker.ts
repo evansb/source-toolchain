@@ -1,9 +1,6 @@
 import { stripIndent } from 'common-tags'
-import { numberT } from '../../src/types/static'
-import {
-  parseTypecheckerTest,
-  runTypecheckerTest
-} from '../../src/harness/typechecker'
+import { numberT } from '../../types/static'
+import { parseTypecheckerTest, runTypecheckerTest } from '../typechecker'
 
 const sample1 = [
   {

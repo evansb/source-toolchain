@@ -1,5 +1,5 @@
-import { InterpreterState } from '../src/types/dynamic'
-import { createSession, Session } from '../src/session'
+import { InterpreterState } from '../types/dynamic'
+import { createSession, Session } from '../session'
 
 it('createSession correctly creates a session instance', () => {
   const session = createSession(3)

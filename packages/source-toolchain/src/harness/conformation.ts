@@ -9,9 +9,9 @@ import { evalStatement, createInterpreter } from '../interpreter'
 const fixturesFolderPath = path.resolve(
   __dirname,
   '..',
-  '..',
-  'test',
-  'fixtures'
+  '__tests__',
+  'fixtures',
+  'conformation'
 )
 
 export type ConformationTest = {

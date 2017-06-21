@@ -1,13 +1,13 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { parse } from '../src/parser'
-import { generateCFG } from '../src/cfg'
-import { numberT, stringT, booleanT } from '../src/types/static'
-import { typecheck, isSameType, parseString } from '../src/typechecker'
+import { parse } from '../parser'
+import { generateCFG } from '../cfg'
+import { numberT, stringT, booleanT } from '../types/static'
+import { typecheck, isSameType, parseString } from '../typechecker'
 import {
   parseTypecheckerTest,
   runTypecheckerTest
-} from '../src/harness/typechecker'
+} from '../harness/typechecker'
 
 it('isSameType works correctly', () => {
   expect(isSameType(numberT, numberT)).toBe(true)

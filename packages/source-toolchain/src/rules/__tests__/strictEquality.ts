@@ -1,5 +1,5 @@
-import { singleError } from '../../src/harness/parser'
-import { StrictEqualityError } from '../../src/rules/strictEquality'
+import { singleError } from '../../harness/parser'
+import { StrictEqualityError } from '../strictEquality'
 
 it('detects not using strict equality', () => {
   singleError(`2 == 2;`, {

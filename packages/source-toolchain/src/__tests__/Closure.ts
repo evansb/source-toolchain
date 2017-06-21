@@ -1,5 +1,5 @@
 import { parse } from 'acorn'
-import Closure from '../src/Closure'
+import Closure from '../Closure'
 
 describe('Closure class', () => {
   it('creates correct scope', () => {
