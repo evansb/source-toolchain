@@ -2,7 +2,7 @@ import * as es from 'estree'
 import { IError } from '../types/error'
 import { Rule } from '../types/static'
 
-export class MissingElseError implements IError {
+export class NoIfWithoutElseError implements IError {
   constructor(public node: es.IfStatement) {}
 
   get location() {
@@ -24,7 +24,7 @@ const missingElse: Rule<es.IfStatement> = {
   checkNodes: {
     IfStatement(node: es.IfStatement) {
       if (!node.alternate) {
-        return [new MissingElseError(node)]
+        return [new NoIfWithoutElseError(node)]
       } else {
         return []
       }

@@ -1,5 +1,5 @@
 import { singleError } from '../../harness/parser'
-import { MissingElseError } from '../missingElse'
+import { NoIfWithoutElseError } from '../noIfWithoutElse'
 
 it('detects missing Else case', () => {
   singleError(
@@ -9,7 +9,7 @@ it('detects missing Else case', () => {
     }
   `,
     {
-      errorClass: MissingElseError,
+      errorClass: NoIfWithoutElseError,
       explanation: /Missing.*else.*/
     }
   )
@@ -25,7 +25,7 @@ it('detects missing Else case in if-elseif', () => {
     }
   `,
     {
-      errorClass: MissingElseError,
+      errorClass: NoIfWithoutElseError,
       explanation: /Missing.*else.*/
     }
   )
