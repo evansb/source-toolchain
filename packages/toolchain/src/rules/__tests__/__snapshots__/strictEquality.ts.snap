@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`elaboration 1`] = `"TODO"`;
+
+exports[`elaboration 2`] = `"TODO"`;
+
+exports[`explanation 1`] = `"Use strict equality (===)"`;
+
+exports[`explanation 2`] = `"Use strict inequality (!==)"`;

@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`elaboration 1`] = `
+"This \\"if\\" block requires corresponding \\"else\\" block which will be
+evaluated when 2 === 2 expression evaluates to false.
+
+Later in the course we will lift this restriction and allow \\"if\\" without
+else."
+`;
+
+exports[`elaboration 2`] = `
+"This \\"if\\" block requires corresponding \\"else\\" block which will be
+evaluated when 2 === 1 expression evaluates to false.
+
+Later in the course we will lift this restriction and allow \\"if\\" without
+else."
+`;
+
+exports[`explanation 1`] = `"Missing \\"else\\" in \\"if-else\\" statement"`;
+
+exports[`explanation 2`] = `"Missing \\"else\\" in \\"if-else\\" statement"`;

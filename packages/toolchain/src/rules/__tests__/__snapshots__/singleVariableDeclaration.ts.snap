@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`elaboration 1`] = `"TODO"`;
+
+exports[`explanation 1`] = `"Multiple declaration in a single statement"`;

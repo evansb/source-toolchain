@@ -9,8 +9,7 @@ it('detects missing value in retun statement', () => {
   }
   `,
     {
-      errorClass: NoImplicitReturnUndefinedError,
-      explanation: /Missing.*value.*return.*/
+      errorClass: NoImplicitReturnUndefinedError
     }
   )
 })

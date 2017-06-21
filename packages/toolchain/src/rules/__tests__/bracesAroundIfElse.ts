@@ -11,9 +11,7 @@ it('detects If not using curly braces', () => {
     }
   `,
     {
-      errorClass: BracesAroundIfElseError,
-      explanation: /curly braces.*if/,
-      elaboration: /if \(2 === 2\)/
+      errorClass: BracesAroundIfElseError
     }
   )
 })
@@ -27,9 +25,7 @@ it('detects Else not using curly braces', () => {
       var zomg = 2;
   `,
     {
-      errorClass: BracesAroundIfElseError,
-      explanation: /curly braces.*else/,
-      elaboration: /zomg/
+      errorClass: BracesAroundIfElseError
     }
   )
 })

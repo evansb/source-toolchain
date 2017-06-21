@@ -4,15 +4,11 @@ import { parse, FatalSyntaxError } from '../parser'
 type Options = {
   week: number
   errorClass: any
-  explanation: RegExp
-  elaboration: RegExp
 }
 
 const defaultOptions: Options = {
   week: 3,
-  errorClass: FatalSyntaxError,
-  explanation: /.*/,
-  elaboration: /.*/
+  errorClass: FatalSyntaxError
 }
 
 const runParser = (source: string, week: number) => {
@@ -30,8 +26,8 @@ export const singleError = (source: string, options: Partial<Options>) => {
   const context = runParser(source, week)
   expect(context.parser.errors.length).toBe(1)
   expect(context.parser.errors[0]).toBeInstanceOf(errorClass)
-  expect(context.parser.errors[0].explain()).toMatch(explanation)
-  expect(context.parser.errors[0].elaborate()).toMatch(elaboration)
+  expect(context.parser.errors[0].explain()).toMatchSnapshot('explanation')
+  expect(context.parser.errors[0].elaborate()).toMatchSnapshot('elaboration')
 }
 
 export const noError = (source: string, options: Partial<Options> = {}) => {

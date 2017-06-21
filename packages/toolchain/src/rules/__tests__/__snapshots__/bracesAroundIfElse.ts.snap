@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`elaboration 1`] = `
+"if block need to be enclosed with a pair of curly braces.
+
+if (2 === 2) {
+  var zomg = 2;
+}
+
+An exception is when you have an \\"if\\" followed by \\"else if\\", in this case
+\\"else if\\" block does not need to be surrounded by curly braces.
+
+if (someCondition) {
+  // ...
+} else /* notice missing { here */ if (someCondition) {
+  // ...
+} else {
+  // ...
+}
+
+Rationale:
+Readability in dense packed code.
+In the snippet below, for instance, with poor indentation it is easy to
+mistaken hello() and world() to belong to the same branch of logic.
+
+if (someCondition) {
+  2;
+} else
+  hello();
+world();"
+`;
+
+exports[`elaboration 2`] = `
+"else block need to be enclosed with a pair of curly braces.
+
+else {
+  var zomg = 2;
+}
+
+An exception is when you have an \\"if\\" followed by \\"else if\\", in this case
+\\"else if\\" block does not need to be surrounded by curly braces.
+
+if (someCondition) {
+  // ...
+} else /* notice missing { here */ if (someCondition) {
+  // ...
+} else {
+  // ...
+}
+
+Rationale:
+Readability in dense packed code.
+In the snippet below, for instance, with poor indentation it is easy to
+mistaken hello() and world() to belong to the same branch of logic.
+
+if (someCondition) {
+  2;
+} else
+  hello();
+world();"
+`;
+
+exports[`explanation 1`] = `"Missing curly braces around \\"if\\" block"`;
+
+exports[`explanation 2`] = `"Missing curly braces around \\"else\\" block"`;

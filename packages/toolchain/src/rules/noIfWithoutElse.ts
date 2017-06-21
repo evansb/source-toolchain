@@ -1,3 +1,4 @@
+import { stripIndent } from 'common-tags'
 import * as es from 'estree'
 import { generate } from 'escodegen'
 import { IError } from '../types/error'
@@ -15,7 +16,7 @@ export class NoIfWithoutElseError implements IError {
   }
 
   elaborate() {
-    return `
+    return stripIndent`
       This "if" block requires corresponding "else" block which will be
       evaluated when ${generate(this.node.test)} expression evaluates to false.
 

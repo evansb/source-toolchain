@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`elaboration 1`] = `"TODO"`;
+
+exports[`elaboration 2`] = `"TODO"`;
+
+exports[`elaboration 3`] = `"TODO"`;
+
+exports[`explanation 1`] = `"Missing semicolon at the end of statement"`;
+
+exports[`explanation 2`] = `"Assignment is not allowed"`;
+
+exports[`explanation 3`] = `"Trailing comma"`;
