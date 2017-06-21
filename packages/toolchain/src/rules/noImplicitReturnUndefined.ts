@@ -19,7 +19,7 @@ export class NoImplicitReturnUndefinedError implements IError {
 }
 
 const noImplicitReturnUndefined: Rule<es.ReturnStatement> = {
-  name: 'no-implicit-declare-undefined',
+  name: 'no-implicit-return-undefined',
 
   checkNodes: {
     ReturnStatement(node: es.ReturnStatement) {
