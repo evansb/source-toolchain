@@ -16,7 +16,6 @@ it('create() correctly creates initial visualizer interpreter', () => {
 describe('next(v, e)', () => {
   it('on top level ExpressionStatement assign current expression to its expression and clears node stack', () => {
     let visualizer = create()
-    visualizer = { ...visualizer, nodes: Stack.of(parse3('1;')) }
     const evaluator = {
       _done: false,
       node: parse3('1 + 2;').body[0]

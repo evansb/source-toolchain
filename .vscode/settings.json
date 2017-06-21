@@ -1,4 +1,5 @@
 {
+  "typescript.tsdk": "packages/source-toolchain/node_modules/typescript/lib",
   "javascript.validate.enable": false,
   "flow.pathToFlow": "./packages/source-website/node_modules/.bin/flow"
 }
