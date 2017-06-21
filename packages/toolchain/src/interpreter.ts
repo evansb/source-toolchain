@@ -79,10 +79,12 @@ const getEnv = (name: string, state: InterpreterState) => {
   return undefined
 }
 
-export type Evaluator<T extends es.Node> =
-  (node: T, state: InterpreterState) => IterableIterator<InterpreterState>
+export type Evaluator<T extends es.Node> = (
+  node: T,
+  state: InterpreterState
+) => IterableIterator<InterpreterState>
 
-export const evaluators: {[nodeType: string]: Evaluator<any>} = {}
+export const evaluators: { [nodeType: string]: Evaluator<any> } = {}
 const ev = evaluators
 
 ev.FunctionExpression = function*(node: es.FunctionExpression, state) {
@@ -94,7 +96,11 @@ ev.FunctionExpression = function*(node: es.FunctionExpression, state) {
 
 ev.Identifier = function*(node: es.Identifier, state) {
   yield (state = state.with({ _done: false, node }))
-  yield (state = state.with({ _done: true, node, value: getEnv(node.name, state) }))
+  yield (state = state.with({
+    _done: true,
+    node,
+    value: getEnv(node.name, state)
+  }))
   return state
 }
 
@@ -104,7 +110,7 @@ ev.Literal = function*(node: es.Literal, state) {
   return state
 }
 
-ev.CallExpression = function* (node: es.CallExpression, state) {
+ev.CallExpression = function*(node: es.CallExpression, state) {
   yield (state = state.with({ _done: false, node }))
 
   // Evaluate Callee
@@ -128,7 +134,7 @@ ev.CallExpression = function* (node: es.CallExpression, state) {
 
     yield (state = popFrame(state).with({ _done: true, node }))
 
-    return state 
+    return state
   } else {
     // TODO: Native Closure
     return state
@@ -151,7 +157,7 @@ ev.UnaryExpression = function*(node: es.UnaryExpression, state) {
 
   yield (state = state.with({ _done: true, node, value }))
 
-  return state 
+  return state
 }
 
 ev.BinaryExpression = function*(node: es.BinaryExpression, state) {
@@ -164,18 +170,41 @@ ev.BinaryExpression = function*(node: es.BinaryExpression, state) {
 
   let result
   switch (node.operator) {
-    case '+': result = left + right; break
-    case '-': result = left - right; break
-    case '*': result = left * right; break
-    case '/': result = left / right; break
-    case '%': result = left % right; break
-    case '===': result = left === right; break
-    case '!==': result = left !== right; break
-    case '<=': result = left <= right; break
-    case '<': result = left < right; break
-    case '>': result = left > right; break
-    case '>=': result = left >= right; break
-    default: result = undefined
+    case '+':
+      result = left + right
+      break
+    case '-':
+      result = left - right
+      break
+    case '*':
+      result = left * right
+      break
+    case '/':
+      result = left / right
+      break
+    case '%':
+      result = left % right
+      break
+    case '===':
+      result = left === right
+      break
+    case '!==':
+      result = left !== right
+      break
+    case '<=':
+      result = left <= right
+      break
+    case '<':
+      result = left < right
+      break
+    case '>':
+      result = left > right
+      break
+    case '>=':
+      result = left >= right
+      break
+    default:
+      result = undefined
   }
 
   yield (state = state.with({ _done: true, node, value: result }))
@@ -189,10 +218,9 @@ ev.LogicalExpression = function*(node: es.LogicalExpression, state) {
   state = yield* ev[node.left.type](node.left, state)
   const left = state.value
 
-  if ((node.operator === '&&' && left)
-        || (node.operator === '||' && !left)) {
+  if ((node.operator === '&&' && left) || (node.operator === '||' && !left)) {
     state = yield* ev[node.right.type](node.right, state)
-  } 
+  }
 
   yield (state = state.with({ _done: true, node }))
 

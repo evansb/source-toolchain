@@ -103,7 +103,7 @@ export const next = (
         } else {
           return visualizer
         }
-      // Self evaluating expression makes no change to the expression watcher 
+      // Self evaluating expression makes no change to the expression watcher
       case 'Literal':
       case 'FunctionExpression':
       default:
