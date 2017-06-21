@@ -34,8 +34,12 @@ const bracesAroundIfElse: Rule<es.IfStatement> = {
       if (node.consequent && node.consequent.type !== 'BlockStatement') {
         errors.push(new BracesAroundIfElseError(node, 'consequent'))
       }
-      if (node.alternate && node.alternate.type !== 'BlockStatement') {
-        errors.push(new BracesAroundIfElseError(node, 'alternate'))
+      if (node.alternate) {
+        const notBlock = node.alternate.type !== 'BlockStatement'
+        const notIf = node.alternate.type !== 'IfStatement'
+        if (notBlock && notIf) {
+          errors.push(new BracesAroundIfElseError(node, 'alternate'))
+        }
       }
       return errors
     }
