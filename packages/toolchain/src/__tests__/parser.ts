@@ -40,8 +40,7 @@ it('produces a SyntaxError for non ES5 features', () => {
 
 it('detects Missing Semicolon errors', () => {
   singleError('1 + 2', {
-    errorClass: MissingSemicolonError,
-    explanation: /Missing.*semicolon/
+    errorClass: MissingSemicolonError
   })
 })
 
@@ -52,8 +51,7 @@ it('detects disallowed feature', () => {
     x = 3;
   `,
     {
-      errorClass: DisallowedConstructError,
-      explanation: /Assignment.*not allowed/
+      errorClass: DisallowedConstructError
     }
   )
 })
@@ -61,8 +59,7 @@ it('detects disallowed feature', () => {
 it('detects trailing comma', () => {
   singleError(`[1,2,];`, {
     week: 13,
-    errorClass: TrailingCommaError,
-    explanation: /Trailing.*comma/
+    errorClass: TrailingCommaError
   })
 })
 

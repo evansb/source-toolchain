@@ -22,7 +22,7 @@ export const singleError = (source: string, options: Partial<Options>) => {
     ...defaultOptions,
     ...options
   }
-  const { errorClass, week, explanation, elaboration } = completeOptions
+  const { errorClass, week } = completeOptions
   const context = runParser(source, week)
   expect(context.parser.errors.length).toBe(1)
   expect(context.parser.errors[0]).toBeInstanceOf(errorClass)
