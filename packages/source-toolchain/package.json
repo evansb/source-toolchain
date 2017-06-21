@@ -63,8 +63,7 @@
     },
     "testRegex": "/test/.*\\.(ts|tsx|js)$",
     "testPathIgnorePatterns": [
-      "/fixtures/.*\\.(ts|tsx|js)$",
-      "/harness/.*\\.(ts|tsx|js)$"
+      "/test/fixtures/.*\\.(ts|tsx|js)$"
     ]
   },
   "lint-staged": {

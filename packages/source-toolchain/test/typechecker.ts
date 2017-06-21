@@ -1,6 +1,13 @@
+import * as fs from 'fs'
+import * as path from 'path'
+import { parse } from '../src/parser'
+import { generateCFG } from '../src/cfg'
 import { numberT, stringT, booleanT } from '../src/types/static'
-import { isSameType, parseString } from '../src/typechecker'
-import { runTypecheckerTest } from '../src/harness/typechecker'
+import { typecheck, isSameType, parseString } from '../src/typechecker'
+import {
+  parseTypecheckerTest,
+  runTypecheckerTest
+} from '../src/harness/typechecker'
 
 it('isSameType works correctly', () => {
   expect(isSameType(numberT, numberT)).toBe(true)
@@ -57,6 +64,16 @@ it('parseString works correctly', () => {
   expect(parseString('boolean')).toBe(booleanT)
 })
 
-describe('Week 3 Typecheckers', () => {
-  runTypecheckerTest('week-3.js')
+it('pass week 3 typecheckers suites', done => {
+  const file = path.resolve(__dirname, 'fixtures', 'typechecker', 'week-3.js')
+  fs.readFile(file, 'utf8', (err, data) => {
+    if (err) {
+      fail(err)
+      done()
+    } else {
+      const suites = parseTypecheckerTest(data)
+      runTypecheckerTest(suites, parse, generateCFG, typecheck)
+      done()
+    }
+  })
 })
