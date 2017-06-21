@@ -84,6 +84,7 @@ it('visualizes complex expression without function calls', () => {
     '1 + 3 + (true ? 1 : 2)',
     '4 + (true ? 1 : 2)',
     '4 + 1',
+    '5',
     '5'
   ])
 })

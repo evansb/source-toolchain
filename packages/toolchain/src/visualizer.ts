@@ -35,9 +35,9 @@ export const create = (): VisualizerState => ({
 /**
  * Advance visualizer interpreter from interpreter interpreter
  *
- * @param visualizer The visualizer interpreter
- * @param interpreter The interpreter interpreter
- * @returns {VisualizerState} the next visualizer interpreter
+ * @param visualizer The visualizer state
+ * @param interpreter The interpreter state
+ * @returns {VisualizerState} the next visualizer state
  */
 export const next = (
   visualizer: VisualizerState,
@@ -103,7 +103,7 @@ export const next = (
         } else {
           return visualizer
         }
-      // Self evaluating expression need not be visualized
+      // Self evaluating expression makes no change to the expression watcher 
       case 'Literal':
       case 'FunctionExpression':
       default:
@@ -117,24 +117,13 @@ export const next = (
           _suppress: true
         }
       case 'ExpressionStatement':
-        const node = interpreter.node as es.ExpressionStatement
+        const node = interpreter.node
         if (_calls.isEmpty()) {
           return {
             ...visualizer,
             id: nextId(),
             root: node.expression,
             _suppress: false
-          }
-        } else {
-          return visualizer
-        }
-      case 'VariableDeclaration':
-        const decl = interpreter.node as es.VariableDeclaration
-        if (_calls.isEmpty()) {
-          return {
-            ...visualizer,
-            id: nextId(),
-            root: decl.declarations[0].init!
           }
         } else {
           return visualizer
@@ -158,6 +147,7 @@ export const next = (
           ...visualizer,
           _calls: visualizer._calls.push(callNode)
         }
+      case 'VariableDeclaration':
       case 'FunctionDeclaration':
       case 'IfStatement':
       case 'UnaryExpression':

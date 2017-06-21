@@ -54,10 +54,10 @@ const defineVariable = (
   })
 }
 
-const popFrame = (state: InterpreterState): InterpreterState =>
+const popFrame = (state: InterpreterState) =>
   state.with({ frames: state.frames.pop() })
 
-const pushFrame = (state: InterpreterState, scope: Scope): InterpreterState => {
+const pushFrame = (state: InterpreterState, scope: Scope) => {
   frameCtr++
   return state.with({
     scopes: state.scopes.set(frameCtr, scope),
@@ -79,61 +79,36 @@ const getEnv = (name: string, state: InterpreterState) => {
   return undefined
 }
 
-export function* evalExpression(
-  node: es.Expression,
-  state: InterpreterState
-): any {
-  yield state.with({ node, _done: false })
+export type Evaluator<T extends es.Node> =
+  (node: T, state: InterpreterState) => IterableIterator<InterpreterState>
 
-  let value: any
-  let selfEvaluating = false
+export const evaluators: {[nodeType: string]: Evaluator<any>} = {}
+const ev = evaluators
 
-  switch (node.type) {
-    case 'CallExpression':
-      state = yield* evalCallExpression(node, state)
-      break
-    case 'UnaryExpression':
-      state = yield* evalUnaryExpression(node, state)
-      break
-    case 'BinaryExpression':
-      state = yield* evalBinaryExpression(node, state)
-      break
-    case 'LogicalExpression':
-      state = yield* evalLogicalExpression(node, state)
-      break
-    case 'ConditionalExpression':
-      state = yield* evalConditionalExpression(node, state)
-      break
-    case 'FunctionExpression':
-      value = new Closure(node, state.frames.first(), lambdaCtr)
-      lambdaCtr++
-      selfEvaluating = true
-      break
-    case 'Identifier':
-      value = getEnv(node.name, state)
-      selfEvaluating = true
-      break
-    case 'Literal':
-      value = node.value
-      selfEvaluating = true
-      break
-    default:
-      break
-  }
-
-  if (selfEvaluating) {
-    const nextState = state.with({ _done: true, node, value })
-    yield nextState
-    return nextState
-  } else {
-    yield state.with({ _done: true, node })
-    return state
-  }
+ev.FunctionExpression = function*(node: es.FunctionExpression, state) {
+  yield (state = state.with({ _done: false, node }))
+  const closure = new Closure(node, state.frames.first(), lambdaCtr)
+  yield (state = state.with({ _done: true, node, value: closure }))
+  return state
 }
 
-function* evalCallExpression(node: es.CallExpression, state: InterpreterState) {
+ev.Identifier = function*(node: es.Identifier, state) {
+  yield (state = state.with({ _done: false, node }))
+  yield (state = state.with({ _done: true, node, value: getEnv(node.name, state) }))
+  return state
+}
+
+ev.Literal = function*(node: es.Literal, state) {
+  yield (state = state.with({ _done: false, node }))
+  yield (state = state.with({ _done: true, node, value: node.value }))
+  return state
+}
+
+ev.CallExpression = function* (node: es.CallExpression, state) {
+  yield (state = state.with({ _done: false, node }))
+
   // Evaluate Callee
-  state = yield* evalExpression(node.callee as any, state)
+  state = yield* ev[node.callee.type](node.callee, state)
   const callee = state.value
 
   // Internal Function Call
@@ -142,32 +117,29 @@ function* evalCallExpression(node: es.CallExpression, state: InterpreterState) {
 
     // Evaluate each arguments from left to right
     for (const exp of node.arguments) {
-      state = yield* evalExpression(exp as es.Expression, state)
+      state = yield* ev[exp.type](exp, state)
       args.push(state.value)
     }
 
     state = pushFrame(state, callee.createScope(args))
+    yield (state = state.with({ _done: false, node: callee.node.body }))
 
-    yield state.with({ _done: false, node: callee.node.body })
+    state = yield* ev.BlockStatement(callee.node.body, state)
 
-    state = yield* evalBlockStatement(callee.node.body, state)
+    yield (state = popFrame(state).with({ _done: true, node }))
 
-    yield state.with({ _done: true, node: callee.node.body })
-
-    return popFrame(state).merge({ _done: true })
+    return state 
   } else {
     // TODO: Native Closure
     return state
   }
 }
 
-function* evalUnaryExpression(
-  node: es.UnaryExpression,
-  state: InterpreterState
-) {
-  let value
-  state = yield* evalExpression(node.argument, state)
+ev.UnaryExpression = function*(node: es.UnaryExpression, state) {
+  yield (state = state.with({ _done: false, node }))
+  state = yield* ev[node.argument.type](node.argument, state)
 
+  let value
   // tslint:disable-next-line
   if (node.operator === '!') {
     value = !state.value
@@ -177,136 +149,81 @@ function* evalUnaryExpression(
     value = +state.value
   }
 
-  return state.with({ _done: true, value })
+  yield (state = state.with({ _done: true, node, value }))
+
+  return state 
 }
 
-function* evalBinaryExpression(
-  node: es.BinaryExpression,
-  state: InterpreterState
-) {
-  state = yield* evalExpression(node.left, state)
+ev.BinaryExpression = function*(node: es.BinaryExpression, state) {
+  yield (state = state.with({ _done: false, node }))
+
+  state = yield* ev[node.left.type](node.left, state)
   const left = state.value
-  state = yield* evalExpression(node.right, state)
+  state = yield* ev[node.right.type](node.right, state)
   const right = state.value
 
   let result
   switch (node.operator) {
-    case '+':
-      result = left + right
-      break
-    case '-':
-      result = left - right
-      break
-    case '*':
-      result = left * right
-      break
-    case '/':
-      result = left / right
-      break
-    case '%':
-      result = left % right
-      break
-    case '===':
-      result = left === right
-      break
-    case '!==':
-      result = left !== right
-      break
-    case '<=':
-      result = left <= right
-      break
-    case '<':
-      result = left < right
-      break
-    case '>':
-      result = left > right
-      break
-    case '>=':
-      result = left >= right
-      break
-    default:
-      result = undefined
+    case '+': result = left + right; break
+    case '-': result = left - right; break
+    case '*': result = left * right; break
+    case '/': result = left / right; break
+    case '%': result = left % right; break
+    case '===': result = left === right; break
+    case '!==': result = left !== right; break
+    case '<=': result = left <= right; break
+    case '<': result = left < right; break
+    case '>': result = left > right; break
+    case '>=': result = left >= right; break
+    default: result = undefined
   }
 
-  return state.with({ value: result })
-}
-
-function* evalLogicalExpression(
-  node: es.LogicalExpression,
-  state: InterpreterState
-) {
-  state = yield* evalExpression(node.left, state)
-  const left = state.value
-
-  if (node.operator === '&&' && left) {
-    state = yield* evalExpression(node.right, state)
-  } else if (node.operator === '||' && !left) {
-    state = yield* evalExpression(node.right, state)
-  }
+  yield (state = state.with({ _done: true, node, value: result }))
 
   return state
 }
 
-function* evalConditionalExpression(
-  node: es.ConditionalExpression,
-  state: InterpreterState
-) {
-  state = yield* evalExpression(node.test, state)
+ev.LogicalExpression = function*(node: es.LogicalExpression, state) {
+  yield (state = state.with({ _done: false, node }))
+
+  state = yield* ev[node.left.type](node.left, state)
+  const left = state.value
+
+  if ((node.operator === '&&' && left)
+        || (node.operator === '||' && !left)) {
+    state = yield* ev[node.right.type](node.right, state)
+  } 
+
+  yield (state = state.with({ _done: true, node }))
+
+  return state
+}
+
+ev.ConditionalExpression = function*(node: es.ConditionalExpression, state) {
+  yield (state = state.with({ _done: false, node }))
+  state = yield* ev[node.test.type](node.test, state)
 
   if (state.value) {
-    return yield* evalExpression(node.consequent, state)
+    state = yield* ev[node.consequent.type](node.consequent, state)
   } else {
-    return yield* evalExpression(node.alternate, state)
-  }
-}
-
-export function* evalStatement(
-  node: es.Statement,
-  state: InterpreterState
-): any {
-  yield state.with({ node, _done: false })
-
-  switch (node.type) {
-    case 'VariableDeclaration':
-      state = yield* evalVariableDeclaration(node, state)
-      break
-    case 'FunctionDeclaration':
-      state = yield* evalFunctionDeclaration(node, state)
-      break
-    case 'IfStatement':
-      state = yield* evalIfStatement(node, state)
-      break
-    case 'ExpressionStatement':
-      state = yield* evalExpressionStatement(node, state)
-      break
-    case 'ReturnStatement':
-      state = yield* evalReturnStatement(node, state)
-      break
-    default:
-      break
+    state = yield* ev[node.alternate.type](node.alternate, state)
   }
 
-  return state.with({ _done: true, node })
+  yield (state = state.with({ _done: true, node }))
+  return state
 }
 
-function* evalVariableDeclaration(
-  node: es.VariableDeclaration,
-  state: InterpreterState
-) {
+ev.VariableDeclaration = function*(node: es.VariableDeclaration, state) {
   const declaration = node.declarations[0]
   const id = declaration.id as es.Identifier
 
-  state = yield* evalExpression(declaration.init as es.Expression, state)
-
+  state = yield* ev[declaration.init!.type](declaration.init, state)
   state = defineVariable(state, id.name, state.value)
 
   return state.with({ value: undefined })
 }
 
-function* evalFunctionDeclaration(
-  node: es.FunctionDeclaration,
-  state: InterpreterState
-) {
+ev.FunctionDeclaration = function*(node: es.FunctionDeclaration, state) {
   const id = node.id as es.Identifier
   const closure = new Closure(node as any, state.frames.first())
 
@@ -315,35 +232,34 @@ function* evalFunctionDeclaration(
   return state.with({ value: undefined })
 }
 
-function* evalIfStatement(node: es.IfStatement, state: InterpreterState) {
-  state = yield* evalExpression(node.test, state)
+ev.IfStatement = function*(node: es.IfStatement, state) {
+  state = yield* ev[node.test.type](node.test, state)
 
-  state = state.value
-    ? yield* evalBlockStatement(node.consequent as es.BlockStatement, state)
-    : yield* evalBlockStatement(node.alternate as es.BlockStatement, state)
+  if (state.value) {
+    state = yield* ev[node.consequent.type](node.consequent, state)
+  } else if (node.alternate) {
+    state = yield* ev[node.alternate.type](node.alternate, state)
+  }
 
   return state
 }
 
-function* evalExpressionStatement(
-  node: es.ExpressionStatement,
-  state: InterpreterState
-) {
-  state = yield* evalExpression(node.expression, state)
-  return state
+ev.ExpressionStatement = function*(node: es.ExpressionStatement, state) {
+  return yield* ev[node.expression.type](node.expression, state)
 }
 
-function* evalReturnStatement(
-  node: es.ReturnStatement,
-  state: InterpreterState
-) {
-  state = yield* evalExpression(node.argument as es.Expression, state)
+ev.ReturnStatement = function*(node: es.ReturnStatement, state) {
+  if (node.argument) {
+    state = yield* ev[node.argument.type](node.argument, state)
+  }
   return state.with({ _isReturned: true })
 }
 
-function* evalBlockStatement(node: es.BlockStatement, state: InterpreterState) {
-  for (const stmt of node.body) {
-    state = yield* evalStatement(stmt as es.Statement, state)
+ev.BlockStatement = function*(node: es.BlockStatement, state) {
+  for (const statement of node.body) {
+    yield (state = state.with({ _done: false, node: statement }))
+    state = yield* ev[statement.type](statement, state)
+
     if (state._isReturned) {
       break
     }
@@ -352,7 +268,7 @@ function* evalBlockStatement(node: es.BlockStatement, state: InterpreterState) {
 }
 
 export function* evalProgram(node: es.Program, state: InterpreterState) {
-  state = yield* evalBlockStatement(node as any, start(state))
+  state = yield* ev.BlockStatement(node as any, start(state))
 
   return stop(state)
 }

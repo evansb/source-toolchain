@@ -4,7 +4,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { parse } from 'acorn'
 
-import { evalStatement, createInterpreter } from '../interpreter'
+import { evaluators, createInterpreter } from '../interpreter'
 
 const fixturesFolderPath = path.resolve(
   __dirname,
@@ -62,7 +62,7 @@ export const runConformationTests = (fixtureFilePath: string) => {
   let state = createInterpreter()
 
   tests.forEach(t => {
-    const generator = evalStatement(t.statement, state)
+    const generator = evaluators[t.statement.type](t.statement, state)
     let isDone = false
 
     while (!isDone) {
