@@ -36,7 +36,7 @@ export const noError = (source: string, options: Partial<Options> = {}) => {
     ...defaultOptions,
     ...options
   }
-  const { errorClass, week, explanation } = completeOptions
+  const { week } = completeOptions
   const context = runParser(source, week)
   expect(context.parser.errors.length).toBe(0)
 }
