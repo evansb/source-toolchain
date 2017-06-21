@@ -5,13 +5,15 @@ import noIfWithoutElse from './noIfWithoutElse'
 import singleVariableDeclaration from './singleVariableDeclaration'
 import strictEquality from './strictEquality'
 import noImplicitDeclareUndefined from './noImplicitDeclareUndefined'
+import noImplicitReturnUndefined from './noImplicitReturnUndefined'
 
 const rules: Array<Rule<any>> = [
   bracesAroundIfElse,
   singleVariableDeclaration,
   strictEquality,
   noIfWithoutElse,
-  noImplicitDeclareUndefined
+  noImplicitDeclareUndefined,
+  noImplicitReturnUndefined
 ]
 
 export default rules

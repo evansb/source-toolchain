@@ -18,8 +18,8 @@ export class NoIfWithoutElseError implements IError {
   }
 }
 
-const missingElse: Rule<es.IfStatement> = {
-  name: 'missing-else',
+const noIfWithoutElse: Rule<es.IfStatement> = {
+  name: 'no-if-without-else',
 
   checkNodes: {
     IfStatement(node: es.IfStatement) {
@@ -32,4 +32,4 @@ const missingElse: Rule<es.IfStatement> = {
   }
 }
 
-export default missingElse
+export default noIfWithoutElse
