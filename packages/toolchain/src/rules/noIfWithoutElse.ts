@@ -1,4 +1,5 @@
 import * as es from 'estree'
+import { generate } from 'escodegen'
 import { IError } from '../types/error'
 import { Rule } from '../types/static'
 
@@ -14,7 +15,13 @@ export class NoIfWithoutElseError implements IError {
   }
 
   elaborate() {
-    return 'TODO'
+    return `
+      This "if" block requires corresponding "else" block which will be
+      evaluated when ${generate(this.node.test)} expression evaluates to false.
+
+      Later in the course we will lift this restriction and allow "if" without
+      else.
+    `
   }
 }
 

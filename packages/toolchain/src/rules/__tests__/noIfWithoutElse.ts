@@ -10,7 +10,8 @@ it('detects missing Else case', () => {
   `,
     {
       errorClass: NoIfWithoutElseError,
-      explanation: /Missing.*else.*/
+      explanation: /Missing.*else.*/,
+      elaboration: /2 === 2/
     }
   )
 })
@@ -26,7 +27,8 @@ it('detects missing Else case in if-elseif', () => {
   `,
     {
       errorClass: NoIfWithoutElseError,
-      explanation: /Missing.*else.*/
+      explanation: /Missing.*else.*/,
+      elaboration: /2 === 1/
     }
   )
 })
