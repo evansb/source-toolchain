@@ -27,7 +27,6 @@
     "only-arrow-functions": [true, "allow-declarations"],
     "ordered-imports": [false],
     "prefer-method-signature": false,
-    "prefer-template": [true, "allow-single-concat"],
     "semicolon": [true, "never"],
     "quotemark": [true, "single", "jsx-double"],
     "triple-equals": [true, "allow-null-check"],

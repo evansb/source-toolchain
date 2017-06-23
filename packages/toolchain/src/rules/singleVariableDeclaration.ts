@@ -1,5 +1,4 @@
 import * as es from 'estree'
-import { stripIndent } from 'common-tags'
 import { generate } from 'escodegen'
 
 import { IError } from '../types/error'
