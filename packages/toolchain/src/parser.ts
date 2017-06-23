@@ -6,6 +6,7 @@ import {
   SourceLocation,
   Position
 } from 'acorn'
+import { stripIndent } from 'common-tags'
 import { simple } from 'acorn/dist/walk'
 
 import { IError } from './types/error'
@@ -19,18 +20,26 @@ export type ParserOptions = {
 }
 
 export class DisallowedConstructError implements IError {
-  constructor(public node: es.Node) {}
+  nodeType: string
+
+  constructor(public node: es.Node) {
+    this.nodeType = this.splitNodeType()
+  }
 
   get location() {
     return this.node.loc!
   }
 
   explain() {
-    return `${this.splitNodeType()} is not allowed`
+    return `${this.nodeType} is not allowed`
   }
 
   elaborate() {
-    return 'TODO'
+    return stripIndent`
+      You are trying to use ${this
+        .nodeType}, which is a valid JavaScript construct,
+      but disallowed or not yet allowed in Source 
+    `
   }
 
   private splitNodeType() {
@@ -46,7 +55,7 @@ export class DisallowedConstructError implements IError {
         soFar += nodeType[i]
       }
     }
-    return tokens
+    return tokens.join(' ')
   }
 }
 

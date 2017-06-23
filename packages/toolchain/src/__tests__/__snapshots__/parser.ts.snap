@@ -2,7 +2,10 @@
 
 exports[`elaboration 1`] = `"TODO"`;
 
-exports[`elaboration 2`] = `"TODO"`;
+exports[`elaboration 2`] = `
+"You are trying to use Assignment, which is a valid JavaScript construct,
+but disallowed or not yet allowed in Source"
+`;
 
 exports[`elaboration 3`] = `"TODO"`;
 
