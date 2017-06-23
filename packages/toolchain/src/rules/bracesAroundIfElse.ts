@@ -53,8 +53,8 @@ export class BracesAroundIfElseError implements IError {
         // ...
       }
 
-      Rationale:
-      Readability in dense packed code.
+      Rationale: Readability in dense packed code.
+
       In the snippet below, for instance, with poor indentation it is easy to
       mistaken hello() and world() to belong to the same branch of logic.
 

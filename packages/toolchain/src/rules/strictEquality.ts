@@ -11,14 +11,14 @@ export class StrictEqualityError implements IError {
 
   explain() {
     if (this.node.operator === '==') {
-      return 'Use strict equality (===)'
+      return 'Use === instead of =='
     } else {
-      return 'Use strict inequality (!==)'
+      return 'Use !== instead of !='
     }
   }
 
   elaborate() {
-    return 'TODO'
+    return '== and != is not a valid operator'
   }
 }
 

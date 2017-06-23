@@ -1,9 +1,20 @@
 import * as es from 'estree'
+import { stripIndent } from 'common-tags'
+import { generate } from 'escodegen'
+
 import { IError } from '../types/error'
 import { Rule } from '../types/static'
 
 export class MultipleDeclarationsError implements IError {
-  constructor(public node: es.VariableDeclaration) {}
+  private fixs: es.VariableDeclaration[]
+  constructor(public node: es.VariableDeclaration) {
+    this.fixs = node.declarations.map(declaration => ({
+      type: 'VariableDeclaration' as 'VariableDeclaration',
+      kind: 'var' as 'var',
+      loc: declaration.loc,
+      declarations: [declaration]
+    }))
+  }
 
   get location() {
     return this.node.loc!
@@ -14,7 +25,12 @@ export class MultipleDeclarationsError implements IError {
   }
 
   elaborate() {
-    return 'TODO'
+    const fixs = this.fixs.map(n => '\t' + generate(n)).join('\n')
+    return (
+      'Split the variable declaration into multiple lines as follows\n\n' +
+      fixs +
+      '\n'
+    )
   }
 }
 

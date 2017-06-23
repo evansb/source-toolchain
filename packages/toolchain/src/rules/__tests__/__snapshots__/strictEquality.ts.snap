@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`elaboration 1`] = `"TODO"`;
+exports[`elaboration 1`] = `"== and != is not a valid operator"`;
 
-exports[`elaboration 2`] = `"TODO"`;
+exports[`elaboration 2`] = `"== and != is not a valid operator"`;
 
-exports[`explanation 1`] = `"Use strict equality (===)"`;
+exports[`explanation 1`] = `"Use === instead of =="`;
 
-exports[`explanation 2`] = `"Use strict inequality (!==)"`;
+exports[`explanation 2`] = `"Use !== instead of !="`;

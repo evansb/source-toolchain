@@ -1,5 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`elaboration 1`] = `"TODO"`;
+exports[`elaboration 1`] = `
+"A variable declaration assigns a value to a name.
+For instance, to assign 20 to x, you can write:
+
+  var x = 20;
+
+  x + x; // 40"
+`;
 
 exports[`explanation 1`] = `"Missing value in variable declaration"`;

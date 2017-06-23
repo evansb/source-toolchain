@@ -36,9 +36,7 @@ export class DisallowedConstructError implements IError {
 
   elaborate() {
     return stripIndent`
-      You are trying to use ${this
-        .nodeType}, which is a valid JavaScript construct,
-      but disallowed or not yet allowed in Source 
+      You are trying to use ${this.nodeType}, which is not yet allowed (yet).
     `
   }
 
@@ -67,7 +65,7 @@ export class FatalSyntaxError implements IError {
   }
 
   elaborate() {
-    return 'TODO'
+    return 'There is a syntax error in your program'
   }
 }
 
@@ -79,7 +77,7 @@ export class MissingSemicolonError implements IError {
   }
 
   elaborate() {
-    return 'TODO'
+    return 'Every statement must be terminated by a semicolon.'
   }
 }
 
@@ -91,7 +89,7 @@ export class TrailingCommaError implements IError {
   }
 
   elaborate() {
-    return 'TODO'
+    return 'Please remove the trailing comma'
   }
 }
 

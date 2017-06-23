@@ -1,4 +1,5 @@
 import * as es from 'estree'
+import { stripIndent } from 'common-tags'
 import { IError } from '../types/error'
 import { Rule } from '../types/static'
 
@@ -14,7 +15,12 @@ export class NoImplicitReturnUndefinedError implements IError {
   }
 
   elaborate() {
-    return 'TODO'
+    return stripIndent`
+      This return statement is missing a value.
+      For instance, to return the value 42, you can write
+
+        return 42;
+    `
   }
 }
 

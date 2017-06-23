@@ -1,4 +1,5 @@
 import * as es from 'estree'
+import { stripIndent } from 'common-tags'
 import { IError } from '../types/error'
 import { Rule } from '../types/static'
 
@@ -14,7 +15,14 @@ export class NoImplicitDeclareUndefinedError implements IError {
   }
 
   elaborate() {
-    return 'TODO'
+    return stripIndent`
+      A variable declaration assigns a value to a name.
+      For instance, to assign 20 to ${this.node.name}, you can write:
+
+        var ${this.node.name} = 20;
+
+        ${this.node.name} + ${this.node.name}; // 40
+    `
   }
 }
 
