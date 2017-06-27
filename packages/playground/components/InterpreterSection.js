@@ -1,6 +1,6 @@
 import Interpreter from './Interpreter'
 
-export default () => (
+export default () =>
   <div>
     <p>
       While most interpreters and debuggers step the code
@@ -26,4 +26,3 @@ export default () => (
     </div>
     <Interpreter />
   </div>
-)

@@ -3,48 +3,77 @@ import { generate } from 'astring'
 import React, { Component } from 'react'
 import Editor from './Editor'
 
-const Controls = ({ isNextDisabled, isPreviousDisabled,
-    isStartOverDisabled, isUntilEndDisabled, isStopDisabled,
-    handleNext, handlePrevious, handleStartOver, handleStop, handleUntilEnd }) => (
+const Controls = ({
+  isNextDisabled,
+  isPreviousDisabled,
+  isStartOverDisabled,
+  isUntilEndDisabled,
+  isStopDisabled,
+  handleNext,
+  handlePrevious,
+  handleStartOver,
+  handleStop,
+  handleUntilEnd
+}) =>
   <div className="Section-control btn-group columns">
     <style jsx>{`
       div {
         padding: 0px 10px;
       }
     `}</style>
-    <button onClick={handleStartOver} disabled={isStartOverDisabled}
-      className="btn btn-primary">Start</button>
-    <button onClick={handleStop} disabled={isStopDisabled}
-            className="btn btn-primary">Stop</button>
-    <button onClick={handleNext} disabled={isNextDisabled}
-      className="btn btn-primary">Next</button>
-    <button onClick={handlePrevious} disabled={isPreviousDisabled}
-      className="btn btn-primary">Previous</button>
+    <button
+      onClick={handleStartOver}
+      disabled={isStartOverDisabled}
+      className="btn btn-primary"
+    >
+      Start
+    </button>
+    <button
+      onClick={handleStop}
+      disabled={isStopDisabled}
+      className="btn btn-primary"
+    >
+      Stop
+    </button>
+    <button
+      onClick={handleNext}
+      disabled={isNextDisabled}
+      className="btn btn-primary"
+    >
+      Next
+    </button>
+    <button
+      onClick={handlePrevious}
+      disabled={isPreviousDisabled}
+      className="btn btn-primary"
+    >
+      Previous
+    </button>
   </div>
-)
 
-const Visualizer = ({ visualizer }) => (
+const Visualizer = ({ visualizer }) =>
   <div className="Section-visualizer-expression">
-    <style jsx>{`
-      pre {
-        color: white;
-        width: 100%;
-        font-weight: 500;
-        margin: 0px 10px;
-        padding: 5px 10px;
-        background: #5764c6;
-        font-weight: 700;
-        font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
-      }
-    `}
+    <style jsx>
+      {`
+        pre {
+          color: white;
+          width: 100%;
+          font-weight: 500;
+          margin: 0px 10px;
+          padding: 5px 10px;
+          background: #5764c6;
+
+          font-weight: 700;
+          font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+        }
+      `}
     </style>
     <div className="columns">
-      { visualizer && visualizer.root && <pre>{generate(visualizer.root)}</pre> }
+      {visualizer && visualizer.root && <pre>{generate(visualizer.root)}</pre>}
     </div>
   </div>
-)
 
-const valueToString = (v) => {
+const valueToString = v => {
   if (v instanceof Closure) {
     return v.node.id ? `<function ${v.node.id.name}>` : '<lambda>'
   } else {
@@ -53,7 +82,9 @@ const valueToString = (v) => {
 }
 
 const EnvironmentTable = ({ scopes, frames }) => {
-  if (!scopes || ! frames) { return null }
+  if (!scopes || !frames) {
+    return null
+  }
   const content = []
   frames.reverse().forEach((f, idx) => {
     const scope = scopes.get(f)
@@ -86,7 +117,7 @@ const EnvironmentTable = ({ scopes, frames }) => {
         </div>
       )
     }
-    const id = "accordion-" + idx
+    const id = 'accordion-' + idx
     content.push(
       <div key={idx} className="accordion-item">
         <style jsx>{`
@@ -107,8 +138,14 @@ const EnvironmentTable = ({ scopes, frames }) => {
             background: #454d5d;
           }
         `}</style>
-        <input type="radio" id={id} name="accordion-radio" readOnly hidden
-               checked={idx === frames.size - 1} />
+        <input
+          type="radio"
+          id={id}
+          name="accordion-radio"
+          readOnly
+          hidden
+          checked={idx === frames.size - 1}
+        />
         <label className="accordion-header hand">{scope.name}</label>
         {child}
       </div>
@@ -122,7 +159,6 @@ const EnvironmentTable = ({ scopes, frames }) => {
 }
 
 class Interpreter extends Component {
-
   constructor(props, context) {
     super(props, context)
     this.state = {
@@ -159,7 +195,7 @@ class Interpreter extends Component {
     })
   }
 
-  handleStartOver = () => { 
+  handleStartOver = () => {
     const { session, editor } = this.state
     if (session) {
       session.start(editor.getValue())
@@ -174,7 +210,7 @@ class Interpreter extends Component {
       interpreters: [],
       visualizers: [],
       session: this.resetSession(),
-      isRunning: false,
+      isRunning: false
     })
   }
 
@@ -188,7 +224,7 @@ class Interpreter extends Component {
         interpreter: session.interpreter,
         interpreters: [session.interpreter],
         visualizers: [session.visualizer],
-        visualizer: session.visualizer,
+        visualizer: session.visualizer
       })
     })
 
@@ -205,7 +241,7 @@ class Interpreter extends Component {
       })
     })
 
-    session.on('errors', (errors) => {
+    session.on('errors', errors => {
       this.setState({ errors })
     })
 
@@ -224,12 +260,17 @@ class Interpreter extends Component {
       editor.setReadOnly(isRunning)
     }
 
-    if (editor && interpreter && prevState.interpreter !== interpreter && interpreter.node) {
+    if (
+      editor &&
+      interpreter &&
+      prevState.interpreter !== interpreter &&
+      interpreter.node
+    ) {
       const range = new Range(
         interpreter.node.loc.start.line - 1,
         interpreter.node.loc.start.column,
         interpreter.node.loc.end.line - 1,
-        interpreter.node.loc.end.column,
+        interpreter.node.loc.end.column
       )
       this.removeMarkers()
       editor.getSession().addMarker(range, 'Editor-highlight')
@@ -240,7 +281,7 @@ class Interpreter extends Component {
           e.node.loc.start.line - 1,
           e.node.loc.start.column,
           e.node.loc.end.line - 1,
-          e.node.loc.end.column,
+          e.node.loc.end.column
         )
         editor.getSession().addMarker(range, 'Editor-highlight-error')
       })
@@ -269,38 +310,48 @@ class Interpreter extends Component {
   }
 
   render() {
-    const { session, interpreter, interpreters, visualizer, isRunning, errors } = this.state
-    const index = interpreters && interpreter && interpreters.indexOf(interpreter)
-    const errorsSection = errors && (errors.length > 0) && (
+    const {
+      session,
+      interpreter,
+      interpreters,
+      visualizer,
+      isRunning,
+      errors
+    } = this.state
+    const index =
+      interpreters && interpreter && interpreters.indexOf(interpreter)
+    const errorsSection =
+      errors &&
+      errors.length > 0 &&
       <div className="Section-errors column col-6 col-sm-12">
         <h6>Errors</h6>
-        {errors.sort(this.compareLine).map((e, idx) => (
+        {errors.sort(this.compareLine).map((e, idx) =>
           <div key={idx} className="Section-error columns">
             <div className="Section-error-line col-1">
-              {e.node ? e.node.loc.start.line: '<unknown>'}
+              {e.node ? e.node.loc.start.line : '<unknown>'}
             </div>
             <div className="Section-error-explanation col-11">
               {e.explanation}
             </div>
           </div>
-        ))
-        }
+        )}
       </div>
-    )
-    const visualizerSection = !errorsSection && isRunning && (
+    const visualizerSection =
+      !errorsSection &&
+      isRunning &&
       <div className="Section-visualizer column col-6 col-sm-12">
         <Visualizer visualizer={visualizer} />
         <EnvironmentTable
           scopes={interpreter && interpreter.scopes}
-          frames={interpreter && interpreter.frames} />
+          frames={interpreter && interpreter.frames}
+        />
       </div>
-    )
 
     const editorOnChange = () => {
       this.removeMarkers()
     }
 
-    const editorOnReady = (editor) => {
+    const editorOnReady = editor => {
       this.setState({ editor, session: this.resetSession() })
     }
 

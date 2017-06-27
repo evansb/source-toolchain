@@ -18,6 +18,7 @@
     "now": "^7.1.0"
   },
   "scripts": {
+    "prettier": "prettier --no-semi --single-quote --write '{pages,components}/**/*.js'",
     "dev": "next",
     "start": "next start",
     "build": "next build",

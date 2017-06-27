@@ -28,7 +28,7 @@ class Editor extends Component {
     const height = this.props.height || '300px'
     return (
       <div>
-        <div style={{height}} ref={(ref) => this.editorContainer = ref } />
+        <div style={{ height }} ref={ref => (this.editorContainer = ref)} />
       </div>
     )
   }

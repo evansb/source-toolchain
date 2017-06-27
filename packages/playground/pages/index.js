@@ -7,7 +7,8 @@ import Footer from '../components/Footer'
 const interpreterSection = (
   <Section
     title="Single Step Interpreter"
-    subtitle="Evaluates Program Step-by-Step According to Substitution Model">
+    subtitle="Evaluates Program Step-by-Step According to Substitution Model"
+  >
     <div>
       <p>
         While most interpreters and debuggers step the code
@@ -39,7 +40,8 @@ const interpreterSection = (
 const weekByWeekSection = (
   <Section
     title="Only Good Parts of JavaScript"
-    subtitle="Say no to Hoisting and Non Strict Equality">
+    subtitle="Say no to Hoisting and Non Strict Equality"
+  >
     <div>
       <style jsx>{`
         .weeks {
@@ -48,7 +50,8 @@ const weekByWeekSection = (
       `}</style>
       <p>
         We eliminate JavaScript features such as non-strict equality, hoisting,
-        variadic arguments, null values, syntax and semantics that might cause confusion
+        variadic arguments, null values, syntax and semantics that might cause
+        confusion
         for beginners.
       </p>
       <br />
@@ -65,18 +68,19 @@ const weekByWeekSection = (
       </p>
       <ul className="weeks step">
         <li className="step-item">
-          <a><span className="Section-week">Week 1</span><br/>Functions</a></li>
-        <li className="step-item">
-          <a><span className="Section-week">Week 5</span><br/>List</a>
+          <a><span className="Section-week">Week 1</span><br />Functions</a>
         </li>
         <li className="step-item">
-          <a><span className="Section-week">Week 6</span><br/>Mutations</a>
+          <a><span className="Section-week">Week 5</span><br />List</a>
         </li>
         <li className="step-item">
-          <a><span className="Section-week">Week 8</span><br/>Objects</a>
+          <a><span className="Section-week">Week 6</span><br />Mutations</a>
         </li>
         <li className="step-item">
-          <a><span className="Section-week">Week 12</span><br/>Loops</a>
+          <a><span className="Section-week">Week 8</span><br />Objects</a>
+        </li>
+        <li className="step-item">
+          <a><span className="Section-week">Week 12</span><br />Loops</a>
         </li>
       </ul>
     </div>
@@ -85,23 +89,24 @@ const weekByWeekSection = (
 
 const syntaxAnalyzerSection = (
   <Section
-     title="Friendly Syntax Analyzer"
-     subtitle="Explain common mistakes with clear error messages">
+    title="Friendly Syntax Analyzer"
+    subtitle="Explain common mistakes with clear error messages"
+  >
     <p>
       Error messages should be educating, not fighting back.
       We tried our best to make every errors, syntax or semantic,
-      to have a <em>human friendly explanation</em> and <em>suggestion for
-      fixing them</em>.
+      to have a <em>human friendly explanation</em> and{' '}
+      <em>
+        suggestion for
+        fixing them
+      </em>.
     </p>
   </Section>
 )
 
-export default () => (
+export default () =>
   <div>
-    <style jsx>{`
-
-
-    `}</style>
+    <style jsx>{`  `}</style>
     <Head title="source-toolchain" />
     <Header />
     <main>
@@ -111,4 +116,3 @@ export default () => (
     </main>
     <Footer />
   </div>
-)
