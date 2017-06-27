@@ -12,10 +12,10 @@
     "test": "lerna run lint && lerna run test-ci"
   },
   "devDependencies": {
-    "lerna": "^2.0.0-rc.5",
-    "prettier": "^1.4.4",
     "husky": "^0.13.4",
-    "lint-staged": "^3.6.1"
+    "lerna": "^2.0.0-rc.5",
+    "lint-staged": "^3.6.1",
+    "prettier": "^1.4.4"
   },
   "lint-staged": {
     "linters": {
