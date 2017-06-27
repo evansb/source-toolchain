@@ -6,7 +6,6 @@
   "dependencies": {
     "ayu-ace": "^2.0.3",
     "brace": "^0.10.0",
-    "flow-bin": "^0.47.0",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "source-toolchain": "2.0.0",
@@ -19,7 +18,6 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "flow": "flow",
     "lint": "echo 'Noop'",
     "test": "react-scripts test --env=jsdom",
     "test-ci": "echo 'Test coming soon'",
