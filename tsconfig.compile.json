@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "exclude": [
     "node_modules",
+    "playground/node_modules",
     "src/**/__tests__/*.ts",
     "src/harness/**/*.ts"
   ]

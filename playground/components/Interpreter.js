@@ -1,4 +1,3 @@
-import { createSession, Closure } from '../es5/main'
 import { generate } from 'astring'
 import React, { Component } from 'react'
 import Editor from './Editor'
@@ -73,7 +72,7 @@ const Visualizer = ({ visualizer }) =>
   </div>
 
 const valueToString = v => {
-  if (v instanceof Closure) {
+  if (v.node && v.node.id && v.node.id.name) {
     return v.node.id ? `<function ${v.node.id.name}>` : '<lambda>'
   } else {
     return v.toString()
@@ -172,6 +171,14 @@ class Interpreter extends Component {
     }
   }
 
+  componentDidMount() {
+    const { createSession } = require('source-toolchain')
+    this.createSession = createSession
+    this.setState({
+      session: this.resetSession()
+    })
+  }
+
   handleNext = () => {
     const { session, interpreter, interpreters, visualizers } = this.state
     const index = interpreters.indexOf(interpreter)
@@ -214,7 +221,7 @@ class Interpreter extends Component {
   }
 
   resetSession() {
-    const session = createSession(3)
+    const session = this.createSession(3)
 
     session.on('start', () => {
       this.setState({
@@ -351,7 +358,7 @@ class Interpreter extends Component {
     }
 
     const editorOnReady = editor => {
-      this.setState({ editor, session: this.resetSession() })
+      this.setState({ editor })
     }
 
     const editorInitialValue = `

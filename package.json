@@ -11,20 +11,18 @@
     "email": "evanlhoini@gmail.com"
   },
   "scripts": {
-    "start": "next start",
-    "build": "npm run compile-toolchain && next build",
-    "dev-playground": "next",
-    "clean": "rimraf definitions es6 es5 .next",
-    "prettier": "lerna run prettier",
+    "start": "cd playground && npm run start",
+    "build": "npm run compile && cd playground && npm run build",
+    "clean": "rimraf definitions es6 es5",
     "precommit": "lint-staged",
-    "prepush": "npm run lint-toolchain",
-    "lint-toolchain": "tslint -c tslint.json --type-check --project tsconfig.json ./src/**/*.ts",
-    "compile-toolchain": "rimraf definitions && tsc -p tsconfig.compile.json --rootDir src --outDir es6 --declarationDir definitions && babel es6 --out-dir es5",
-    "dev-toolchain": "jest --verbose --watch",
-    "test-toolchain": "jest --no-cache --coverage",
-    "test": "npm run test-toolchain && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
-    "prepublishOnly": "npm run compile",
-    "deploy": "now --public"
+    "prepush": "npm run lint",
+    "lint": "tslint -c tslint.json --type-check --project tsconfig.json ./src/**/*.ts",
+    "compile": "rimraf definitions && tsc -p tsconfig.compile.json --rootDir src --outDir es6 --declarationDir definitions && babel es6 --out-dir es5",
+    "dev": "jest --verbose --watch",
+    "test": "jest --no-cache --coverage && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "deploy": "now --public",
+    "prepublishOnly": "npm run lint",
+    "postinstall": "cd playground && npm install"
   },
   "dependencies": {
     "@types/acorn": "^4.0.2",
@@ -43,28 +41,22 @@
     "@types/debug": "^0.0.29",
     "@types/jest": "^19.2.3",
     "@types/node": "^7.0.22",
-    "ayu-ace": "^2.0.3",
     "babel-cli": "^6.24.1",
     "babel-core": "^6.24.1",
     "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-stage-0": "^6.24.1",
-    "brace": "^0.10.0",
+    "babel-preset-env": "^1.5.2",
     "coveralls": "^2.13.1",
     "debug": "^2.6.8",
     "husky": "^0.13.4",
     "jest": "^20.0.3",
     "lint-staged": "^3.6.1",
-    "next": "^3.0.1-beta.2",
     "now": "^7.1.0",
     "prettier": "^1.4.4",
     "prop-types": "^15.5.10",
-    "react": "^15.5.4",
-    "react-dom": "^15.5.4",
     "rimraf": "^2.6.1",
     "ts-jest": "^20.0.4",
     "tslint": "^5.4.3",
-    "typescript": "^2.5.0-dev.20170619",
-    "webpack": "^3.0.0"
+    "typescript": "^2.5.0-dev.20170619"
   },
   "lint-staged": {
     "linters": {
@@ -93,13 +85,5 @@
       "/__tests__/fixtures/.*\\.(ts|tsx|js)$"
     ]
   },
-  "babel": {
-    "presets": [
-      "next/babel",
-      "stage-0"
-    ],
-    "plugins": [
-      "transform-runtime"
-    ]
-  }
+  "false": {}
 }

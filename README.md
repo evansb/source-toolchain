@@ -49,40 +49,44 @@ The toolchain has three main components.
 
 ## Installation
 
-The only package publishable to NPM is `source-toolchain`, the rests are private.
-You will need Node >=6 and NPM >=3. Yarn is recommended.
+You will need Node >=6 and NPM >=3.
+Yarn is recommended.
 
 ```
 npm install source-toolchain --save
+
 # Or if you have Yarn
 yarn add source-toolchain --save
 ```
 
 ## Developing
 
-This project uses Lerna to manage dependencies between 3 internal packages.
-
-```
-packages/toolchain      The toolchain as explained above.
-packages/stdlib         JavaScript Standard Library (list, object).
-packages/playground     A playground website to demonstrate the toolchain. 
-```
-
-Install dependencies.
+Install dependencies (do for current directory and playground)
 ```
 npm install 
 # Or if you have Yarn
 yarn 
 ```
 
-Run the task that you need, the script name is standardized among
-packages.
+Run the task that you need
 
 ```
-npm run lint             # Lint the code using tslint
-npm run compile          # Compiles to ES6 then ES5
-npm run test             # Run the test + coverage
-npm run test-watch       # Run the test in watch mode
+# Toolchain: Run Jest in watch mode 
+# Playground: Run Next.js development
+npm run dev
+
+# Toolchain: Compile to ES6 then ES5
+npm run compile
+```
+
+To deploy the playground using `now.sh`
+
+```
+# Make sure you compile the toolchain
+npm run compile
+
+# Deploy it
+cd playground && npm run deploy
 ```
 
 ## License
