@@ -1,5 +1,5 @@
 import * as es from 'estree'
-import { generate } from 'escodegen'
+import { generate } from 'astring'
 import { stripIndent } from 'common-tags'
 import { IError } from '../types/error'
 import { Rule } from '../types/static'

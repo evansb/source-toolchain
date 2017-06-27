@@ -1,7 +1,7 @@
 import * as invariant from 'invariant'
 import * as es from 'estree'
 import { recursive, base, Walker, Walkers } from 'acorn/dist/walk'
-import { generate } from 'escodegen'
+import { generate } from 'astring'
 import { stripIndent } from 'common-tags'
 
 import { IError } from './types/error'

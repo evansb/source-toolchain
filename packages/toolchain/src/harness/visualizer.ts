@@ -1,4 +1,4 @@
-import { generate } from 'escodegen'
+import { generate } from 'astring'
 import { parse } from '../parser'
 import { createInterpreter, evalProgram } from '../interpreter'
 import { create, next } from '../visualizer'

@@ -16,19 +16,18 @@
     "compile": "rimraf definitions && tsc -p tsconfig.compile.json --rootDir src --outDir es6 --declarationDir definitions && babel es6 --out-dir es5",
     "lint": "tslint -c tslint.json --type-check --project tsconfig.json ./src/**/*.ts ./test/**/*.ts",
     "test-watch": "DEBUG=test jest --watch --verbose",
-    "test": "jest --coverage",
+    "test": "jest --no-cache --coverage",
     "test-ci": "npm run test && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "dependencies": {
     "@types/acorn": "^4.0.2",
     "@types/common-tags": "^1.2.5",
-    "@types/escodegen": "^0.0.6",
     "@types/estree": "^0.0.35",
     "@types/invariant": "^2.2.28",
     "acorn": "^5.0.3",
-    "babel-polyfill": "^6.23.0",
+    "astring": "^1.0.2",
+    "babel-runtime": "^6.23.0",
     "common-tags": "^1.4.0",
-    "escodegen": "^1.8.1",
     "eventemitter2": "^4.1.0",
     "immutable": "^3.8.1",
     "invariant": "^2.2.2"
@@ -39,6 +38,7 @@
     "@types/node": "^7.0.22",
     "babel-cli": "^6.24.1",
     "babel-core": "^6.24.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.5.1",
     "coveralls": "^2.13.1",
     "debug": "^2.6.8",
@@ -74,5 +74,6 @@
         "git add"
       ]
     }
-  }
+  },
+  "false": {}
 }

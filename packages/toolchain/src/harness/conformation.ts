@@ -1,4 +1,4 @@
-import { generate } from 'escodegen'
+import { generate } from 'astring'
 import * as es from 'estree'
 import * as fs from 'fs'
 import * as path from 'path'
