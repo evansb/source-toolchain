@@ -1,22 +1,17 @@
 import { createSession, Closure } from 'source-toolchain'
-import { generate } from 'escodegen'
+import { generate } from 'astring'
 import React, { Component } from 'react'
-
-class Editor extends Component {
-
-  async componentDidMount() {
-    await this.props.setupEditor(this.editor)
-  }
-
-  render() {
-    return <div className="Section-editor" ref={(e) => this.editor = e} />
-  }
-}
+import Editor from './Editor'
 
 const Controls = ({ isNextDisabled, isPreviousDisabled,
     isStartOverDisabled, isUntilEndDisabled, isStopDisabled,
     handleNext, handlePrevious, handleStartOver, handleStop, handleUntilEnd }) => (
   <div className="Section-control btn-group columns">
+    <style jsx>{`
+      div {
+        padding: 0px 10px;
+      }
+    `}</style>
     <button onClick={handleStartOver} disabled={isStartOverDisabled}
       className="btn btn-primary">Start</button>
     <button onClick={handleStop} disabled={isStopDisabled}
@@ -30,7 +25,19 @@ const Controls = ({ isNextDisabled, isPreviousDisabled,
 
 const Visualizer = ({ visualizer }) => (
   <div className="Section-visualizer-expression">
-    <h6>Current Expression</h6>
+    <style jsx>{`
+      pre {
+        color: white;
+        width: 100%;
+        font-weight: 500;
+        margin: 0px 10px;
+        padding: 5px 10px;
+        background: #5764c6;
+        font-weight: 700;
+        font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+      }
+    `}
+    </style>
     <div className="columns">
       { visualizer && visualizer.root && <pre>{generate(visualizer.root)}</pre> }
     </div>
@@ -56,8 +63,16 @@ const EnvironmentTable = ({ scopes, frames }) => {
       for (const [key, value] of scope.environment.entries()) {
         tableContent.push(
           <tr className="columns" key={key}>
-            <td className="col-3">{key}</td>
-            <td className="col-9">{valueToString(value)}</td>
+            <style jsx>{`
+              td {
+                background: #454d5d;
+                padding: 5px 10px;
+                border-bottom: none;
+                border-right: 3px solid black;
+              }
+            `}</style>
+            <td className="col-5">{key}</td>
+            <td className="col-7">{valueToString(value)}</td>
           </tr>
         )
       }
@@ -74,6 +89,24 @@ const EnvironmentTable = ({ scopes, frames }) => {
     const id = "accordion-" + idx
     content.push(
       <div key={idx} className="accordion-item">
+        <style jsx>{`
+          div {
+            color: white;
+          }
+          .accordion-header {
+            font-family: 'Menlo', 'Consolas', monospace;
+            background: #222436 !important;
+            color: white;
+            border-left: 5px solid #5764c6;
+            border-top: 1px solid #5764c6;
+          }
+          .accordion-body {
+            font-family: 'Menlo', 'Consolas', monospace;
+            color: white !important;
+            padding: 0 10px;
+            background: #454d5d;
+          }
+        `}</style>
         <input type="radio" id={id} name="accordion-radio" readOnly hidden
                checked={idx === frames.size - 1} />
         <label className="accordion-header hand">{scope.name}</label>
@@ -82,11 +115,8 @@ const EnvironmentTable = ({ scopes, frames }) => {
     )
   })
   return (
-    <div className="Section-visualizer-frame">
-      <h6>Environments</h6>
-      <div className="accordion">
-        {content}
-      </div>
+    <div className="accordion">
+      {content}
     </div>
   )
 }
@@ -105,39 +135,6 @@ class Interpreter extends Component {
       errors: [],
       isRunning: false
     }
-  }
-
-  setupEditor = async (editorRef) => {
-    const ace = await import('brace')
-    this.Range = ace.acequire('ace/range').Range
-    await import('brace/mode/javascript')
-    await import('ayu-ace')
-
-    const editor = ace.edit(editorRef)
-    editor.getSession().setUseWorker(false)
-    editor.getSession().setMode('ace/mode/javascript')
-    editor.setTheme('ace/theme/ayu-mirage')
-    editor.$blockScrolling = Infinity
-    editor.setOptions({
-      fontSize: '14px'
-    })
-    editor.setValue(`
-function arithmetic(n) {
-  if (n <= 1) {
-    return n;
-  } else {
-    return n + arithmetic(n - 1); 
-  }
-}
-
-arithmetic(3); 
-`)
-    editor.clearSelection()
-    editor.on('change', () => {
-      this.removeMarkers()
-    })
-
-    this.setState({ editor, session: this.resetSession() })
   }
 
   handleNext = () => {
@@ -228,7 +225,7 @@ arithmetic(3);
     }
 
     if (editor && interpreter && prevState.interpreter !== interpreter && interpreter.node) {
-      const range = new this.Range(
+      const range = new Range(
         interpreter.node.loc.start.line - 1,
         interpreter.node.loc.start.column,
         interpreter.node.loc.end.line - 1,
@@ -239,7 +236,7 @@ arithmetic(3);
     } else if (errors.length !== 0) {
       this.removeMarkers()
       errors.forEach(e => {
-        const range = new this.Range(
+        const range = new Range(
           e.node.loc.start.line - 1,
           e.node.loc.start.column,
           e.node.loc.end.line - 1,
@@ -298,21 +295,54 @@ arithmetic(3);
           frames={interpreter && interpreter.frames} />
       </div>
     )
+
+    const editorOnChange = () => {
+      this.removeMarkers()
+    }
+
+    const editorOnReady = (editor) => {
+      this.setState({ editor, session: this.resetSession() })
+    }
+
+    const editorInitialValue = `
+function arithmetic(n) {
+  if (n <= 1) {
+    return n;
+  } else {
+    return n + arithmetic(n - 1); 
+  }
+}
+
+arithmetic(3); 
+`
+
+    const editor = (
+      <Editor
+        initialValue={editorInitialValue}
+        onChange={editorOnChange}
+        onReady={editorOnReady}
+      />
+    )
+
+    const controls = (
+      <Controls
+        isNextDisabled={!session || !isRunning}
+        isPreviousDisabled={!session || !isRunning || !index || index <= 0}
+        isStartOverDisabled={!session}
+        isUntilEndDisabled={!session}
+        isStopDisabled={!session || !isRunning}
+        handleStop={this.handleStop}
+        handleNext={this.handleNext}
+        handlePrevious={this.handlePrevious}
+        handleStartOver={this.handleStartOver}
+      />
+    )
+
     return (
       <div className="columns">
         <div className="column col-6 col-sm-12">
-          <Controls
-            isNextDisabled={!session || !isRunning}
-            isPreviousDisabled={!session || !isRunning || !index || index <= 0}
-            isStartOverDisabled={!session}
-            isUntilEndDisabled={!session}
-            isStopDisabled={!session || !isRunning}
-            handleStop={this.handleStop}
-            handleNext={this.handleNext}
-            handlePrevious={this.handlePrevious}
-            handleStartOver={this.handleStartOver}
-          />
-          <Editor setupEditor={this.setupEditor} />
+          {controls}
+          {editor}
         </div>
         {errorsSection}
         {visualizerSection}

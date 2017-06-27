@@ -6,6 +6,7 @@ const Section = ({ title, subtitle, children }) => (
       .Section {
         margin-top: 50px;
         margin-bottom: 50px;
+        padding: 0px 25px;
       }
 
       .Section-control { 

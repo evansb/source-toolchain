@@ -11,7 +11,7 @@ const Head = ({ title }) => (
     <link rel="stylesheet" href="/static/css/spectre.min.css" />
     <link rel="stylesheet" href="/static/css/spectre-exp.min.css" />
     <title>{title}</title>
-    <style global>{`
+    <style>{`
       @import url('https://fonts.googleapis.com/css?family=Noto+Sans');
 
       body {
@@ -29,6 +29,21 @@ const Head = ({ title }) => (
       .container {
         margin: 0 auto;
         max-width: 960px;
+      }
+
+      .Editor-highlight {
+        position: absolute;
+        z-index: 20;
+        background: #5764c6;
+        opacity: 0.5;
+        border-radius: 0 !important;
+      }
+
+      .Editor-highlight-error {
+        position: absolute;
+        z-index: 20;
+        border-bottom: 3px dotted #FF5B92;
+        border-radius: 0 !important;
       }
     `}</style>
   </NextHead>

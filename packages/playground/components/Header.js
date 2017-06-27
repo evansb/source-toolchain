@@ -34,6 +34,17 @@ export default () => (
         font-weight: 700;
         margin-bottom: 2em;
       }
+
+      .btn {
+        margin-right: 10px;
+        padding: 10px 20px;
+        font-weight: 700;
+        text-shadow:
+        -1px -1px 0 #272134,  
+         1px -1px 0 #272134,
+        -1px 1px 0 #272134,
+         1px 1px 0 #272134
+      }
     `}</style>
     <div className="container columns">
       <div className="column col-2 col-sm-12">
@@ -46,6 +57,10 @@ export default () => (
         <h6 className="subheading">
           Toolkit for Learning Programming Using JavaScript
         </h6>
+        <a href="https://github.com/evansb/source-toolchain"
+           className="btn btn-primary btn-lg">
+          Try It
+        </a>
         <a href="https://github.com/evansb/source-toolchain"
            className="btn btn-primary btn-lg">
           View on GitHub
