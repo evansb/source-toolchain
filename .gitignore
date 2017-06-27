@@ -1,8 +1,8 @@
-.awcache
-.idea
+.next
 node_modules
 dist
-npm-debug.log
+es6
+es5
+definitions
 coverage
 .nyc_output
-build

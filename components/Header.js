@@ -7,7 +7,6 @@ export default () =>
       header {
         background-color: #272134;
         padding: 50px;
-
         color: #fafafa;
       }
       .logo {

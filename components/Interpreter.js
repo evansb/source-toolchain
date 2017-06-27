@@ -1,4 +1,4 @@
-import { createSession, Closure } from 'source-toolchain'
+import { createSession, Closure } from '../es5/main'
 import { generate } from 'astring'
 import React, { Component } from 'react'
 import Editor from './Editor'
@@ -62,7 +62,6 @@ const Visualizer = ({ visualizer }) =>
           margin: 0px 10px;
           padding: 5px 10px;
           background: #5764c6;
-
           font-weight: 700;
           font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
         }
