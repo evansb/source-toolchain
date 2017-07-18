@@ -23,3 +23,7 @@ it('interprets simple program', () => {
 it('passes Week 3 Conformation Test', () => {
   runConformationTests('week-3.js')
 })
+
+it('passes Week 3 Conformation Test (martin)', () => {
+  runConformationTests('week-3-martin.js')
+})

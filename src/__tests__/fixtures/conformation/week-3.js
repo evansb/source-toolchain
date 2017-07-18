@@ -1,6 +1,6 @@
 0; // 0
 ('A String'); // 'A String'
-false; // true
+false; // false
 true; // true
 
 1 < 2; // true
