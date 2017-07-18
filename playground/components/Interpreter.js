@@ -1,54 +1,7 @@
-import { generate } from 'astring'
-import React, { Component } from 'react'
-import Editor from './Editor'
-
-const Controls = ({
-  isNextDisabled,
-  isPreviousDisabled,
-  isStartOverDisabled,
-  isUntilEndDisabled,
-  isStopDisabled,
-  handleNext,
-  handlePrevious,
-  handleStartOver,
-  handleStop,
-  handleUntilEnd
-}) =>
-  <div className="Section-control btn-group columns">
-    <style jsx>{`
-      div {
-        padding: 0px 10px;
-      }
-    `}</style>
-    <button
-      onClick={handleStartOver}
-      disabled={isStartOverDisabled}
-      className="btn btn-primary"
-    >
-      Start
-    </button>
-    <button
-      onClick={handleStop}
-      disabled={isStopDisabled}
-      className="btn btn-primary"
-    >
-      Stop
-    </button>
-    <button
-      onClick={handleNext}
-      disabled={isNextDisabled}
-      className="btn btn-primary"
-    >
-      Next
-    </button>
-    <button
-      onClick={handlePrevious}
-      disabled={isPreviousDisabled}
-      className="btn btn-primary"
-    >
-      Previous
-    </button>
-  </div>
+import { generate } from 'astring';
+import React, { Component } from 'react';
+import Editor from './Editor';
+import InterpreterControl from './InterpreterControl';
 
 const Visualizer = ({ visualizer }) =>
   <div className="Section-visualizer-expression">
@@ -67,28 +20,32 @@ const Visualizer = ({ visualizer }) =>
       `}
     </style>
     <div className="columns">
-      {visualizer && visualizer.root && <pre>{generate(visualizer.root)}</pre>}
+      {visualizer &&
+        visualizer.root &&
+        <pre>
+          {generate(visualizer.root)}
+        </pre>}
     </div>
-  </div>
+  </div>;
 
 const valueToString = v => {
   if (v.node && v.node.id && v.node.id.name) {
-    return v.node.id ? `<function ${v.node.id.name}>` : '<lambda>'
+    return v.node.id ? `<function ${v.node.id.name}>` : '<lambda>';
   } else {
-    return v.toString()
+    return v.toString();
   }
-}
+};
 
 const EnvironmentTable = ({ scopes, frames }) => {
   if (!scopes || !frames) {
-    return null
+    return null;
   }
-  const content = []
+  const content = [];
   frames.reverse().forEach((f, idx) => {
-    const scope = scopes.get(f)
-    let child = null
+    const scope = scopes.get(f);
+    let child = null;
     if (idx === frames.size - 1) {
-      const tableContent = []
+      const tableContent = [];
       for (const [key, value] of scope.environment.entries()) {
         tableContent.push(
           <tr className="columns" key={key}>
@@ -100,10 +57,14 @@ const EnvironmentTable = ({ scopes, frames }) => {
                 border-right: 3px solid black;
               }
             `}</style>
-            <td className="col-5">{key}</td>
-            <td className="col-7">{valueToString(value)}</td>
+            <td className="col-5">
+              {key}
+            </td>
+            <td className="col-7">
+              {valueToString(value)}
+            </td>
           </tr>
-        )
+        );
       }
       child = (
         <div className="accordion-body">
@@ -113,9 +74,9 @@ const EnvironmentTable = ({ scopes, frames }) => {
             </tbody>
           </table>
         </div>
-      )
+      );
     }
-    const id = 'accordion-' + idx
+    const id = 'accordion-' + idx;
     content.push(
       <div key={idx} className="accordion-item">
         <style jsx>{`
@@ -144,21 +105,23 @@ const EnvironmentTable = ({ scopes, frames }) => {
           hidden
           checked={idx === frames.size - 1}
         />
-        <label className="accordion-header hand">{scope.name}</label>
+        <label className="accordion-header hand">
+          {scope.name}
+        </label>
         {child}
       </div>
-    )
-  })
+    );
+  });
   return (
     <div className="accordion">
       {content}
     </div>
-  )
-}
+  );
+};
 
 class Interpreter extends Component {
   constructor(props, context) {
-    super(props, context)
+    super(props, context);
     this.state = {
       editor: null,
       session: null,
@@ -168,48 +131,48 @@ class Interpreter extends Component {
       visualizers: [],
       errors: [],
       isRunning: false
-    }
+    };
   }
 
   componentDidMount() {
-    const { createSession } = require('source-toolchain')
-    this.createSession = createSession
+    const { createSession } = require('source-toolchain');
+    this.createSession = createSession;
     this.setState({
       session: this.resetSession()
-    })
+    });
   }
 
   handleNext = () => {
-    const { session, interpreter, interpreters, visualizers } = this.state
-    const index = interpreters.indexOf(interpreter)
+    const { session, interpreter, interpreters, visualizers } = this.state;
+    const index = interpreters.indexOf(interpreter);
     if (index !== interpreters.length - 1) {
       this.setState({
         interpreter: interpreters[index + 1],
         visualizer: visualizers[index + 1]
-      })
+      });
     } else {
-      session.next()
+      session.next();
     }
-  }
+  };
 
   handlePrevious = () => {
-    const { interpreter, interpreters, visualizer, visualizers } = this.state
-    const index = interpreters.indexOf(interpreter)
+    const { interpreter, interpreters, visualizer, visualizers } = this.state;
+    const index = interpreters.indexOf(interpreter);
     this.setState({
       interpreter: interpreters[index - 1] || interpreter,
       visualizer: visualizers[index - 1] || visualizer
-    })
-  }
+    });
+  };
 
   handleStartOver = () => {
-    const { session, editor } = this.state
+    const { session, editor } = this.state;
     if (session) {
-      session.start(editor.getValue())
+      session.start(editor.getValue());
     }
-  }
+  };
 
   handleStop = () => {
-    this.removeMarkers()
+    this.removeMarkers();
     this.setState({
       interpreter: null,
       visualizer: null,
@@ -217,11 +180,11 @@ class Interpreter extends Component {
       visualizers: [],
       session: this.resetSession(),
       isRunning: false
-    })
-  }
+    });
+  };
 
   resetSession() {
-    const session = this.createSession(3)
+    const session = this.createSession(3);
 
     session.on('start', () => {
       this.setState({
@@ -231,12 +194,12 @@ class Interpreter extends Component {
         interpreters: [session.interpreter],
         visualizers: [session.visualizer],
         visualizer: session.visualizer
-      })
-    })
+      });
+    });
 
     session.on('next', () => {
-      const { interpreter, visualizer } = session
-      const { interpreters, visualizers } = this.state
+      const { interpreter, visualizer } = session;
+      const { interpreters, visualizers } = this.state;
 
       this.setState({
         isRunning: true,
@@ -244,26 +207,26 @@ class Interpreter extends Component {
         visualizer,
         interpreters: interpreters.concat([interpreter]),
         visualizers: visualizers.concat([visualizer])
-      })
-    })
+      });
+    });
 
     session.on('errors', errors => {
-      this.setState({ errors })
-    })
+      this.setState({ errors });
+    });
 
     session.on('done', () => {
-      this.removeMarkers()
-      this.setState({ isRunning: false })
-    })
+      this.removeMarkers();
+      this.setState({ isRunning: false });
+    });
 
-    return session
+    return session;
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { editor, isRunning, interpreter, errors } = this.state
+    const { editor, isRunning, interpreter, errors } = this.state;
 
     if (editor) {
-      editor.setReadOnly(isRunning)
+      editor.setReadOnly(isRunning);
     }
 
     if (
@@ -277,43 +240,43 @@ class Interpreter extends Component {
         interpreter.node.loc.start.column,
         interpreter.node.loc.end.line - 1,
         interpreter.node.loc.end.column
-      )
-      this.removeMarkers()
-      editor.getSession().addMarker(range, 'Editor-highlight')
+      );
+      this.removeMarkers();
+      editor.getSession().addMarker(range, 'Editor-highlight');
     } else if (errors.length !== 0) {
-      this.removeMarkers()
+      this.removeMarkers();
       errors.forEach(e => {
         const range = new Range(
           e.node.loc.start.line - 1,
           e.node.loc.start.column,
           e.node.loc.end.line - 1,
           e.node.loc.end.column
-        )
-        editor.getSession().addMarker(range, 'Editor-highlight-error')
-      })
+        );
+        editor.getSession().addMarker(range, 'Editor-highlight-error');
+      });
     }
   }
 
   removeMarkers() {
-    const editor = this.state.editor
-    const editSession = editor.getSession()
-    const markers = editSession.getMarkers()
-    Object.keys(markers).forEach(m => editSession.removeMarker(m))
+    const editor = this.state.editor;
+    const editSession = editor.getSession();
+    const markers = editSession.getMarkers();
+    Object.keys(markers).forEach(m => editSession.removeMarker(m));
   }
 
   compareLine = (s1, s2) => {
     if (s1.node.loc.start.line < s2.node.loc.start.line) {
-      return -1
+      return -1;
     } else if (s1.node.loc.start.line > s2.node.loc.start.line) {
-      return 1
+      return 1;
     } else if (s1.node.loc.start.column < s2.node.loc.start.column) {
-      return -1
+      return -1;
     } else if (s1.node.loc.start.column > s2.node.loc.start.column) {
-      return 1
+      return 1;
     } else {
-      return -1
+      return -1;
     }
-  }
+  };
 
   render() {
     const {
@@ -323,9 +286,9 @@ class Interpreter extends Component {
       visualizer,
       isRunning,
       errors
-    } = this.state
+    } = this.state;
     const index =
-      interpreters && interpreter && interpreters.indexOf(interpreter)
+      interpreters && interpreter && interpreters.indexOf(interpreter);
     const errorsSection =
       errors &&
       errors.length > 0 &&
@@ -341,7 +304,7 @@ class Interpreter extends Component {
             </div>
           </div>
         )}
-      </div>
+      </div>;
     const visualizerSection =
       !errorsSection &&
       isRunning &&
@@ -351,15 +314,15 @@ class Interpreter extends Component {
           scopes={interpreter && interpreter.scopes}
           frames={interpreter && interpreter.frames}
         />
-      </div>
+      </div>;
 
     const editorOnChange = () => {
-      this.removeMarkers()
-    }
+      this.removeMarkers();
+    };
 
     const editorOnReady = editor => {
-      this.setState({ editor })
-    }
+      this.setState({ editor });
+    };
 
     const editorInitialValue = `
 function arithmetic(n) {
@@ -371,7 +334,7 @@ function arithmetic(n) {
 }
 
 arithmetic(3); 
-`
+`;
 
     const editor = (
       <Editor
@@ -379,10 +342,10 @@ arithmetic(3);
         onChange={editorOnChange}
         onReady={editorOnReady}
       />
-    )
+    );
 
     const controls = (
-      <Controls
+      <InterpreterControl
         isNextDisabled={!session || !isRunning}
         isPreviousDisabled={!session || !isRunning || !index || index <= 0}
         isStartOverDisabled={!session}
@@ -393,7 +356,7 @@ arithmetic(3);
         handlePrevious={this.handlePrevious}
         handleStartOver={this.handleStartOver}
       />
-    )
+    );
 
     return (
       <div className="columns">
@@ -404,8 +367,8 @@ arithmetic(3);
         {errorsSection}
         {visualizerSection}
       </div>
-    )
+    );
   }
 }
 
-export default Interpreter
+export default Interpreter;

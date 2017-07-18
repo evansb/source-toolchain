@@ -12,7 +12,7 @@
   "scripts": {
     "start": "next start",
     "build": "next build",
-    "dev": "next"
+    "dev": "next -p 8080"
   },
   "dependencies": {
     "astring": "^1.0.2",

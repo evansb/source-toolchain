@@ -61,7 +61,7 @@
   "lint-staged": {
     "linters": {
       "*.js": [
-        "prettier --no-semi --single-quote --write",
+        "prettier --semi --single-quote --write",
         "git add"
       ],
       "*.ts": [
