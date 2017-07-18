@@ -2,8 +2,10 @@ import { generate } from 'astring'
 import * as es from 'estree'
 import * as fs from 'fs'
 import * as path from 'path'
-import { parse } from 'acorn'
+import { parse as acornParse } from 'acorn'
+import { parse } from '../parser'
 
+import { createContext } from '../context'
 import { evaluators, createInterpreter } from '../interpreter'
 
 const fixturesFolderPath = path.resolve(
@@ -31,7 +33,7 @@ export const loadAndParseConformation = (
   const expectedValues: any[] = []
   const tests: ConformationTest[] = []
 
-  const ast = parse(content, {
+  acornParse(content, {
     ecmaVersion: 5,
     locations: true,
     onComment: (isBlock, text) => {
@@ -41,6 +43,9 @@ export const loadAndParseConformation = (
       }
     }
   })
+
+  const context = createContext({ week: 3 })
+  const ast = parse(content, context).parser.program!
 
   for (const [idx, statement] of ast.body.entries()) {
     tests.push({
